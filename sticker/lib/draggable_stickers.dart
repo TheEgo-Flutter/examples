@@ -6,9 +6,10 @@ import 'stickerview.dart';
 class DraggableStickers extends StatefulWidget {
   //List of stickers (elements)
   final List<Sticker>? stickerList;
+  final String backgroundImage;
 
   // ignore: use_key_in_widget_constructors
-  const DraggableStickers({this.stickerList});
+  const DraggableStickers({this.stickerList, required this.backgroundImage});
   @override
   State<DraggableStickers> createState() => _DraggableStickersState();
 }
@@ -30,90 +31,82 @@ class _DraggableStickersState extends State<DraggableStickers> {
 
   @override
   Widget build(BuildContext context) {
-    return stickers.isNotEmpty && stickers != []
-        ? Stack(
-            fit: StackFit.expand,
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  key: const Key('stickersView_background_gestureDetector'),
-                  onTap: () {},
-                ),
-              ),
-              for (final sticker in stickers)
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(widget.backgroundImage, fit: BoxFit.cover),
+        Positioned.fill(
+          child: GestureDetector(
+            key: const Key('stickersView_background_gestureDetector'),
+            onTap: () {},
+          ),
+        ),
+        for (final sticker in stickers)
 
-                // Main widget that handles all features like rotate, resize, edit, delete, layer update etc.
-                DraggableResizable(
-                  key: Key('stickerPage_${sticker.key}_draggableResizable_asset'),
-                  canTransform: selectedAssetId == sticker.key ? true : false
+          // Main widget that handles all features like rotate, resize, edit, delete, layer update etc.
+          DraggableResizable(
+            key: Key('stickerPage_${sticker.key}_draggableResizable_asset'),
+            canTransform: selectedAssetId == sticker.key ? true : false
 
-                  //  true
-                  /*sticker.id == state.selectedAssetId*/,
-                  onUpdate: (update) => {},
+            //  true
+            /*sticker.id == state.selectedAssetId*/,
+            onUpdate: (update) => {},
 
-                  // To update the layer (manage position of widget in stack)
-                  onLayerTapped: () {
-                    var listLength = stickers.length;
-                    var ind = stickers.indexOf(sticker);
-                    stickers.remove(sticker);
-                    if (ind == listLength - 1) {
-                      stickers.insert(0, sticker);
-                    } else {
-                      stickers.insert(listLength - 1, sticker);
-                    }
+            // To update the layer (manage position of widget in stack)
+            onLayerTapped: () {},
 
-                    selectedAssetId = sticker.key;
-                    setState(() {});
-                  },
+            // To edit (Not implemented yet)
+            onEdit: () {},
 
-                  // To edit (Not implemented yet)
-                  onEdit: () {},
+            // To Delete the sticker
+            onDelete: () async {
+              {
+                stickers.remove(sticker);
+                setState(() {});
+              }
+            },
 
-                  // To Delete the sticker
-                  onDelete: () async {
-                    {
-                      stickers.remove(sticker);
-                      setState(() {});
-                    }
-                  },
+            // Size of the sticker
+            size: sticker.isText == true
+                ? Size(64 * _initialStickerScale / 3, 64 * _initialStickerScale / 3)
+                : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
 
-                  // Size of the sticker
-                  size: sticker.isText == true
-                      ? Size(64 * _initialStickerScale / 3, 64 * _initialStickerScale / 3)
-                      : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
-
-                  // Constraints of the sticker
-                  constraints: sticker.isText == true
-                      ? BoxConstraints.tight(
-                          Size(
-                            64 * _initialStickerScale / 3,
-                            64 * _initialStickerScale / 3,
-                          ),
-                        )
-                      : BoxConstraints.tight(
-                          Size(
-                            64 * _initialStickerScale,
-                            64 * _initialStickerScale,
-                          ),
-                        ),
-
-                  // Child widget in which sticker is passed
-                  child: InkWell(
-                    splashColor: Colors.transparent,
-                    onTap: () {
-                      // To update the selected widget
-                      selectedAssetId = sticker.key;
-                      setState(() {});
-                    },
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: sticker.isText == true ? FittedBox(child: sticker) : sticker,
+            // Constraints of the sticker
+            constraints: sticker.isText == true
+                ? BoxConstraints.tight(
+                    Size(
+                      64 * _initialStickerScale / 3,
+                      64 * _initialStickerScale / 3,
+                    ),
+                  )
+                : BoxConstraints.tight(
+                    Size(
+                      64 * _initialStickerScale,
+                      64 * _initialStickerScale,
                     ),
                   ),
-                ),
-            ],
-          )
-        : Container();
+
+            // Child widget in which sticker is passed
+            child: GestureDetector(
+              onTapDown: (TapDownDetails details) {
+                selectedAssetId = sticker.key;
+                var listLength = stickers.length;
+                var index = stickers.indexOf(sticker);
+                if (index != listLength) {
+                  stickers.remove(sticker);
+                  stickers.add(sticker);
+                }
+
+                setState(() {});
+              },
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: sticker.isText == true ? FittedBox(child: sticker) : sticker,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

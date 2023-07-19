@@ -15,11 +15,12 @@ enum ImageQuality { low, medium, high }
 ///
 class StickerView extends StatefulWidget {
   final List<Sticker>? stickerList;
+  final String backgroundImage;
   final double? height; // height of the editor view
   final double? width; // width of the editor view
 
   // ignore: use_key_in_widget_constructors
-  const StickerView({this.stickerList, this.height, this.width});
+  const StickerView({this.stickerList, this.height, this.width, required this.backgroundImage});
 
   // Method for saving image of the editor view as Uint8List
   // You have to pass the imageQuality as per your requirement (ImageQuality.low, ImageQuality.medium or ImageQuality.high)
@@ -67,35 +68,34 @@ class StickerViewState extends State<StickerView> {
 
   @override
   Widget build(BuildContext context) {
-    return stickerList != null
-        ? Column(
-            children: [
-              //For capturing screenshot of the widget
-              RepaintBoundary(
-                key: stickGlobalKey,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                  ),
-                  height: widget.height ?? MediaQuery.of(context).size.height * 0.7,
-                  width: widget.width ?? MediaQuery.of(context).size.width,
-                  child:
-                      //DraggableStickers class in which stickerList is passed
-                      DraggableStickers(
-                    stickerList: stickerList,
-                  ),
-                ),
-              ),
-            ],
-          )
-        : const CircularProgressIndicator();
+    return Column(
+      children: [
+        //For capturing screenshot of the widget
+        RepaintBoundary(
+          key: stickGlobalKey,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+            ),
+            height: widget.height ?? MediaQuery.of(context).size.height * 0.7,
+            width: widget.width ?? MediaQuery.of(context).size.width,
+            child:
+                //DraggableStickers class in which stickerList is passed
+                DraggableStickers(
+              backgroundImage: widget.backgroundImage,
+              stickerList: stickerList,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
 // Sticker class
 
 // ignore: must_be_immutable
-class Sticker extends StatefulWidget {
+class Sticker extends StatelessWidget {
   // you can pass any widget to it as child
   Widget? child;
   // set isText to true if passed Text widget as child
@@ -103,12 +103,7 @@ class Sticker extends StatefulWidget {
 
   Sticker({required Key key, this.child, this.isText}) : super(key: key);
   @override
-  _StickerState createState() => _StickerState();
-}
-
-class _StickerState extends State<Sticker> {
-  @override
   Widget build(BuildContext context) {
-    return widget.child != null ? widget.child! : Container();
+    return child != null ? child! : Container();
   }
 }

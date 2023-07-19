@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -122,12 +123,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
         void onUpdate() {
           final normalizedPosition = Offset(
-            normalizedLeft +
-                (_floatingActionPadding / 2) +
-                (_cornerDiameter / 2),
-            normalizedTop +
-                (_floatingActionPadding / 2) +
-                (_cornerDiameter / 2),
+            normalizedLeft + (_floatingActionPadding / 2) + (_cornerDiameter / 2),
+            normalizedTop + (_floatingActionPadding / 2) + (_cornerDiameter / 2),
           );
           widget.onUpdate?.call(
             DragUpdate(
@@ -137,43 +134,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
               angle: angle,
             ),
           );
-        }
-
-        // void onDragTopLeft(Offset details) {
-        //   final mid = (details.dx + details.dy) / 2;
-        //   final newHeight = math.max((size.height - (2 * mid)), 0.0);
-        //   final newWidth = math.max(size.width - (2 * mid), 0.0);
-        //   final updatedSize = Size(newWidth, newHeight);
-
-        //   if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-        //   final updatedPosition = Offset(position.dx + mid, position.dy + mid);
-
-        //   setState(() {
-        //     size = updatedSize;
-        //     position = updatedPosition;
-        //   });
-
-        //   onUpdate();
-        // }
-
-        // ignore: unused_element
-        void onDragTopRight(Offset details) {
-          final mid = (details.dx + (details.dy * -1)) / 2;
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-          final updatedSize = Size(newWidth, newHeight);
-
-          if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-
-          setState(() {
-            size = updatedSize;
-            position = updatedPosition;
-          });
-
-          onUpdate();
         }
 
         // ignore: unused_element
@@ -186,11 +146,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
           final updatedSize = Size(newWidth, newHeight);
 
-          // if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
           final updatedPosition = Offset(position.dx - mid, position.dy - mid);
 
-          // if (updatedSize > Size(100, 100)) {
           setState(() {
             size = updatedSize;
             position = updatedPosition;
@@ -210,7 +167,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
           final updatedPosition = Offset(position.dx - mid, position.dy - mid);
           // minimum size of the sticker should be Size(50,50)
-          if (updatedSize > const Size(50, 50)) {
+          if (updatedSize > const Size(150, 150)) {
             setState(() {
               size = updatedSize;
               position = updatedPosition;
@@ -237,35 +194,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
             child: Center(child: widget.child),
           ),
         );
-        final topLeftCorner = _FloatingActionIcon(
-          key: const Key('draggableResizable_edit_floatingActionIcon'),
-          iconData: Icons.edit,
-          onTap: widget.onEdit,
-        );
-
-        final topCenter = _FloatingActionIcon(
-          key: const Key('draggableResizable_layer_floatingActionIcon'),
-          iconData: Icons.layers,
-          onTap: widget.onLayerTapped,
-        );
-        // final topLeftCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_topLeft_resizePoint'),
-        //   type: _ResizePointType.topLeft,
-        //   onDrag: onDragTopLeft,
-        // );
-
-        // final topRightCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_topRight_resizePoint'),
-        //   type: _ResizePointType.topRight,
-        //   onDrag: onDragTopRight,
-        // );
-
-        // final bottomLeftCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_bottomLeft_resizePoint'),
-        //   type: _ResizePointType.bottomLeft,
-        //   onDrag: onDragBottomLeft,
-        //   // iconData: Icons.zoom_out_map,
-        // );
 
         final bottomRightCorner = _ResizePoint(
           key: const Key('draggableResizable_bottomRight_resizePoint'),
@@ -285,32 +213,32 @@ class _DraggableResizableState extends State<DraggableResizable> {
               (_floatingActionDiameter / 2) +
               (_cornerDiameter / 2) +
               (_floatingActionPadding / 2)),
-          // (_floatingActionDiameter + _cornerDiameter) / 2,
-          (normalizedHeight / 2) +
-              (_floatingActionDiameter / 2) +
-              (_cornerDiameter / 2) +
-              (_floatingActionPadding / 2),
+          (normalizedHeight / 2) + (_floatingActionDiameter / 2) + (_cornerDiameter / 2) + (_floatingActionPadding / 2),
         );
 
         final rotateAnchor = GestureDetector(
           key: const Key('draggableResizable_rotate_gestureDetector'),
           onScaleStart: (details) {
-            final offsetFromCenter = details.localFocalPoint - center;
-            setState(() => angleDelta = baseAngle -
-                offsetFromCenter.direction -
-                _floatingActionDiameter);
+            // final offsetFromCenter = details.localFocalPoint - center;
+            double dx = details.localFocalPoint.dx - center.dx;
+            double dy = details.localFocalPoint.dy - center.dy;
+            angle = atan2(dy, dx);
+            // onScaleStart에서 원하는 초기 회전 각도를 설정합니다.
+            setState(() => angle = baseAngle + angle);
           },
           onScaleUpdate: (details) {
             final offsetFromCenter = details.localFocalPoint - center;
 
             setState(
               () {
-                angle = offsetFromCenter.direction + angleDelta * 0.5;
+                // onScaleUpdate에서 현재 회전 각도를 업데이트합니다.
+                angle = baseAngle + offsetFromCenter.direction;
+                print(angle);
               },
             );
             onUpdate();
           },
-          onScaleEnd: (_) => setState(() => baseAngle = angle),
+          onScaleEnd: (_) => setState(() => baseAngle = angle), // 마지막으로 초기 회전 각도를 현재 각도로 설정합니다.
           child: _FloatingActionIcon(
             key: const Key('draggableResizable_rotate_floatingActionIcon'),
             iconData: Icons.rotate_90_degrees_ccw,
@@ -343,12 +271,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
                     onUpdate();
                   },
                   onScale: (s) {
+                    // onDragBottomRight();
                     final updatedSize = Size(
                       widget.size.width * s,
                       widget.size.height * s,
                     );
 
-                    if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
+                    if (s > 2.0) return;
 
                     final midX = position.dx + (size.width / 2);
                     final midY = position.dy + (size.height / 2);
@@ -356,33 +285,26 @@ class _DraggableResizableState extends State<DraggableResizable> {
                       midX - (updatedSize.width / 2),
                       midY - (updatedSize.height / 2),
                     );
+                    if (updatedSize > const Size(150, 150)) {
+                      setState(() {
+                        print(updatedSize);
+                        size = updatedSize;
+                        position = updatedPosition;
+                      });
+                    }
 
-                    setState(() {
-                      size = updatedSize;
-                      position = updatedPosition;
-                    });
                     onUpdate();
                   },
                   onRotate: (a) {
-                    setState(() => angle = a * 0.5);
+                    setState(() {
+                      angle = a;
+                    });
                     onUpdate();
                   },
                   child: Stack(
                     children: [
                       decoratedChild,
                       if (widget.canTransform && isTouchInputSupported) ...[
-                        Positioned(
-                          top: _floatingActionPadding / 2,
-                          left: _floatingActionPadding / 2,
-                          child: topLeftCorner,
-                        ),
-                        Positioned(
-                          right: (normalizedWidth / 2) -
-                              (_floatingActionDiameter / 2) +
-                              (_cornerDiameter / 2) +
-                              (_floatingActionPadding / 2),
-                          child: topCenter,
-                        ),
                         Positioned(
                           bottom: _floatingActionPadding / 2,
                           left: _floatingActionPadding / 2,
@@ -426,12 +348,7 @@ const _cursorLookup = <_ResizePointType, MouseCursor>{
 };
 
 class _ResizePoint extends StatelessWidget {
-  const _ResizePoint(
-      {Key? key,
-      required this.onDrag,
-      required this.type,
-      this.onScale,
-      this.iconData})
+  const _ResizePoint({Key? key, required this.onDrag, required this.type, this.onScale, this.iconData})
       : super(key: key);
 
   final ValueSetter<Offset> onDrag;
