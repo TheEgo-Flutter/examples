@@ -1,6 +1,3 @@
-import 'dart:math' as math;
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 /// {@template drag_update}
@@ -121,6 +118,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
         final normalizedLeft = position.dx;
         final normalizedTop = position.dy;
 
+        // // print(a.localToGlobal(Offset.zero));
+
         void onUpdate() {
           final normalizedPosition = Offset(
             normalizedLeft + (_floatingActionPadding / 2) + (_cornerDiameter / 2),
@@ -134,47 +133,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
               angle: angle,
             ),
           );
-        }
-
-        // ignore: unused_element
-        void onDragBottomLeft(Offset details) {
-          final mid = ((details.dx * -1) + details.dy) / 2;
-
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-
-          final updatedSize = Size(newWidth, newHeight);
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-
-          setState(() {
-            size = updatedSize;
-            position = updatedPosition;
-          });
-          // }
-
-          onUpdate();
-        }
-
-        void onDragBottomRight(Offset details) {
-          final mid = (details.dx + details.dy) / 2;
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-          final updatedSize = Size(newWidth, newHeight);
-
-          // if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-          // minimum size of the sticker should be Size(50,50)
-          if (updatedSize > const Size(150, 150)) {
-            setState(() {
-              size = updatedSize;
-              position = updatedPosition;
-            });
-          }
-
-          onUpdate();
         }
 
         final decoratedChild = Container(
@@ -195,55 +153,10 @@ class _DraggableResizableState extends State<DraggableResizable> {
           ),
         );
 
-        final bottomRightCorner = _ResizePoint(
-          key: const Key('draggableResizable_bottomRight_resizePoint'),
-          type: _ResizePointType.bottomRight,
-          onDrag: onDragBottomRight,
-          iconData: Icons.zoom_out_map,
-        );
-
         final deleteButton = _FloatingActionIcon(
           key: const Key('draggableResizable_delete_floatingActionIcon'),
           iconData: Icons.delete,
           onTap: widget.onDelete,
-        );
-
-        final center = Offset(
-          -((normalizedHeight / 2) +
-              (_floatingActionDiameter / 2) +
-              (_cornerDiameter / 2) +
-              (_floatingActionPadding / 2)),
-          (normalizedHeight / 2) + (_floatingActionDiameter / 2) + (_cornerDiameter / 2) + (_floatingActionPadding / 2),
-        );
-
-        final rotateAnchor = GestureDetector(
-          key: const Key('draggableResizable_rotate_gestureDetector'),
-          onScaleStart: (details) {
-            // final offsetFromCenter = details.localFocalPoint - center;
-            double dx = details.localFocalPoint.dx - center.dx;
-            double dy = details.localFocalPoint.dy - center.dy;
-            angle = atan2(dy, dx);
-            // onScaleStart에서 원하는 초기 회전 각도를 설정합니다.
-            setState(() => angle = baseAngle + angle);
-          },
-          onScaleUpdate: (details) {
-            final offsetFromCenter = details.localFocalPoint - center;
-
-            setState(
-              () {
-                // onScaleUpdate에서 현재 회전 각도를 업데이트합니다.
-                angle = baseAngle + offsetFromCenter.direction;
-                print(angle);
-              },
-            );
-            onUpdate();
-          },
-          onScaleEnd: (_) => setState(() => baseAngle = angle), // 마지막으로 초기 회전 각도를 현재 각도로 설정합니다.
-          child: _FloatingActionIcon(
-            key: const Key('draggableResizable_rotate_floatingActionIcon'),
-            iconData: Icons.rotate_90_degrees_ccw,
-            onTap: () {},
-          ),
         );
 
         if (this.constraints != constraints) {
@@ -266,8 +179,28 @@ class _DraggableResizableState extends State<DraggableResizable> {
                   onTap: onUpdate,
                   onDrag: (d) {
                     setState(() {
-                      position = Offset(position.dx + d.dx, position.dy + d.dy);
+                      bool isCrush = false;
+                      if (position.dx + d.dx < 0 && d.dx < 0) {
+                        position = Offset(0, position.dy + d.dy);
+                        isCrush = true;
+                      }
+                      if (position.dy + d.dy < 0 && d.dy < 0) {
+                        position = Offset(position.dx + d.dx, 0);
+                        isCrush = true;
+                      }
+                      if (position.dx > constraints.maxWidth - size.width && d.dx > 0) {
+                        position = Offset(constraints.maxWidth - size.width, position.dy + d.dy);
+                        isCrush = true;
+                      }
+                      if (position.dy > constraints.maxHeight - size.height && d.dy > 0) {
+                        position = Offset(position.dx + d.dx, constraints.maxHeight - size.height);
+                        isCrush = true;
+                      }
+                      if (!isCrush) {
+                        position = Offset(position.dx + d.dx, position.dy + d.dy);
+                      }
                     });
+
                     onUpdate();
                   },
                   onScale: (s) {
@@ -278,6 +211,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                     );
 
                     if (s > 2.0) return;
+                    if (updatedSize.width < 150 || updatedSize.height < 150) return;
 
                     final midX = position.dx + (size.width / 2);
                     final midY = position.dy + (size.height / 2);
@@ -285,13 +219,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
                       midX - (updatedSize.width / 2),
                       midY - (updatedSize.height / 2),
                     );
-                    if (updatedSize > const Size(150, 150)) {
-                      setState(() {
-                        print(updatedSize);
-                        size = updatedSize;
-                        position = updatedPosition;
-                      });
-                    }
+
+                    setState(() {
+                      size = updatedSize;
+                      position = updatedPosition;
+                    });
 
                     onUpdate();
                   },
@@ -306,20 +238,17 @@ class _DraggableResizableState extends State<DraggableResizable> {
                       decoratedChild,
                       if (widget.canTransform && isTouchInputSupported) ...[
                         Positioned(
-                          bottom: _floatingActionPadding / 2,
-                          left: _floatingActionPadding / 2,
+                          right: (normalizedWidth / 2) -
+                              (_floatingActionDiameter / 2) +
+                              (_cornerDiameter / 2) +
+                              (_floatingActionPadding / 2),
                           child: deleteButton,
                         ),
-                        Positioned(
-                          top: normalizedHeight + _floatingActionPadding / 2,
-                          left: normalizedWidth + _floatingActionPadding / 2,
-                          child: bottomRightCorner,
-                        ),
-                        Positioned(
-                          top: _floatingActionPadding / 2,
-                          right: _floatingActionPadding / 2,
-                          child: rotateAnchor,
-                        ),
+                        // Positioned(
+                        //   top: _floatingActionPadding / 2,
+                        //   left: _floatingActionPadding / 2,
+                        //   child: deleteButton,
+                        // ),
                       ],
                     ],
                   ),

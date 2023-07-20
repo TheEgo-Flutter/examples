@@ -31,82 +31,84 @@ class _DraggableStickersState extends State<DraggableStickers> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.network(widget.backgroundImage, fit: BoxFit.cover),
-        Positioned.fill(
-          child: GestureDetector(
-            key: const Key('stickersView_background_gestureDetector'),
-            onTap: () {},
-          ),
-        ),
-        for (final sticker in stickers)
-
-          // Main widget that handles all features like rotate, resize, edit, delete, layer update etc.
-          DraggableResizable(
-            key: Key('stickerPage_${sticker.key}_draggableResizable_asset'),
-            canTransform: selectedAssetId == sticker.key ? true : false
-
-            //  true
-            /*sticker.id == state.selectedAssetId*/,
-            onUpdate: (update) => {},
-
-            // To update the layer (manage position of widget in stack)
-            onLayerTapped: () {},
-
-            // To edit (Not implemented yet)
-            onEdit: () {},
-
-            // To Delete the sticker
-            onDelete: () async {
-              {
-                stickers.remove(sticker);
-                setState(() {});
-              }
-            },
-
-            // Size of the sticker
-            size: sticker.isText == true
-                ? Size(64 * _initialStickerScale / 3, 64 * _initialStickerScale / 3)
-                : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
-
-            // Constraints of the sticker
-            constraints: sticker.isText == true
-                ? BoxConstraints.tight(
-                    Size(
-                      64 * _initialStickerScale / 3,
-                      64 * _initialStickerScale / 3,
-                    ),
-                  )
-                : BoxConstraints.tight(
-                    Size(
-                      64 * _initialStickerScale,
-                      64 * _initialStickerScale,
-                    ),
-                  ),
-
-            // Child widget in which sticker is passed
+    return SizedBox(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(widget.backgroundImage, fit: BoxFit.cover),
+          Positioned.fill(
             child: GestureDetector(
-              onTapDown: (TapDownDetails details) {
-                selectedAssetId = sticker.key;
-                var listLength = stickers.length;
-                var index = stickers.indexOf(sticker);
-                if (index != listLength) {
-                  stickers.remove(sticker);
-                  stickers.add(sticker);
-                }
-
-                setState(() {});
-              },
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: sticker.isText == true ? FittedBox(child: sticker) : sticker,
-              ),
+              key: const Key('stickersView_background_gestureDetector'),
+              onTap: () {},
             ),
           ),
-      ],
+          for (final sticker in stickers)
+
+            // Main widget that handles all features like rotate, resize, edit, delete, layer update etc.
+            DraggableResizable(
+              key: Key('stickerPage_${sticker.key}_draggableResizable_asset'),
+              canTransform: selectedAssetId == sticker.key ? true : false
+
+              //  true
+              /*sticker.id == state.selectedAssetId*/,
+              onUpdate: (update) => {},
+
+              // To update the layer (manage position of widget in stack)
+              onLayerTapped: () {},
+
+              // To edit (Not implemented yet)
+              onEdit: () {},
+
+              // To Delete the sticker
+              onDelete: () async {
+                {
+                  stickers.remove(sticker);
+                  setState(() {});
+                }
+              },
+
+              // Size of the sticker
+              size: sticker.isText == true
+                  ? Size(64 * _initialStickerScale / 3, 64 * _initialStickerScale / 3)
+                  : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
+
+              // Constraints of the sticker
+              constraints: sticker.isText == true
+                  ? BoxConstraints.tight(
+                      Size(
+                        64 * _initialStickerScale / 3,
+                        64 * _initialStickerScale / 3,
+                      ),
+                    )
+                  : BoxConstraints.tight(
+                      Size(
+                        64 * _initialStickerScale,
+                        64 * _initialStickerScale,
+                      ),
+                    ),
+
+              // Child widget in which sticker is passed
+              child: GestureDetector(
+                onTapDown: (TapDownDetails details) {
+                  selectedAssetId = sticker.key;
+                  var listLength = stickers.length;
+                  var index = stickers.indexOf(sticker);
+                  if (index != listLength) {
+                    stickers.remove(sticker);
+                    stickers.add(sticker);
+                  }
+
+                  setState(() {});
+                },
+                child: SizedBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: sticker.isText == true ? FittedBox(child: sticker) : sticker,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
