@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// {@template drag_update}
-/// Drag update model which includes the position and size.
-/// {@endtemplate}
 class DragUpdate {
-  /// {@macro drag_update}
   const DragUpdate({
     required this.angle,
     required this.position,
@@ -28,11 +24,7 @@ class DragUpdate {
 const _cornerDiameter = 22.0;
 const _floatingActionDiameter = 18.0;
 const _floatingActionPadding = 24.0;
-// const _floatingActionPadding = 0.0;
 
-/// {@template draggable_resizable}
-/// A widget which allows a user to drag and resize the provided [child].
-/// {@endtemplate}
 class DraggableResizable extends StatefulWidget {
   /// {@macro draggable_resizable}
   DraggableResizable({
@@ -247,11 +239,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
                               (_floatingActionPadding / 2),
                           child: deleteButton,
                         ),
-                        // Positioned(
-                        //   top: _floatingActionPadding / 2,
-                        //   left: _floatingActionPadding / 2,
-                        //   child: deleteButton,
-                        // ),
                       ],
                     ],
                   ),

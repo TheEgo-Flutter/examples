@@ -35,7 +35,8 @@ class _DraggableStickersState extends State<DraggableStickers> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(widget.backgroundImage, fit: BoxFit.cover),
+          Image.asset(widget.backgroundImage, fit: BoxFit.cover),
+          // Image.network(widget.backgroundImage, fit: BoxFit.cover),
           Positioned.fill(
             child: GestureDetector(
               key: const Key('stickersView_background_gestureDetector'),
