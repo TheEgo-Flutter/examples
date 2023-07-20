@@ -1,12 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-/// {@template drag_update}
-/// Drag update model which includes the position and size.
-/// {@endtemplate}
 class DragUpdate {
-  /// {@macro drag_update}
   const DragUpdate({
     required this.angle,
     required this.position,
@@ -30,11 +24,7 @@ class DragUpdate {
 const _cornerDiameter = 22.0;
 const _floatingActionDiameter = 18.0;
 const _floatingActionPadding = 24.0;
-// const _floatingActionPadding = 0.0;
 
-/// {@template draggable_resizable}
-/// A widget which allows a user to drag and resize the provided [child].
-/// {@endtemplate}
 class DraggableResizable extends StatefulWidget {
   /// {@macro draggable_resizable}
   DraggableResizable({
@@ -120,14 +110,12 @@ class _DraggableResizableState extends State<DraggableResizable> {
         final normalizedLeft = position.dx;
         final normalizedTop = position.dy;
 
+        // // print(a.localToGlobal(Offset.zero));
+
         void onUpdate() {
           final normalizedPosition = Offset(
-            normalizedLeft +
-                (_floatingActionPadding / 2) +
-                (_cornerDiameter / 2),
-            normalizedTop +
-                (_floatingActionPadding / 2) +
-                (_cornerDiameter / 2),
+            normalizedLeft + (_floatingActionPadding / 2) + (_cornerDiameter / 2),
+            normalizedTop + (_floatingActionPadding / 2) + (_cornerDiameter / 2),
           );
           widget.onUpdate?.call(
             DragUpdate(
@@ -137,87 +125,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
               angle: angle,
             ),
           );
-        }
-
-        // void onDragTopLeft(Offset details) {
-        //   final mid = (details.dx + details.dy) / 2;
-        //   final newHeight = math.max((size.height - (2 * mid)), 0.0);
-        //   final newWidth = math.max(size.width - (2 * mid), 0.0);
-        //   final updatedSize = Size(newWidth, newHeight);
-
-        //   if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-        //   final updatedPosition = Offset(position.dx + mid, position.dy + mid);
-
-        //   setState(() {
-        //     size = updatedSize;
-        //     position = updatedPosition;
-        //   });
-
-        //   onUpdate();
-        // }
-
-        // ignore: unused_element
-        void onDragTopRight(Offset details) {
-          final mid = (details.dx + (details.dy * -1)) / 2;
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-          final updatedSize = Size(newWidth, newHeight);
-
-          if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-
-          setState(() {
-            size = updatedSize;
-            position = updatedPosition;
-          });
-
-          onUpdate();
-        }
-
-        // ignore: unused_element
-        void onDragBottomLeft(Offset details) {
-          final mid = ((details.dx * -1) + details.dy) / 2;
-
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-
-          final updatedSize = Size(newWidth, newHeight);
-
-          // if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-
-          // if (updatedSize > Size(100, 100)) {
-          setState(() {
-            size = updatedSize;
-            position = updatedPosition;
-          });
-          // }
-
-          onUpdate();
-        }
-
-        void onDragBottomRight(Offset details) {
-          final mid = (details.dx + details.dy) / 2;
-          final newHeight = math.max(size.height + (2 * mid), 0.0);
-          final newWidth = math.max(size.width + (2 * mid), 0.0);
-          final updatedSize = Size(newWidth, newHeight);
-
-          // if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
-
-          final updatedPosition = Offset(position.dx - mid, position.dy - mid);
-          // minimum size of the sticker should be Size(50,50)
-          if (updatedSize > const Size(50, 50)) {
-            setState(() {
-              size = updatedSize;
-              position = updatedPosition;
-            });
-          }
-
-          onUpdate();
         }
 
         final decoratedChild = Container(
@@ -237,85 +144,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
             child: Center(child: widget.child),
           ),
         );
-        final topLeftCorner = _FloatingActionIcon(
-          key: const Key('draggableResizable_edit_floatingActionIcon'),
-          iconData: Icons.edit,
-          onTap: widget.onEdit,
-        );
-
-        final topCenter = _FloatingActionIcon(
-          key: const Key('draggableResizable_layer_floatingActionIcon'),
-          iconData: Icons.layers,
-          onTap: widget.onLayerTapped,
-        );
-        // final topLeftCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_topLeft_resizePoint'),
-        //   type: _ResizePointType.topLeft,
-        //   onDrag: onDragTopLeft,
-        // );
-
-        // final topRightCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_topRight_resizePoint'),
-        //   type: _ResizePointType.topRight,
-        //   onDrag: onDragTopRight,
-        // );
-
-        // final bottomLeftCorner = _ResizePoint(
-        //   key: const Key('draggableResizable_bottomLeft_resizePoint'),
-        //   type: _ResizePointType.bottomLeft,
-        //   onDrag: onDragBottomLeft,
-        //   // iconData: Icons.zoom_out_map,
-        // );
-
-        final bottomRightCorner = _ResizePoint(
-          key: const Key('draggableResizable_bottomRight_resizePoint'),
-          type: _ResizePointType.bottomRight,
-          onDrag: onDragBottomRight,
-          iconData: Icons.zoom_out_map,
-        );
 
         final deleteButton = _FloatingActionIcon(
           key: const Key('draggableResizable_delete_floatingActionIcon'),
           iconData: Icons.delete,
           onTap: widget.onDelete,
-        );
-
-        final center = Offset(
-          -((normalizedHeight / 2) +
-              (_floatingActionDiameter / 2) +
-              (_cornerDiameter / 2) +
-              (_floatingActionPadding / 2)),
-          // (_floatingActionDiameter + _cornerDiameter) / 2,
-          (normalizedHeight / 2) +
-              (_floatingActionDiameter / 2) +
-              (_cornerDiameter / 2) +
-              (_floatingActionPadding / 2),
-        );
-
-        final rotateAnchor = GestureDetector(
-          key: const Key('draggableResizable_rotate_gestureDetector'),
-          onScaleStart: (details) {
-            final offsetFromCenter = details.localFocalPoint - center;
-            setState(() => angleDelta = baseAngle -
-                offsetFromCenter.direction -
-                _floatingActionDiameter);
-          },
-          onScaleUpdate: (details) {
-            final offsetFromCenter = details.localFocalPoint - center;
-
-            setState(
-              () {
-                angle = offsetFromCenter.direction + angleDelta * 0.5;
-              },
-            );
-            onUpdate();
-          },
-          onScaleEnd: (_) => setState(() => baseAngle = angle),
-          child: _FloatingActionIcon(
-            key: const Key('draggableResizable_rotate_floatingActionIcon'),
-            iconData: Icons.rotate_90_degrees_ccw,
-            onTap: () {},
-          ),
         );
 
         if (this.constraints != constraints) {
@@ -338,17 +171,42 @@ class _DraggableResizableState extends State<DraggableResizable> {
                   onTap: onUpdate,
                   onDrag: (d) {
                     setState(() {
-                      position = Offset(position.dx + d.dx, position.dy + d.dy);
+                      bool isCrush = false;
+                      if (position.dx + d.dx < 0 && d.dx < 0) {
+                        position = Offset(0, position.dy + d.dy);
+                        isCrush = true;
+                      }
+                      if (position.dy + d.dy < 0 && d.dy < 0) {
+                        position = Offset(position.dx + d.dx, 0);
+                        isCrush = true;
+                      }
+                      if (position.dx > constraints.maxWidth - size.width && d.dx > 0) {
+                        position = Offset(constraints.maxWidth - size.width, position.dy + d.dy);
+                        isCrush = true;
+                      }
+                      if (position.dy > constraints.maxHeight - size.height && d.dy > 0) {
+                        position = Offset(position.dx + d.dx, constraints.maxHeight - size.height);
+                        isCrush = true;
+                      }
+                      if (!isCrush) {
+                        position = Offset(position.dx + d.dx, position.dy + d.dy);
+                      }
                     });
+
                     onUpdate();
                   },
                   onScale: (s) {
+                    // onDragBottomRight();
                     final updatedSize = Size(
                       widget.size.width * s,
                       widget.size.height * s,
                     );
 
-                    if (!widget.constraints.isSatisfiedBy(updatedSize)) return;
+                    if (s > 2.0) return;
+                    if (updatedSize.width < 150 || updatedSize.height < 150) return;
+                    if (updatedSize.width >= constraints.maxWidth || updatedSize.height >= constraints.maxHeight) {
+                      return;
+                    }
 
                     final midX = position.dx + (size.width / 2);
                     final midY = position.dy + (size.height / 2);
@@ -361,10 +219,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
                       size = updatedSize;
                       position = updatedPosition;
                     });
+
                     onUpdate();
                   },
                   onRotate: (a) {
-                    setState(() => angle = a * 0.5);
+                    setState(() {
+                      angle = a;
+                    });
                     onUpdate();
                   },
                   child: Stack(
@@ -372,31 +233,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
                       decoratedChild,
                       if (widget.canTransform && isTouchInputSupported) ...[
                         Positioned(
-                          top: _floatingActionPadding / 2,
-                          left: _floatingActionPadding / 2,
-                          child: topLeftCorner,
-                        ),
-                        Positioned(
                           right: (normalizedWidth / 2) -
                               (_floatingActionDiameter / 2) +
                               (_cornerDiameter / 2) +
                               (_floatingActionPadding / 2),
-                          child: topCenter,
-                        ),
-                        Positioned(
-                          bottom: _floatingActionPadding / 2,
-                          left: _floatingActionPadding / 2,
                           child: deleteButton,
-                        ),
-                        Positioned(
-                          top: normalizedHeight + _floatingActionPadding / 2,
-                          left: normalizedWidth + _floatingActionPadding / 2,
-                          child: bottomRightCorner,
-                        ),
-                        Positioned(
-                          top: _floatingActionPadding / 2,
-                          right: _floatingActionPadding / 2,
-                          child: rotateAnchor,
                         ),
                       ],
                     ],
@@ -426,12 +267,7 @@ const _cursorLookup = <_ResizePointType, MouseCursor>{
 };
 
 class _ResizePoint extends StatelessWidget {
-  const _ResizePoint(
-      {Key? key,
-      required this.onDrag,
-      required this.type,
-      this.onScale,
-      this.iconData})
+  const _ResizePoint({Key? key, required this.onDrag, required this.type, this.onScale, this.iconData})
       : super(key: key);
 
   final ValueSetter<Offset> onDrag;
