@@ -212,6 +212,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
                     if (s > 2.0) return;
                     if (updatedSize.width < 150 || updatedSize.height < 150) return;
+                    if (updatedSize.width >= constraints.maxWidth || updatedSize.height >= constraints.maxHeight) {
+                      return;
+                    }
 
                     final midX = position.dx + (size.width / 2);
                     final midY = position.dy + (size.height / 2);
