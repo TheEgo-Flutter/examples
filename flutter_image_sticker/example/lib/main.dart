@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_image_sticker/stickerview.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sticker/stickerview.dart';
 
 void main() {
   runApp(const MyApp());
@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> {
                     showModalBottomSheet(
                         context: context,
                         builder: (context) {
-                          return Container(
+                          return SizedBox(
                             height: MediaQuery.of(context).size.height * 0.7,
                             child: imageFile != null
                                 ? Image.file(imageFile!)

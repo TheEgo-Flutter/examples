@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   path_provider: ^2.0.15
-  sticker:
+  flutter_image_sticker:
     path: ../
 dev_dependencies:
   flutter_test:

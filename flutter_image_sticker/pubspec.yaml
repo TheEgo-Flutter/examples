@@ -1,6 +1,8 @@
-name: flutter_stickers
+name: flutter_image_sticker
 description: A new Flutter project.
-version: 0.1.0
+version: 1.0.0
+repository: https://github.com/TheEgo-Flutter/flutter_image_sticker
+# homepage:
 
 environment:
   sdk: ">=3.0.6 <4.0.0"
