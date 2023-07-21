@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'draggable_resizable.dart';
-import 'stickerview.dart';
+import 'package:flutter_image_sticker/sticker.dart';
 
 class DraggableStickers extends StatefulWidget {
   //List of stickers (elements)
@@ -70,7 +68,8 @@ class _DraggableStickersState extends State<DraggableStickers> {
 
               // Size of the sticker
               size: sticker.isText == true
-                  ? Size(64 * _initialStickerScale / 3, 64 * _initialStickerScale / 3)
+                  ? Size(64 * _initialStickerScale / 3,
+                      64 * _initialStickerScale / 3)
                   : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
 
               // Constraints of the sticker
@@ -104,7 +103,9 @@ class _DraggableStickersState extends State<DraggableStickers> {
                 child: SizedBox(
                   width: double.infinity,
                   height: double.infinity,
-                  child: sticker.isText == true ? FittedBox(child: sticker) : sticker,
+                  child: sticker.isText == true
+                      ? FittedBox(child: sticker)
+                      : sticker,
                 ),
               ),
             ),
