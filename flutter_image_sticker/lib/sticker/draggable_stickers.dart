@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'draggable_resizable.dart';
 import 'sticker_view.dart';
 
+const double stickerBaseSize = 64.0;
+
 class DraggableStickers extends StatefulWidget {
   //List of stickers (elements)
   final List<Sticker>? stickerList;
@@ -19,7 +21,6 @@ Key? selectedAssetId;
 class _DraggableStickersState extends State<DraggableStickers> {
   // initial scale of sticker
   final _initialStickerScale = 5.0;
-
   List<Sticker> stickers = [];
   @override
   void initState() {
@@ -36,7 +37,6 @@ class _DraggableStickersState extends State<DraggableStickers> {
         fit: StackFit.expand,
         children: [
           Image.asset(widget.backgroundImage, fit: BoxFit.cover),
-          // Image.network(widget.backgroundImage, fit: BoxFit.cover),
           Positioned.fill(
             child: GestureDetector(
               key: const Key('stickersView_background_gestureDetector'),
@@ -70,22 +70,20 @@ class _DraggableStickersState extends State<DraggableStickers> {
 
               // Size of the sticker
               size: sticker.isText == true
-                  ? Size(64 * _initialStickerScale / 3,
-                      64 * _initialStickerScale / 3)
-                  : Size(64 * _initialStickerScale, 64 * _initialStickerScale),
-
-              // Constraints of the sticker
+                  ? Size(stickerBaseSize * _initialStickerScale / 3, stickerBaseSize * _initialStickerScale / 3)
+                  : Size(stickerBaseSize * _initialStickerScale, stickerBaseSize * _initialStickerScale),
+// Constraints of the sticker
               constraints: sticker.isText == true
                   ? BoxConstraints.tight(
                       Size(
-                        64 * _initialStickerScale / 3,
-                        64 * _initialStickerScale / 3,
+                        stickerBaseSize * _initialStickerScale / 3,
+                        stickerBaseSize * _initialStickerScale / 3,
                       ),
                     )
                   : BoxConstraints.tight(
                       Size(
-                        64 * _initialStickerScale,
-                        64 * _initialStickerScale,
+                        stickerBaseSize * _initialStickerScale,
+                        stickerBaseSize * _initialStickerScale,
                       ),
                     ),
 
