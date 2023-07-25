@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class DragUpdate {
@@ -172,24 +174,26 @@ class _DraggableResizableState extends State<DraggableResizable> {
                   onDrag: (d) {
                     setState(() {
                       bool isCrush = false;
-                      if (position.dx + d.dx < 0 && d.dx < 0) {
-                        position = Offset(0, position.dy + d.dy);
+                      double dx = d.dx * cos(angle) - d.dy * sin(angle);
+                      double dy = d.dx * sin(angle) + d.dy * cos(angle);
+                      if (position.dx + dx < 0 && dx < 0) {
+                        position = Offset(0, position.dy + dy);
                         isCrush = true;
                       }
-                      if (position.dy + d.dy < 0 && d.dy < 0) {
-                        position = Offset(position.dx + d.dx, 0);
+                      if (position.dy + dy < 0 && dy < 0) {
+                        position = Offset(position.dx + dx, 0);
                         isCrush = true;
                       }
-                      if (position.dx > constraints.maxWidth - size.width && d.dx > 0) {
-                        position = Offset(constraints.maxWidth - size.width, position.dy + d.dy);
+                      if (position.dx > constraints.maxWidth - size.width && dx > 0) {
+                        position = Offset(constraints.maxWidth - size.width, position.dy + dy);
                         isCrush = true;
                       }
-                      if (position.dy > constraints.maxHeight - size.height && d.dy > 0) {
-                        position = Offset(position.dx + d.dx, constraints.maxHeight - size.height);
+                      if (position.dy > constraints.maxHeight - size.height && dy > 0) {
+                        position = Offset(position.dx + dx, constraints.maxHeight - size.height);
                         isCrush = true;
                       }
                       if (!isCrush) {
-                        position = Offset(position.dx + d.dx, position.dy + d.dy);
+                        position = Offset(position.dx + dx, position.dy + dy);
                       }
                     });
 
