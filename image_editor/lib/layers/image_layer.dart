@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
-import 'package:image_editor/image_editor_plus.dart';
-import 'package:image_editor/modules/image_layer_overlay.dart';
 
 /// Image layer that can be used to add overlay images and drawings
 class ImageLayer extends StatefulWidget {
@@ -31,27 +29,7 @@ class _ImageLayerState extends State<ImageLayer> {
       left: widget.layerData.offset.dx,
       top: widget.layerData.offset.dy,
       child: GestureDetector(
-        onTap: () {
-          showModalBottomSheet(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(10),
-                topLeft: Radius.circular(10),
-              ),
-            ),
-            context: context,
-            builder: (context) {
-              return ImageLayerOverlay(
-                index: layers.indexOf(widget.layerData),
-                layerData: widget.layerData,
-                onUpdate: () {
-                  if (widget.onUpdate != null) widget.onUpdate!();
-                  setState(() {});
-                },
-              );
-            },
-          );
-        },
+        onTap: () {},
         onScaleUpdate: (detail) {
           if (detail.pointerCount == 1) {
             widget.layerData.offset = Offset(

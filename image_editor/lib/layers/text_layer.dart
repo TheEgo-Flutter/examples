@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
-import 'package:image_editor/image_editor_plus.dart';
-import 'package:image_editor/modules/text_layer_overlay.dart';
 
 /// Text layer
 class TextLayer extends StatefulWidget {
@@ -30,27 +28,7 @@ class _TextViewState extends State<TextLayer> {
       left: widget.layerData.offset.dx,
       top: widget.layerData.offset.dy,
       child: GestureDetector(
-        onTap: () {
-          showModalBottomSheet(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(10),
-                topLeft: Radius.circular(10),
-              ),
-            ),
-            context: context,
-            builder: (context) {
-              return TextLayerOverlay(
-                index: layers.indexOf(widget.layerData),
-                layer: widget.layerData,
-                onUpdate: () {
-                  if (widget.onUpdate != null) widget.onUpdate!();
-                  setState(() {});
-                },
-              );
-            },
-          );
-        },
+        onTap: () {},
         onScaleUpdate: (detail) {
           if (detail.pointerCount == 1) {
             widget.layerData.offset = Offset(
