@@ -41,7 +41,7 @@ String i18n(String sourceString) => _translations[sourceString.toLowerCase()] ??
 class ImageEditor extends StatelessWidget {
   final Uint8List? image;
   final List? images;
-
+  final List<String> stickers;
   final Directory? savePath;
   final int maxLength;
   final bool allowMultiple;
@@ -52,6 +52,7 @@ class ImageEditor extends StatelessWidget {
     super.key,
     this.image,
     this.images,
+    this.stickers = const [],
     this.savePath,
     this.allowMultiple = false,
     this.maxLength = 99,
@@ -62,7 +63,7 @@ class ImageEditor extends StatelessWidget {
       crop: true,
       blur: true,
       brush: true,
-      emoji: true,
+      sticker: true,
       filters: true,
       flip: true,
       rotate: true,
@@ -87,6 +88,7 @@ class ImageEditor extends StatelessWidget {
     if ((image == null || images != null) && allowMultiple == true) {
       return MultiImageEditor(
         images: images ?? [],
+        stickers: stickers,
         savePath: savePath,
         allowMultiple: allowMultiple,
         maxLength: maxLength,
@@ -96,6 +98,7 @@ class ImageEditor extends StatelessWidget {
     } else {
       return SingleImageEditor(
         image: image,
+        stickers: stickers,
         savePath: savePath,
         features: features,
         cropAvailableRatios: cropAvailableRatios,
@@ -139,16 +142,15 @@ class MultiImageEditor extends StatefulWidget {
   final Directory? savePath;
   final List images;
   final int maxLength;
-  final bool allowGallery, allowCamera, allowMultiple;
+  final bool allowMultiple;
   final ImageEditorFeatures features;
   final List<AspectRatioOption> cropAvailableRatios;
-
+  final List<String> stickers;
   const MultiImageEditor({
     super.key,
     this.images = const [],
+    this.stickers = const [],
     this.savePath,
-    @Deprecated('Use features instead') this.allowCamera = false,
-    @Deprecated('Use features instead') this.allowGallery = false,
     this.allowMultiple = false,
     this.maxLength = 99,
     this.features = const ImageEditorFeatures(
@@ -157,7 +159,7 @@ class MultiImageEditor extends StatefulWidget {
       crop: true,
       blur: true,
       brush: true,
-      emoji: true,
+      sticker: true,
       filters: true,
       flip: true,
       rotate: true,
@@ -251,6 +253,7 @@ class _MultiImageEditorState extends State<MultiImageEditor> {
                               MaterialPageRoute(
                                 builder: (context) => SingleImageEditor(
                                   image: image,
+                                  stickers: widget.stickers,
                                 ),
                               ),
                             );
@@ -353,6 +356,7 @@ class _MultiImageEditorState extends State<MultiImageEditor> {
 class SingleImageEditor extends StatefulWidget {
   final Directory? savePath;
   final dynamic image;
+  final List<String> stickers;
   final List? imageList;
   final ImageEditorFeatures features;
   final List<AspectRatioOption> cropAvailableRatios;
@@ -361,6 +365,7 @@ class SingleImageEditor extends StatefulWidget {
     super.key,
     this.savePath,
     this.image,
+    this.stickers = const [],
     this.imageList,
     this.features = const ImageEditorFeatures(
       pickFromGallery: true,
@@ -368,7 +373,7 @@ class SingleImageEditor extends StatefulWidget {
       crop: true,
       blur: true,
       brush: true,
-      emoji: true,
+      sticker: true,
       filters: true,
       flip: true,
       rotate: true,
@@ -563,9 +568,9 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           );
         }
 
-        // Emoji layer
-        if (layerItem is EmojiLayerData) {
-          return EmojiLayer(
+        // Sticker layer
+        if (layerItem is StickerLayerData) {
+          return StickerLayer(
             layerData: layerItem,
             onUpdate: () {
               setState(() {});
@@ -1011,7 +1016,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                         );
 
                         /// Use case, if you don't want your filter to effect your
-                        /// other elements such as emoji and text. Use insert
+                        /// other elements such as sticker and text. Use insert
                         /// instead of add like in line 888
                         //layers.insert(1, layer);
                         layers.add(layer);
@@ -1021,16 +1026,18 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                         setState(() {});
                       },
                     ),
-                  if (widget.features.emoji)
+                  if (widget.features.sticker)
                     BottomButton(
                       icon: Icons.face_5_outlined,
-                      text: i18n('Emoji'),
+                      text: i18n('Sticker'),
                       onTap: () async {
-                        EmojiLayerData? layer = await showModalBottomSheet(
+                        StickerLayerData? layer = await showModalBottomSheet(
                           context: context,
                           backgroundColor: Colors.black,
                           builder: (BuildContext context) {
-                            return const Emojies();
+                            return Stickers(
+                              stickers: widget.stickers,
+                            );
                           },
                         );
 

@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 
-/// Emoji layer
-class EmojiLayer extends StatefulWidget {
-  final EmojiLayerData layerData;
+class StickerLayer extends StatefulWidget {
+  final StickerLayerData layerData;
   final VoidCallback? onUpdate;
 
-  const EmojiLayer({
+  const StickerLayer({
     super.key,
     required this.layerData,
     this.onUpdate,
   });
 
   @override
-  createState() => _EmojiLayerState();
+  createState() => _StickerLayerState();
 }
 
-class _EmojiLayerState extends State<EmojiLayer> {
+class _StickerLayerState extends State<StickerLayer> {
   double initialSize = 0;
   double initialRotation = 0;
 
@@ -37,20 +36,22 @@ class _EmojiLayerState extends State<EmojiLayer> {
               widget.layerData.offset.dy + detail.focalPointDelta.dy,
             );
           } else if (detail.pointerCount == 2) {
-            widget.layerData.size = initialSize + detail.scale * 5 * (detail.scale > 1 ? 1 : -1);
-          }
+            widget.layerData.size = initialSize + detail.scale * (detail.scale > 1 ? 1 : -1);
 
+            // print('angle');
+            // print(detail.rotation);
+            widget.layerData.rotation = detail.rotation;
+          }
           setState(() {});
         },
         child: Transform.rotate(
           angle: widget.layerData.rotation,
           child: Container(
-            padding: const EdgeInsets.all(64),
-            child: Text(
-              widget.layerData.text.toString(),
-              style: TextStyle(
-                fontSize: widget.layerData.size,
-              ),
+            padding: const EdgeInsets.all(8),
+            height: widget.layerData.size,
+            width: widget.layerData.size,
+            child: Image.asset(
+              'assets/${widget.layerData.sticker}',
             ),
           ),
         ),

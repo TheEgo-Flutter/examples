@@ -28,13 +28,13 @@ class BackgroundLayerData extends Layer {
   });
 }
 
-/// Attributes used by [EmojiLayer]
-class EmojiLayerData extends Layer {
-  String text;
+/// Attributes used by [StickerLayer]
+class StickerLayerData extends Layer {
+  String sticker;
   double size;
 
-  EmojiLayerData({
-    this.text = '',
+  StickerLayerData({
+    this.sticker = '',
     this.size = 64,
     Offset? offset,
     double? opacity,

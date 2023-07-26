@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/data/data.dart';
 import 'package:image_editor/data/layer.dart';
 import 'package:image_editor/image_editor_plus.dart';
 
-class Emojies extends StatefulWidget {
-  const Emojies({super.key});
-
+class Stickers extends StatefulWidget {
+  const Stickers({super.key, required this.stickers});
+  final List<String> stickers;
   @override
-  createState() => _EmojiesState();
+  createState() => _StickersState();
 }
 
-class _EmojiesState extends State<Emojies> {
+class _StickersState extends State<Stickers> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -35,7 +34,7 @@ class _EmojiesState extends State<Emojies> {
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(
-                i18n('Select Emoji'),
+                i18n('Select Sticker'),
                 style: const TextStyle(color: Colors.white),
               ),
             ]),
@@ -52,24 +51,22 @@ class _EmojiesState extends State<Emojies> {
                   mainAxisSpacing: 0.0,
                   maxCrossAxisExtent: 60.0,
                 ),
-                children: emojis.map((String emoji) {
+                children: widget.stickers.map((String sticker) {
                   return GridTile(
                       child: GestureDetector(
                     onTap: () {
                       Navigator.pop(
                         context,
-                        EmojiLayerData(
-                          text: emoji,
-                          size: 32.0,
+                        StickerLayerData(
+                          sticker: sticker,
+                          size: 100.0,
                         ),
                       );
                     },
-                    child: Container(
-                      padding: EdgeInsets.zero,
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 35),
-                      ),
+                    child: Image.asset(
+                      'assets/$sticker',
+                      height: 100,
+                      width: 100,
                     ),
                   ));
                 }).toList(),

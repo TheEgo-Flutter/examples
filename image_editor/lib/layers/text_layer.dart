@@ -30,6 +30,7 @@ class _TextViewState extends State<TextLayer> {
       child: GestureDetector(
         onTap: () {},
         onScaleUpdate: (detail) {
+          print('angle');
           if (detail.pointerCount == 1) {
             widget.layerData.offset = Offset(
               widget.layerData.offset.dx + detail.focalPointDelta.dx,
@@ -38,8 +39,6 @@ class _TextViewState extends State<TextLayer> {
           } else if (detail.pointerCount == 2) {
             widget.layerData.size = initialSize + detail.scale * (detail.scale > 1 ? 1 : -1);
 
-            // print('angle');
-            // print(detail.rotation);
             widget.layerData.rotation = detail.rotation;
           }
           setState(() {});

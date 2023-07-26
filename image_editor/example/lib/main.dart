@@ -1,3 +1,4 @@
+import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor/image_editor_plus.dart';
@@ -43,7 +44,9 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
             var editedImage = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ImageEditor(),
+                builder: (context) => ImageEditor(
+                  stickers: stickers,
+                ),
               ),
             );
 
