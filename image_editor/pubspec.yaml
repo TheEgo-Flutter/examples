@@ -1,0 +1,26 @@
+name: image_editor
+description: A new Flutter project.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.0.0
+  screenshot: ^2.1.0
+  flutter_colorpicker: ^1.0.3
+  extended_image: ^8.0.2
+  image: ^4.0.15
+  colorfilter_generator: ^0.0.8
+  hand_signature: ^3.0.0
+  flutter_image_compress: ^2.0.3
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
