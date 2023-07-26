@@ -15,9 +15,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_editor/data/image_item.dart';
 import 'package:image_editor/data/layer.dart';
 import 'package:image_editor/layers/background_blur_layer.dart';
-import 'package:image_editor/layers/emoji_layer.dart';
-import 'package:image_editor/layers/image_layer.dart';
-import 'package:image_editor/layers/text_layer.dart';
+import 'package:image_editor/layers/object_layer.dart';
 import 'package:image_editor/loading_screen.dart';
 import 'package:image_editor/modules/all_emojies.dart';
 import 'package:image_editor/modules/src/src.dart' as image_editor_src;
@@ -30,7 +28,7 @@ import 'modules/text.dart';
 
 late Size viewportSize;
 double viewportRatio = 1;
-
+Widget? backgroundLayer;
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Map<String, String> _translations = {};
 
@@ -405,6 +403,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   @override
   void dispose() {
+    backgroundLayer = null;
     layers.clear();
     super.dispose();
   }
@@ -520,11 +519,12 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   /// obtain image Uint8List by merging layers
   Future<Uint8List?> getMergedImage() async {
-    if (layers.length == 1 && layers.first is BackgroundLayerData) {
-      return (layers.first as BackgroundLayerData).file.image;
-    } else if (layers.length == 1 && layers.first is ImageLayerData) {
-      return (layers.first as ImageLayerData).image.image;
-    }
+    //TODO fix this
+    // if (layers.length == 1 && layers.first is BackgroundLayerData) {
+    //   return (layers.first as BackgroundLayerData).file.image;
+    // } else if (layers.length == 1 && layers.first is ImageLayerData) {
+    //   return (layers.first as ImageLayerData).image.image;
+    // }
 
     return screenshotController.capture(
       pixelRatio: pixelRatio,
@@ -547,16 +547,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           );
         }
 
-        // Image layer
-        if (layerItem is ImageLayerData) {
-          return ImageLayer(
-            layerData: layerItem,
-            onUpdate: () {
-              setState(() {});
-            },
-          );
-        }
-
         // Background blur layer
         if (layerItem is BackgroundBlurLayerData && layerItem.radius > 0) {
           return BackgroundBlurLayer(
@@ -567,19 +557,9 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           );
         }
 
-        // Sticker layer
-        if (layerItem is StickerLayerData) {
-          return StickerLayer(
-            layerData: layerItem,
-            onUpdate: () {
-              setState(() {});
-            },
-          );
-        }
-
         // Text layer
-        if (layerItem is TextLayerData) {
-          return TextLayer(
+        if (layerItem is LayerData) {
+          return ObjectLayer(
             layerData: layerItem,
             onUpdate: () {
               setState(() {});
@@ -604,6 +584,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
         appBar: filterActions,
         body: SizedBox(
           child: Stack(children: [
+            backgroundLayer ?? Container(),
             GestureDetector(
               onScaleUpdate: (details) {
                 // print(details);
@@ -721,7 +702,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                 ],
               ),
               onPressed: () async {
-                var drawing = await Navigator.push(
+                Uint8List? drawing = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ImageEditorDrawing(
@@ -733,8 +714,8 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                   undoLayers.clear();
                   removedLayers.clear();
                   layers.add(
-                    ImageLayerData(
-                      image: ImageItem(drawing),
+                    LayerData(
+                      object: Image.memory(drawing),
                       offset: Offset(
                         -currentImage.width / 4,
                         -currentImage.height / 4,
@@ -757,7 +738,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                 ],
               ),
               onPressed: () async {
-                TextLayerData? layer = await Navigator.push(
+                LayerData? layer = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TextEditorImage(),
@@ -1034,7 +1015,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                 ],
               ),
               onPressed: () async {
-                StickerLayerData? layer = await showModalBottomSheet(
+                LayerData? layer = await showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.black,
                   builder: (BuildContext context) {
@@ -1061,10 +1042,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
     await currentImage.load(imageFile);
 
     layers.clear();
-
-    layers.add(BackgroundLayerData(
-      file: currentImage,
-    ));
+    backgroundLayer = Center(child: Image.memory(currentImage.image, fit: BoxFit.fill));
 
     setState(() {});
   }

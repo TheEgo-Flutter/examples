@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 
-/// Image layer that can be used to add overlay images and drawings
-class ImageLayer extends StatefulWidget {
-  final ImageLayerData layerData;
+/// Text layer
+class ObjectLayer extends StatefulWidget {
+  final LayerData layerData;
   final VoidCallback? onUpdate;
 
-  const ImageLayer({
+  const ObjectLayer({
     super.key,
     required this.layerData,
     this.onUpdate,
   });
-
   @override
-  createState() => _ImageLayerState();
+  createState() => _BaseLayerState();
 }
 
-class _ImageLayerState extends State<ImageLayer> {
+class _BaseLayerState extends State<ObjectLayer> {
   double initialSize = 0;
   double initialRotation = 0;
 
@@ -37,16 +36,20 @@ class _ImageLayerState extends State<ImageLayer> {
               widget.layerData.offset.dy + detail.focalPointDelta.dy,
             );
           } else if (detail.pointerCount == 2) {
-            widget.layerData.scale = detail.scale;
-          }
+            widget.layerData.size = initialSize + detail.scale * (detail.scale > 1 ? 1 : -1);
 
+            widget.layerData.rotation = detail.rotation;
+          }
           setState(() {});
         },
         child: Transform.rotate(
           angle: widget.layerData.rotation,
-          child: Image.memory(
-            widget.layerData.image.image,
-            fit: BoxFit.contain,
+          child: Container(
+            padding: const EdgeInsets.all(64),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: widget.layerData.object,
+            ),
           ),
         ),
       ),

@@ -52,22 +52,23 @@ class _StickersState extends State<Stickers> {
                   maxCrossAxisExtent: 60.0,
                 ),
                 children: widget.stickers.map((String sticker) {
+                  Widget object = Image.asset(
+                    'assets/$sticker',
+                    height: 100,
+                    width: 100,
+                  );
                   return GridTile(
                       child: GestureDetector(
                     onTap: () {
                       Navigator.pop(
                         context,
-                        StickerLayerData(
-                          sticker: sticker,
+                        LayerData(
+                          object: object,
                           size: 100.0,
                         ),
                       );
                     },
-                    child: Image.asset(
-                      'assets/$sticker',
-                      height: 100,
-                      width: 100,
-                    ),
+                    child: object,
                   ));
                 }).toList(),
               ),

@@ -58,13 +58,15 @@ class _TextEditorImageState extends State<TextEditorImage> {
               onPressed: () {
                 Navigator.pop(
                   context,
-                  TextLayerData(
-                    background: Colors.transparent,
-                    text: name.text,
-                    color: currentColor,
-                    size: slider.toDouble(),
-                    align: align,
-                  ),
+                  LayerData(
+                      object: Text(
+                    name.text,
+                    textAlign: align,
+                    style: TextStyle(
+                      color: currentColor,
+                      fontSize: slider.toDouble(),
+                    ),
+                  )),
                 );
               },
               color: Colors.white,

@@ -48,10 +48,11 @@ class BackgroundBlurLayerData extends Layer {
         );
 }
 
-class ObjectLayer extends Layer {
+class LayerData extends Layer {
   late double size;
-
-  ObjectLayer({
+  Widget object;
+  LayerData({
+    required this.object,
     Offset? offset,
     double? opacity,
     double? rotation,
@@ -63,73 +64,5 @@ class ObjectLayer extends Layer {
           opacity: opacity,
           rotation: rotation,
           scale: scale,
-        );
-}
-
-/// Attributes used by [StickerLayer]
-class StickerLayerData extends ObjectLayer {
-  String sticker;
-
-  StickerLayerData({
-    this.sticker = '',
-    Offset? offset,
-    double? opacity,
-    double? size,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-          size: size,
-        );
-}
-
-/// Attributes used by [ImageLayer]
-class ImageLayerData extends ObjectLayer {
-  ImageItem image;
-
-  ImageLayerData({
-    required this.image,
-    Offset? offset,
-    double? opacity,
-    double? size,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-          size: size,
-        );
-}
-
-/// Attributes used by [TextLayer]
-class TextLayerData extends ObjectLayer {
-  String text;
-
-  Color color, background;
-  int backgroundOpacity;
-  TextAlign align;
-
-  TextLayerData({
-    required this.text,
-    this.color = Colors.white,
-    this.background = Colors.transparent,
-    this.backgroundOpacity = 1,
-    this.align = TextAlign.left,
-    Offset? offset,
-    double? opacity,
-    double? size,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-          size: size,
         );
 }
