@@ -20,11 +20,9 @@ class _BackgroundLayerState extends State<BackgroundLayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: widget.layerData.file.width.toDouble(),
-      height: widget.layerData.file.height.toDouble(),
       // color: black,
       padding: EdgeInsets.zero,
-      child: Image.memory(widget.layerData.file.image),
+      child: Image.memory(widget.layerData.file.image, fit: BoxFit.contain),
     );
   }
 }

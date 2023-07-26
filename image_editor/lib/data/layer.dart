@@ -25,7 +25,7 @@ class BackgroundLayerData extends Layer {
 
   BackgroundLayerData({
     required this.file,
-  });
+  }) : super(offset: Offset.zero);
 }
 
 /// Attributes used by [BackgroundBlurLayer]
