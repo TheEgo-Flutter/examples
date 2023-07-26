@@ -28,73 +28,6 @@ class BackgroundLayerData extends Layer {
   });
 }
 
-/// Attributes used by [StickerLayer]
-class StickerLayerData extends Layer {
-  String sticker;
-  double size;
-
-  StickerLayerData({
-    this.sticker = '',
-    this.size = 64,
-    Offset? offset,
-    double? opacity,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-        );
-}
-
-/// Attributes used by [ImageLayer]
-class ImageLayerData extends Layer {
-  ImageItem image;
-  double size;
-
-  ImageLayerData({
-    required this.image,
-    this.size = 64,
-    Offset? offset,
-    double? opacity,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-        );
-}
-
-/// Attributes used by [TextLayer]
-class TextLayerData extends Layer {
-  String text;
-  double size;
-  Color color, background;
-  int backgroundOpacity;
-  TextAlign align;
-
-  TextLayerData({
-    required this.text,
-    this.size = 64,
-    this.color = Colors.white,
-    this.background = Colors.transparent,
-    this.backgroundOpacity = 1,
-    this.align = TextAlign.left,
-    Offset? offset,
-    double? opacity,
-    double? rotation,
-    double? scale,
-  }) : super(
-          offset: offset,
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-        );
-}
-
 /// Attributes used by [BackgroundBlurLayer]
 class BackgroundBlurLayerData extends Layer {
   Color color;
@@ -112,5 +45,91 @@ class BackgroundBlurLayerData extends Layer {
           opacity: opacity,
           rotation: rotation,
           scale: scale,
+        );
+}
+
+class ObjectLayer extends Layer {
+  late double size;
+
+  ObjectLayer({
+    Offset? offset,
+    double? opacity,
+    double? rotation,
+    double? scale,
+    double? size,
+  })  : size = size ?? 64,
+        super(
+          offset: offset,
+          opacity: opacity,
+          rotation: rotation,
+          scale: scale,
+        );
+}
+
+/// Attributes used by [StickerLayer]
+class StickerLayerData extends ObjectLayer {
+  String sticker;
+
+  StickerLayerData({
+    this.sticker = '',
+    Offset? offset,
+    double? opacity,
+    double? size,
+    double? rotation,
+    double? scale,
+  }) : super(
+          offset: offset,
+          opacity: opacity,
+          rotation: rotation,
+          scale: scale,
+          size: size,
+        );
+}
+
+/// Attributes used by [ImageLayer]
+class ImageLayerData extends ObjectLayer {
+  ImageItem image;
+
+  ImageLayerData({
+    required this.image,
+    Offset? offset,
+    double? opacity,
+    double? size,
+    double? rotation,
+    double? scale,
+  }) : super(
+          offset: offset,
+          opacity: opacity,
+          rotation: rotation,
+          scale: scale,
+          size: size,
+        );
+}
+
+/// Attributes used by [TextLayer]
+class TextLayerData extends ObjectLayer {
+  String text;
+
+  Color color, background;
+  int backgroundOpacity;
+  TextAlign align;
+
+  TextLayerData({
+    required this.text,
+    this.color = Colors.white,
+    this.background = Colors.transparent,
+    this.backgroundOpacity = 1,
+    this.align = TextAlign.left,
+    Offset? offset,
+    double? opacity,
+    double? size,
+    double? rotation,
+    double? scale,
+  }) : super(
+          offset: offset,
+          opacity: opacity,
+          rotation: rotation,
+          scale: scale,
+          size: size,
         );
 }

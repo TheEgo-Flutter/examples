@@ -42,29 +42,11 @@ class _ImageLayerState extends State<ImageLayer> {
 
           setState(() {});
         },
-        child: Transform(
-          transform: Matrix4(
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            1,
-            0,
-            1 / widget.layerData.scale,
-          ),
-          child: SizedBox(
-            width: widget.layerData.image.width.toDouble(),
-            height: widget.layerData.image.height.toDouble(),
-            child: Image.memory(widget.layerData.image.image),
+        child: Transform.rotate(
+          angle: widget.layerData.rotation,
+          child: Image.memory(
+            widget.layerData.image.image,
+            fit: BoxFit.contain,
           ),
         ),
       ),
