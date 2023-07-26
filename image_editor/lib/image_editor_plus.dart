@@ -972,15 +972,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                         );
                       },
                     ),
-                  // BottomButton(
-                  //   icon: FontAwesomeIcons.eraser,
-                  //   text: 'Eraser',
-                  //   onTap: () {
-                  //     _controller.clear();
-                  //     layers.removeWhere((layer) => layer['type'] == 'drawing');
-                  //     setState(() {});
-                  //   },
-                  // ),
                   if (widget.features.filters)
                     BottomButton(
                       icon: Icons.photo,
@@ -1200,61 +1191,6 @@ class _ImageCropperState extends State<ImageCropper> {
             height: 80,
             child: Column(
               children: [
-                // Container(
-                //   height: 48,
-                //   decoration: const BoxDecoration(
-                //     boxShadow: [
-                //       BoxShadow(
-                //         color: black,
-                //         blurRadius: 10,
-                //       ),
-                //     ],
-                //   ),
-                //   child: ListView(
-                //     scrollDirection: Axis.horizontal,
-                //     children: <Widget>[
-                //       IconButton(
-                //         icon: Icon(
-                //           Icons.portrait,
-                //           color: isLandscape ? gray : white,
-                //         ).paddingSymmetric(horizontal: 8, vertical: 4),
-                //         onPressed: () {
-                //           isLandscape = false;
-                //           if (aspectRatioOriginal != null) {
-                //             aspectRatio = 1 / aspectRatioOriginal!;
-                //           }
-                //           setState(() {});
-                //         },
-                //       ),
-                //       IconButton(
-                //         icon: Icon(
-                //           Icons.landscape,
-                //           color: isLandscape ? white : gray,
-                //         ).paddingSymmetric(horizontal: 8, vertical: 4),
-                //         onPressed: () {
-                //           isLandscape = true;
-                //           aspectRatio = aspectRatioOriginal!;
-                //           setState(() {});
-                //         },
-                //       ),
-                //       Slider(
-                //         activeColor: Colors.white,
-                //         inactiveColor: Colors.grey,
-                //         value: rotateAngle.toDouble(),
-                //         min: 0.0,
-                //         max: 100.0,
-                //         onChangeEnd: (v) {
-                //           rotateAngle = v.toInt();
-                //           setState(() {});
-                //         },
-                //         onChanged: (v) {
-                //           rotateAngle = v.toInt();
-                //           setState(() {});
-                //         },
-                //       ),
-                //     ],
-                //   ),
-                // ),
                 Container(
                   height: 80,
                   decoration: const BoxDecoration(
