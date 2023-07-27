@@ -3,6 +3,7 @@ List<String> stickers = [
   "sticker02.png",
   "sticker11.png",
   "sticker12.png",
+  "giftest.gif",
   "sticker15.png",
   "sticker16.png",
   "sticker17.png",
