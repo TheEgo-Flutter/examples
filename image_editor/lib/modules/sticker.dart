@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 import 'package:image_editor/image_editor_plus.dart';
+import 'package:lottie/lottie.dart';
 
 class Stickers extends StatefulWidget {
   const Stickers({super.key, required this.stickers});
@@ -52,11 +53,22 @@ class _StickersState extends State<Stickers> {
                   maxCrossAxisExtent: 60.0,
                 ),
                 children: widget.stickers.map((String sticker) {
-                  Widget object = Image.asset(
-                    'assets/$sticker',
-                    height: 200.0,
-                    width: 200.0,
-                  );
+                  late Widget object;
+                  //if .json contains sticker type
+                  if (sticker.contains('.json')) {
+                    object = Lottie.asset(
+                      'assets/$sticker',
+                      height: 200.0,
+                      width: 200.0,
+                    );
+                  } else {
+                    object = Image.asset(
+                      'assets/$sticker',
+                      height: 200.0,
+                      width: 200.0,
+                    );
+                  }
+
                   return GridTile(
                       child: GestureDetector(
                     onTap: () {

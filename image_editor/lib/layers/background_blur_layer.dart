@@ -5,7 +5,7 @@ import 'package:image_editor/data/layer.dart';
 
 /// Image layer to blur background using BackdropFilter
 class BackgroundBlurLayer extends StatefulWidget {
-  final BackgroundBlurLayerData layerData;
+  final BlurLayerData layerData;
   final VoidCallback? onUpdate;
 
   const BackgroundBlurLayer({

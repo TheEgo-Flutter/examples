@@ -23,10 +23,10 @@ class Layer {
 }
 
 /// Attributes used by [BackgroundLayer]
-class BackgroundLayerData extends Layer {
+class BaseLayerData extends Layer {
   ImageItem file;
   late double size;
-  BackgroundLayerData({
+  BaseLayerData({
     required this.file,
     Offset? offset,
     double? opacity,
@@ -44,11 +44,11 @@ class BackgroundLayerData extends Layer {
 }
 
 /// Attributes used by [BackgroundBlurLayer]
-class BackgroundBlurLayerData extends Layer {
+class BlurLayerData extends Layer {
   Color color;
   double radius;
 
-  BackgroundBlurLayerData({
+  BlurLayerData({
     required this.color,
     required this.radius,
     Offset? offset,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 
 class BackgroundLayer extends StatefulWidget {
-  final BackgroundLayerData layerData;
+  final BaseLayerData layerData;
 
   const BackgroundLayer({
     super.key,

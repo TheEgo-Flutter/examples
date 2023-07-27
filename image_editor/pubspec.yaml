@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  lottie: ^2.5.0
   image_picker: ^1.0.0
   screenshot: ^2.1.0
   flutter_colorpicker: ^1.0.3
