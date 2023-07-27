@@ -6,7 +6,6 @@ import 'dart:math' as math;
 
 import 'package:colorfilter_generator/colorfilter_generator.dart';
 import 'package:colorfilter_generator/presets.dart';
-import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -27,6 +26,7 @@ import 'modules/text.dart';
 
 late Size viewportSize;
 double viewportRatio = 1;
+ImageItem? baseLayer;
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Map<String, String> _translations = {};
 final GlobalKey editGlobalKey = GlobalKey();
@@ -208,6 +208,7 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   @override
   Widget build(BuildContext context) {
+    viewportSize = MediaQuery.of(context).size;
     return Theme(
       data: ImageEditor.theme,
       child: Scaffold(
@@ -218,49 +219,54 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           controller: screenshotController,
           child: RepaintBoundary(
             key: editGlobalKey,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                const FlutterLogo(
-                  size: 400,
-                ),
-                Positioned.fill(
-                  child: GestureDetector(
-                    key: const Key('stickersView_background_gestureDetector'),
-                    onTap: () {},
-                  ),
-                ),
-                for (final layer in layers)
-                  if (layer is LayerData)
-                    DraggableResizable(
-                      key: Key('stickerPage_${layer.key}_draggableResizable_asset'),
-                      canTransform: selectedAssetId == layer.key ? true : false,
-                      onDelete: () async {
-                        layers.remove(layer);
-                        setState(() {});
-                      },
-                      size: layer.size * layer.scale,
-                      constraints: BoxConstraints.tight(layer.size * layer.scale),
-                      child: GestureDetector(
-                        onTapDown: (TapDownDetails details) {
-                          selectedAssetId = layer.key;
-                          var listLength = layers.length;
-                          var index = layers.indexOf(layer);
-                          if (index != listLength) {
-                            layers.remove(layer);
-                            layers.add(layer);
-                          }
-                          setState(() {});
-                        },
-                        child: SizedBox(
-                          width: layer.size.width,
-                          height: layer.size.height,
-                          child: layer.object,
+            child: baseLayer != null
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Center(
+                        child: Image.memory(
+                          baseLayer!.image,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                    ),
-              ],
-            ),
+                      Positioned.fill(
+                        child: GestureDetector(
+                          key: const Key('stickersView_background_gestureDetector'),
+                          onTap: () {},
+                        ),
+                      ),
+                      for (final layer in layers)
+                        if (layer is LayerData)
+                          DraggableResizable(
+                            key: Key('stickerPage_${layer.key}_draggableResizable_asset'),
+                            canTransform: selectedAssetId == layer.key ? true : false,
+                            onDelete: () async {
+                              layers.remove(layer);
+                              setState(() {});
+                            },
+                            size: layer.size * layer.scale,
+                            constraints: BoxConstraints.tight(layer.size * layer.scale),
+                            child: GestureDetector(
+                              onTapDown: (TapDownDetails details) {
+                                selectedAssetId = layer.key;
+                                var listLength = layers.length;
+                                var index = layers.indexOf(layer);
+                                if (index != listLength) {
+                                  layers.remove(layer);
+                                  layers.add(layer);
+                                }
+                                setState(() {});
+                              },
+                              child: SizedBox(
+                                width: layer.size.width,
+                                height: layer.size.height,
+                                child: layer.object,
+                              ),
+                            ),
+                          ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
           ),
         ),
         bottomNavigationBar: bottomBar,
@@ -355,12 +361,8 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   Future<void> loadImage(dynamic imageFile) async {
     await currentImage.load(imageFile);
-
+    baseLayer = currentImage;
     layers.clear();
-    layers.add(BackgroundLayerData(
-      file: currentImage,
-    ));
-
     setState(() {});
   }
 
@@ -372,39 +374,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              if (widget.features.crop)
-                ElevatedButton(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.crop),
-                      Text(
-                        i18n('Crop'),
-                      )
-                    ],
-                  ),
-                  onPressed: () async {
-                    resetTransformation();
-                    LoadingScreen(scaffoldGlobalKey).show();
-                    var mergedImage = await getMergedImage();
-                    LoadingScreen(scaffoldGlobalKey).hide();
-                    if (!mounted) return;
-                    Uint8List? croppedImage = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ImageCropper(
-                          image: mergedImage!,
-                          availableRatios: widget.cropAvailableRatios,
-                        ),
-                      ),
-                    );
-                    if (croppedImage == null) return;
-                    flipValue = 0;
-                    rotateValue = 0;
-                    await currentImage.load(croppedImage);
-                    setState(() {});
-                  },
-                ),
               if (widget.features.brush)
                 ElevatedButton(
                   child: Column(
@@ -707,11 +676,9 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
                     if (filterAppliedImage == null) return;
                     removedLayers.clear();
                     undoLayers.clear();
-                    var layer = BackgroundLayerData(
-                      file: ImageItem(filterAppliedImage),
-                    );
-                    layers.add(layer);
-                    await layer.file.status;
+
+                    baseLayer = ImageItem(filterAppliedImage);
+                    await baseLayer?.status;
                     setState(() {});
                   },
                 ),
@@ -747,213 +714,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
           ),
         ),
       );
-}
-
-/// Crop given image with various aspect ratios
-class ImageCropper extends StatefulWidget {
-  final Uint8List image;
-  final List<AspectRatioOption> availableRatios;
-
-  const ImageCropper({
-    super.key,
-    required this.image,
-    this.availableRatios = const [
-      AspectRatioOption(title: 'Freeform'),
-      AspectRatioOption(title: '1:1', ratio: 1),
-      AspectRatioOption(title: '4:3', ratio: 4 / 3),
-      AspectRatioOption(title: '5:4', ratio: 5 / 4),
-      AspectRatioOption(title: '7:5', ratio: 7 / 5),
-      AspectRatioOption(title: '16:9', ratio: 16 / 9),
-    ],
-  });
-
-  @override
-  createState() => _ImageCropperState();
-}
-
-class _ImageCropperState extends State<ImageCropper> {
-  final GlobalKey<ExtendedImageEditorState> _controller = GlobalKey<ExtendedImageEditorState>();
-
-  double? aspectRatio;
-  double? aspectRatioOriginal;
-  bool isLandscape = true;
-  int rotateAngle = 0;
-
-  @override
-  void initState() {
-    if (widget.availableRatios.isNotEmpty) {
-      aspectRatio = aspectRatioOriginal = widget.availableRatios.first.ratio;
-    }
-    _controller.currentState?.rotate(right: true);
-
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_controller.currentState != null) {
-      // _controller.currentState?.
-    }
-
-    return Theme(
-      data: ImageEditor.theme,
-      child: Scaffold(
-        appBar: AppBar(
-          actions: [
-            IconButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              icon: const Icon(Icons.check),
-              onPressed: () async {
-                var state = _controller.currentState;
-
-                if (state == null) return;
-
-                var data = await cropImageDataWithNativeLibrary(state: state);
-
-                if (mounted) Navigator.pop(context, data);
-              },
-            ),
-          ],
-        ),
-        body: Container(
-          color: Colors.black,
-          child: ExtendedImage.memory(
-            widget.image,
-            cacheRawData: true,
-            fit: BoxFit.contain,
-            extendedImageEditorKey: _controller,
-            mode: ExtendedImageMode.editor,
-            initEditorConfigHandler: (state) {
-              return EditorConfig(
-                cropAspectRatio: aspectRatio,
-              );
-            },
-          ),
-        ),
-        bottomNavigationBar: SafeArea(
-          child: SizedBox(
-            height: 80,
-            child: Column(
-              children: [
-                Container(
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black,
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        if (aspectRatioOriginal != null && aspectRatioOriginal != 1)
-                          IconButton(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            icon: Icon(
-                              Icons.portrait,
-                              color: isLandscape ? Colors.grey : Colors.white,
-                            ),
-                            onPressed: () {
-                              isLandscape = false;
-                              if (aspectRatioOriginal != null) {
-                                aspectRatio = 1 / aspectRatioOriginal!;
-                              }
-                              setState(() {});
-                            },
-                          ),
-                        if (aspectRatioOriginal != null && aspectRatioOriginal != 1)
-                          IconButton(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            icon: Icon(
-                              Icons.landscape,
-                              color: isLandscape ? Colors.white : Colors.grey,
-                            ),
-                            onPressed: () {
-                              isLandscape = true;
-                              aspectRatio = aspectRatioOriginal!;
-                              setState(() {});
-                            },
-                          ),
-                        for (var ratio in widget.availableRatios) imageRatioButton(ratio.ratio, i18n(ratio.title)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<Uint8List?> cropImageDataWithNativeLibrary({required ExtendedImageEditorState state}) async {
-    final Rect? cropRect = state.getCropRect();
-    final EditActionDetails action = state.editAction!;
-
-    final int rotateAngle = action.rotateAngle.toInt();
-    final bool flipHorizontal = action.flipY;
-    final bool flipVertical = action.flipX;
-    final Uint8List img = state.rawImageData;
-
-    final option = image_editor_src.ImageEditorOption();
-
-    if (action.needCrop) {
-      option.addOption(image_editor_src.ClipOption.fromRect(cropRect!));
-    }
-
-    if (action.needFlip) {
-      option.addOption(image_editor_src.FlipOption(horizontal: flipHorizontal, vertical: flipVertical));
-    }
-
-    if (action.hasRotateAngle) {
-      option.addOption(image_editor_src.RotateOption(rotateAngle));
-    }
-
-    // final DateTime start = DateTime.now();
-    final Uint8List? result = await image_editor_src.ImageEditor.editImage(
-      image: img,
-      imageEditorOption: option,
-    );
-
-    // print('${DateTime.now().difference(start)} ：total time');
-
-    return result;
-  }
-
-  Widget imageRatioButton(double? ratio, String title) {
-    return TextButton(
-      onPressed: () {
-        aspectRatioOriginal = ratio;
-
-        if (aspectRatioOriginal != null && isLandscape == false) {
-          aspectRatio = 1 / aspectRatioOriginal!;
-        } else {
-          aspectRatio = aspectRatioOriginal;
-        }
-
-        setState(() {});
-      },
-      child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            i18n(title),
-            style: TextStyle(
-              color: aspectRatioOriginal == ratio ? Colors.white : Colors.grey,
-            ),
-          )),
-    );
-  }
 }
 
 /// Return filter applied Uint8List image
