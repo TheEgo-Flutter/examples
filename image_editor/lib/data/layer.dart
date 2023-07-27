@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'image_item.dart';
-
 /// Layer class with some common properties
 class Layer {
   final UniqueKey key;
@@ -20,27 +18,6 @@ class Layer {
     this.rotation = rotation ?? 0;
     this.scale = scale ?? 1;
   }
-}
-
-/// Attributes used by [BackgroundLayer]
-class BaseLayerData extends Layer {
-  ImageItem file;
-  late double size;
-  BaseLayerData({
-    required this.file,
-    Offset? offset,
-    double? opacity,
-    double? rotation,
-    double? scale,
-    double? size,
-  })  : size = size ?? 400,
-        super(
-          key: UniqueKey(),
-          offset: offset ?? const Offset(0, 0),
-          opacity: opacity,
-          rotation: rotation,
-          scale: scale,
-        );
 }
 
 /// Attributes used by [BackgroundBlurLayer]

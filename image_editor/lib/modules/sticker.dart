@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
-import 'package:image_editor/image_editor_plus.dart';
 import 'package:lottie/lottie.dart';
 
 class Stickers extends StatefulWidget {
@@ -33,10 +32,10 @@ class _StickersState extends State<Stickers> {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(
-                i18n('Select Sticker'),
-                style: const TextStyle(color: Colors.white),
+                'Select Sticker',
+                style: TextStyle(color: Colors.white),
               ),
             ]),
             const Divider(height: 1),

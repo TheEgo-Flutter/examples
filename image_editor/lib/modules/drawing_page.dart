@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hand_signature/signature.dart';
 import 'package:image_editor/data/image_item.dart';
-import 'package:image_editor/image_editor_plus.dart';
+
+import '../theme.dart';
 
 /// Show image drawing surface over image
 class Brush extends StatefulWidget {
@@ -67,7 +68,7 @@ class _BrushState extends State<Brush> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ImageEditor.theme,
+      data: theme,
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,

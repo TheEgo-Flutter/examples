@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
-import 'package:image_editor/image_editor_plus.dart';
 import 'package:image_editor/utils.dart';
 
 import 'colors_picker.dart';
@@ -92,7 +91,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.all(10),
-                      hintText: i18n('Insert Your Message'),
+                      hintText: 'Insert Your Message',
                       hintStyle: const TextStyle(color: Colors.white),
                       alignLabelWithHint: true,
                     ),
@@ -113,7 +112,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     children: [
                       //   SizedBox(height: 20.0),
                       Text(
-                        i18n('Slider Color'),
+                        'Slider Color',
                       ),
                       //   SizedBox(height: 10.0),
                       Row(children: [
@@ -133,13 +132,13 @@ class _TextEditorImageState extends State<TextEditorImage> {
                         TextButton(
                           onPressed: () {},
                           child: Text(
-                            i18n('Reset'),
+                            'Reset',
                           ),
                         ),
                       ]),
                       //   SizedBox(height: 20.0),
                       Text(
-                        i18n('Slider White Black Color'),
+                        'Slider White Black Color',
                       ),
                       //   SizedBox(height: 10.0),
                       Row(children: [
@@ -159,7 +158,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                         TextButton(
                           onPressed: () {},
                           child: Text(
-                            i18n('Reset'),
+                            'Reset',
                           ),
                         )
                       ]),
@@ -170,7 +169,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                             const SizedBox(height: 10.0),
                             Center(
                               child: Text(
-                                i18n('Size Adjust').toUpperCase(),
+                                'Size Adjust'.toUpperCase(),
                                 style: const TextStyle(color: Colors.white),
                               ),
                             ),

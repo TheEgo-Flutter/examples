@@ -5,9 +5,10 @@ import 'package:colorfilter_generator/presets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_editor/image_editor_plus.dart';
 import 'package:image_editor/modules/src/src.dart' as src;
 import 'package:screenshot/screenshot.dart';
+
+import '../theme.dart';
 
 /**
   if (widget.features.filters)
@@ -17,7 +18,7 @@ import 'package:screenshot/screenshot.dart';
                     children: [
                       const Icon(Icons.photo),
                       Text(
-                        i18n('Filter'),
+                        'Filter',
                       )
                     ],
                   ),
@@ -79,7 +80,7 @@ class _ImageFiltersState extends State<ImageFilters> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ImageEditor.theme,
+      data: theme,
       child: Scaffold(
         appBar: AppBar(
           actions: [
@@ -185,7 +186,7 @@ class _ImageFiltersState extends State<ImageFilters> {
           ),
         ),
         Text(
-          i18n(name),
+          name,
           style: const TextStyle(fontSize: 12),
         ),
       ]),

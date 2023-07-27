@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_editor/image_editor_plus.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImageItem {
@@ -13,13 +12,13 @@ class ImageItem {
   double viewportRatio = 1;
   Completer loader = Completer();
 
-  ImageItem([dynamic img]) {
-    if (img != null) load(img);
+  ImageItem([dynamic img, Size viewportSize = const Size(300, 300)]) {
+    if (img != null) load(img, viewportSize);
   }
 
   Future get status => loader.future;
 
-  Future load(dynamic imageFile) async {
+  Future load(dynamic imageFile, Size viewportSize) async {
     loader = Completer();
 
     dynamic decodedImage;
