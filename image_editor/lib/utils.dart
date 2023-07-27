@@ -1,6 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
+Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
+    (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
+          ..layout(maxWidth: maxWidth))
+        .size;
 var _formatMap = <String, CompressFormat>{
   'jpeg': CompressFormat.jpeg,
   'jpg': CompressFormat.jpeg,

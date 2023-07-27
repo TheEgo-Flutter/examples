@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 import 'package:image_editor/image_editor_plus.dart';
+import 'package:image_editor/utils.dart';
 
 import 'colors_picker.dart';
 
@@ -17,10 +18,61 @@ class _TextEditorImageState extends State<TextEditorImage> {
   double slider = 32.0;
   TextAlign align = TextAlign.left;
 
-  Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
-      (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
-            ..layout(maxWidth: maxWidth))
-          .size;
+  AppBar get appBar => AppBar(
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.align_horizontal_left,
+                color: align == TextAlign.left ? Colors.white : Colors.white.withAlpha(80)),
+            onPressed: () {
+              setState(() {
+                align = TextAlign.left;
+              });
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.align_horizontal_center,
+                color: align == TextAlign.center ? Colors.white : Colors.white.withAlpha(80)),
+            onPressed: () {
+              setState(() {
+                align = TextAlign.center;
+              });
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.align_horizontal_right,
+                color: align == TextAlign.right ? Colors.white : Colors.white.withAlpha(80)),
+            onPressed: () {
+              setState(() {
+                align = TextAlign.right;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () {
+              TextSpan text = TextSpan(
+                  text: name.text,
+                  style: TextStyle(
+                    color: currentColor,
+                    fontSize: slider.toDouble(),
+                  ));
+              Navigator.pop(
+                context,
+                LayerData(
+                  key: UniqueKey(),
+                  object: Text.rich(
+                    text,
+                    textAlign: align,
+                  ),
+                  size: textSize(text, context),
+                ),
+              );
+            },
+            color: Colors.white,
+            padding: const EdgeInsets.all(15),
+          )
+        ],
+      );
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -28,61 +80,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
-        appBar: AppBar(
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.align_horizontal_left,
-                  color: align == TextAlign.left ? Colors.white : Colors.white.withAlpha(80)),
-              onPressed: () {
-                setState(() {
-                  align = TextAlign.left;
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.align_horizontal_center,
-                  color: align == TextAlign.center ? Colors.white : Colors.white.withAlpha(80)),
-              onPressed: () {
-                setState(() {
-                  align = TextAlign.center;
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.align_horizontal_right,
-                  color: align == TextAlign.right ? Colors.white : Colors.white.withAlpha(80)),
-              onPressed: () {
-                setState(() {
-                  align = TextAlign.right;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: () {
-                TextSpan text = TextSpan(
-                    text: name.text,
-                    style: TextStyle(
-                      color: currentColor,
-                      fontSize: slider.toDouble(),
-                    ));
-                Navigator.pop(
-                  context,
-                  LayerData(
-                    key: UniqueKey(),
-                    object: Text.rich(
-                      text,
-                      textAlign: align,
-                    ),
-                    size: textSize(text, context),
-                  ),
-                );
-              },
-              color: Colors.white,
-              padding: const EdgeInsets.all(15),
-            )
-          ],
-        ),
+        appBar: appBar,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
