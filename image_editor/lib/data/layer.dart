@@ -4,10 +4,12 @@ import 'image_item.dart';
 
 /// Layer class with some common properties
 class Layer {
+  final UniqueKey key;
   late Offset offset;
   late double rotation, scale, opacity;
 
   Layer({
+    required this.key,
     Offset? offset,
     double? opacity,
     double? rotation,
@@ -33,6 +35,7 @@ class BackgroundLayerData extends Layer {
     double? size,
   })  : size = size ?? 400,
         super(
+          key: UniqueKey(),
           offset: offset ?? const Offset(0, 0),
           opacity: opacity,
           rotation: rotation,
@@ -53,6 +56,7 @@ class BackgroundBlurLayerData extends Layer {
     double? rotation,
     double? scale,
   }) : super(
+          key: UniqueKey(),
           offset: offset,
           opacity: opacity,
           rotation: rotation,
@@ -60,17 +64,20 @@ class BackgroundBlurLayerData extends Layer {
         );
 }
 
+@Deprecated('Use DraggableResizable instead, need to refactor All Layers')
 class LayerData extends Layer {
-  late double size;
-  Widget object;
+  Size size;
+  final Widget object;
+
   LayerData({
+    required super.key,
     required this.object,
     Offset? offset,
     double? opacity,
     double? rotation,
     double? scale,
-    double? size,
-  })  : size = size ?? 64,
+    Size? size,
+  })  : size = size ?? const Size(64, 64),
         super(
           offset: offset,
           opacity: opacity,

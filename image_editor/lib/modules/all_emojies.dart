@@ -54,8 +54,8 @@ class _StickersState extends State<Stickers> {
                 children: widget.stickers.map((String sticker) {
                   Widget object = Image.asset(
                     'assets/$sticker',
-                    height: 100,
-                    width: 100,
+                    height: 200.0,
+                    width: 200.0,
                   );
                   return GridTile(
                       child: GestureDetector(
@@ -63,8 +63,9 @@ class _StickersState extends State<Stickers> {
                       Navigator.pop(
                         context,
                         LayerData(
+                          key: UniqueKey(),
                           object: object,
-                          size: 100.0,
+                          size: const Size(200.0, 200.0),
                         ),
                       );
                     },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 
+@Deprecated('Use DraggableResizable instead, need to refactor All Layers')
 class ObjectLayer extends StatefulWidget {
   final LayerData layerData;
 
@@ -13,7 +14,7 @@ class ObjectLayer extends StatefulWidget {
 }
 
 class _BaseLayerState extends State<ObjectLayer> {
-  double size = 0;
+  Size size = Size(0, 0);
   double rotation = 0;
   @override
   void initState() {
@@ -36,7 +37,7 @@ class _BaseLayerState extends State<ObjectLayer> {
               widget.layerData.offset.dy + detail.focalPointDelta.dy,
             );
           } else if (detail.pointerCount == 2) {
-            widget.layerData.size = size + detail.scale * (detail.scale > 1 ? 1 : -1);
+            widget.layerData.size = size * detail.scale * (detail.scale > 1 ? 1 : -1);
             size = widget.layerData.size;
 
             widget.layerData.rotation = detail.rotation;

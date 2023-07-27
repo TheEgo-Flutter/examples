@@ -17,6 +17,10 @@ class _TextEditorImageState extends State<TextEditorImage> {
   double slider = 32.0;
   TextAlign align = TextAlign.left;
 
+  Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
+      (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
+            ..layout(maxWidth: maxWidth))
+          .size;
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -56,17 +60,22 @@ class _TextEditorImageState extends State<TextEditorImage> {
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  LayerData(
-                      object: Text(
-                    name.text,
-                    textAlign: align,
+                TextSpan text = TextSpan(
+                    text: name.text,
                     style: TextStyle(
                       color: currentColor,
                       fontSize: slider.toDouble(),
+                    ));
+                Navigator.pop(
+                  context,
+                  LayerData(
+                    key: UniqueKey(),
+                    object: Text.rich(
+                      text,
+                      textAlign: align,
                     ),
-                  )),
+                    size: textSize(text, context),
+                  ),
                 );
               },
               color: Colors.white,
@@ -95,6 +104,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     maxLines: 99999,
                     style: TextStyle(
                       color: currentColor,
+                      fontSize: slider.toDouble(),
                     ),
                     autofocus: true,
                   ),

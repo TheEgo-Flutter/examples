@@ -14,8 +14,7 @@ import 'package:hand_signature/signature.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_editor/data/image_item.dart';
 import 'package:image_editor/data/layer.dart';
-import 'package:image_editor/layers/background_blur_layer.dart';
-import 'package:image_editor/layers/object_layer.dart';
+import 'package:image_editor/layers/draggable_resizable.dart';
 import 'package:image_editor/loading_screen.dart';
 import 'package:image_editor/modules/all_emojies.dart';
 import 'package:image_editor/modules/src/src.dart' as image_editor_src;
@@ -23,7 +22,6 @@ import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
-import 'layers/background_layer.dart';
 import 'modules/colors_picker.dart';
 import 'modules/text.dart';
 
@@ -31,7 +29,9 @@ late Size viewportSize;
 double viewportRatio = 1;
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Map<String, String> _translations = {};
-
+final GlobalKey editGlobalKey = GlobalKey();
+Key? selectedAssetId;
+final GlobalKey globalKey = GlobalKey();
 String i18n(String sourceString) => _translations[sourceString.toLowerCase()] ?? sourceString;
 
 /// Single endpoint for MultiImageEditor & SingleImageEditor
@@ -397,8 +397,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
   Offset offset2 = Offset.zero;
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
 
-  final GlobalKey container = GlobalKey();
-  final GlobalKey globalKey = GlobalKey();
   ScreenshotController screenshotController = ScreenshotController();
 
   @override
@@ -534,452 +532,488 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
   Widget build(BuildContext context) {
     viewportSize = MediaQuery.of(context).size;
 
-    var layersStack = Stack(
-      children: layers.map((layerItem) {
-        // Background layer
-        if (layerItem is BackgroundLayerData) {
-          return Center(
-            child: BackgroundLayer(
-              layerData: layerItem,
-            ),
-          );
-        }
+    // Stack layersStack = Stack(
+    //   children: layers.map((layerItem) {
+    //     // Background layer
+    //     if (layerItem is BackgroundLayerData) {
+    //       return BackgroundLayer(
+    //         layerData: layerItem,
+    //       );
+    //     }
 
-        // Background blur layer
-        if (layerItem is BackgroundBlurLayerData && layerItem.radius > 0) {
-          return BackgroundBlurLayer(
-            layerData: layerItem,
-            onUpdate: () {
-              setState(() {});
-            },
-          );
-        }
+    //     // Background blur layer
+    //     if (layerItem is BackgroundBlurLayerData && layerItem.radius > 0) {
+    //       return BackgroundBlurLayer(
+    //         layerData: layerItem,
+    //         onUpdate: () {
+    //           setState(() {});
+    //         },
+    //       );
+    //     }
 
-        // Text layer
-        if (layerItem is LayerData) {
-          return ObjectLayer(
-            layerData: layerItem,
-          );
-        }
+    //     if (layerItem is LayerData) {
+    //       return ObjectLayer(
+    //         layerData: layerItem,
+    //       );
+    //     }
 
-        // Blank layer
-        return Container();
-      }).toList(),
-    );
-
-    widthRatio = currentImage.width / viewportSize.width;
-    heightRatio = currentImage.height / viewportSize.height;
-    pixelRatio = math.max(heightRatio, widthRatio);
-
+    //     // Blank layer
+    //     return Container();
+    //   }).toList(),
+    // );
     return Theme(
       data: ImageEditor.theme,
       child: Scaffold(
         key: scaffoldGlobalKey,
         backgroundColor: Colors.grey,
         appBar: filterActions,
-        body: SizedBox(
-          height: MediaQuery.sizeOf(context).height,
-          width: MediaQuery.sizeOf(context).width / 0.6,
-          child: Stack(children: [
-            Center(
-              child: SizedBox(
-                height: currentImage.height / pixelRatio,
-                width: currentImage.width / pixelRatio,
-                child: Screenshot(
-                  controller: screenshotController,
-                  child: layersStack,
+        body: Screenshot(
+          controller: screenshotController,
+          child: RepaintBoundary(
+            key: editGlobalKey,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                FlutterLogo(
+                  size: 400,
                 ),
-              ),
-            ),
-          ]),
-        ),
-        bottomNavigationBar: bottomNavigationBar(context),
-      ),
-    );
-  }
+                // Image.network(widget.backgroundImage, fit: BoxFit.cover),
+                Positioned.fill(
+                  child: GestureDetector(
+                    key: const Key('stickersView_background_gestureDetector'),
+                    onTap: () {},
+                  ),
+                ),
+                for (final layer in layers)
+                  if (layer is LayerData)
+                    // Main widget that handles all features like rotate, resize, edit, delete, layer update etc.
+                    DraggableResizable(
+                      key: Key('stickerPage_${layer.key}_draggableResizable_asset'),
+                      canTransform: selectedAssetId == layer.key ? true : false,
 
-  Widget bottomNavigationBar(BuildContext context) {
-    return Container(
-      height: const ButtonThemeData().height * 2,
-      color: Colors.black87,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          if (widget.features.crop)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.crop),
-                  Text(
-                    i18n('Crop'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                resetTransformation();
-                LoadingScreen(scaffoldGlobalKey).show();
-                var mergedImage = await getMergedImage();
-                LoadingScreen(scaffoldGlobalKey).hide();
-                if (!mounted) return;
-                Uint8List? croppedImage = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ImageCropper(
-                      image: mergedImage!,
-                      availableRatios: widget.cropAvailableRatios,
-                    ),
-                  ),
-                );
-                if (croppedImage == null) return;
-                flipValue = 0;
-                rotateValue = 0;
-                await currentImage.load(croppedImage);
-                setState(() {});
-              },
-            ),
-          if (widget.features.brush)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.edit),
-                  Text(
-                    i18n('Brush'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                Uint8List? drawing = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ImageEditorDrawing(
-                      image: currentImage,
-                    ),
-                  ),
-                );
-                if (drawing != null) {
-                  undoLayers.clear();
-                  removedLayers.clear();
-                  layers.add(
-                    LayerData(
-                      object: Image.memory(drawing),
-                      offset: Offset(
-                        -currentImage.width / 4,
-                        -currentImage.height / 4,
+                      // To Delete the sticker
+                      onDelete: () async {
+                        {
+                          layers.remove(layer);
+                          setState(() {});
+                        }
+                      },
+
+                      // Size of the sticker
+                      size: layer.size * layer.scale,
+
+                      // Constraints of the sticker
+                      constraints: BoxConstraints.tight(
+                        layer.size * layer.scale,
+                      ),
+
+                      // Child widget in which sticker is passed
+                      child: GestureDetector(
+                        onTapDown: (TapDownDetails details) {
+                          selectedAssetId = layer.key;
+                          var listLength = layers.length;
+                          var index = layers.indexOf(layer);
+                          if (index != listLength) {
+                            layers.remove(layer);
+                            layers.add(layer);
+                          }
+
+                          setState(() {});
+                        },
+                        child: SizedBox(
+                          width: layer.size.width,
+                          height: layer.size.height,
+                          child: layer.object,
+                        ),
                       ),
                     ),
-                  );
-                  setState(() {});
-                }
-              },
+              ],
             ),
-          if (widget.features.text)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.text_fields),
-                  Text(
-                    i18n('Text'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                LayerData? layer = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TextEditorImage(),
+          ),
+        ),
+        bottomNavigationBar: Container(
+          height: const ButtonThemeData().height * 2,
+          color: Colors.black87,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                if (widget.features.crop)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.crop),
+                        Text(
+                          i18n('Crop'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      resetTransformation();
+                      LoadingScreen(scaffoldGlobalKey).show();
+                      var mergedImage = await getMergedImage();
+                      LoadingScreen(scaffoldGlobalKey).hide();
+                      if (!mounted) return;
+                      Uint8List? croppedImage = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ImageCropper(
+                            image: mergedImage!,
+                            availableRatios: widget.cropAvailableRatios,
+                          ),
+                        ),
+                      );
+                      if (croppedImage == null) return;
+                      flipValue = 0;
+                      rotateValue = 0;
+                      await currentImage.load(croppedImage);
+                      setState(() {});
+                    },
                   ),
-                );
-                if (layer == null) return;
-                undoLayers.clear();
-                removedLayers.clear();
-                layers.add(layer);
-                setState(() {});
-              },
-            ),
-          if (widget.features.flip)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.flip),
-                  Text(
-                    i18n('Flip'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                setState(() {
-                  flipValue = flipValue == 0 ? math.pi : 0;
-                });
-              },
-            ),
-          if (widget.features.rotate)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.rotate_left),
-                  Text(
-                    i18n('left'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                var t = currentImage.width;
-                currentImage.width = currentImage.height;
-                currentImage.height = t;
-                rotateValue--;
-                setState(() {});
-              },
-            ),
-          if (widget.features.rotate)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.rotate_right),
-                  Text(
-                    i18n('right'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                var t = currentImage.width;
-                currentImage.width = currentImage.height;
-                currentImage.height = t;
-                rotateValue++;
-                setState(() {});
-              },
-            ),
-          if (widget.features.blur)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.blur_on),
-                  Text(
-                    i18n('Blur'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                var blurLayer = BackgroundBlurLayerData(
-                  color: Colors.transparent,
-                  radius: 0.0,
-                  opacity: 0.0,
-                );
-                undoLayers.clear();
-                removedLayers.clear();
-                layers.add(blurLayer);
-                setState(() {});
-                showModalBottomSheet(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
-                  ),
-                  context: context,
-                  builder: (context) {
-                    return StatefulBuilder(
-                      builder: (context, setS) {
-                        return SingleChildScrollView(
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              borderRadius:
-                                  BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
-                            ),
-                            padding: const EdgeInsets.all(20),
-                            height: 400,
-                            child: Column(
-                              children: [
-                                Center(
-                                    child: Text(
-                                  i18n('Slider Filter Color').toUpperCase(),
-                                  style: const TextStyle(color: Colors.white),
-                                )),
-                                const Divider(),
-                                const SizedBox(height: 20.0),
-                                Text(
-                                  i18n('Slider Color'),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(children: [
-                                  Expanded(
-                                    child: BarColorPicker(
-                                      width: 300,
-                                      thumbColor: Colors.white,
-                                      cornerRadius: 10,
-                                      pickMode: PickMode.color,
-                                      colorListener: (int value) {
-                                        setS(() {
-                                          setState(() {
-                                            blurLayer.color = Color(value);
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  TextButton(
-                                    child: Text(
-                                      i18n('Reset'),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        setS(() {
-                                          blurLayer.color = Colors.transparent;
-                                        });
-                                      });
-                                    },
-                                  )
-                                ]),
-                                const SizedBox(height: 5.0),
-                                Text(
-                                  i18n('Blur Radius'),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const SizedBox(height: 10.0),
-                                Row(children: [
-                                  Expanded(
-                                    child: Slider(
-                                      activeColor: Colors.white,
-                                      inactiveColor: Colors.grey,
-                                      value: blurLayer.radius,
-                                      min: 0.0,
-                                      max: 10.0,
-                                      onChanged: (v) {
-                                        setS(() {
-                                          setState(() {
-                                            blurLayer.radius = v;
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  TextButton(
-                                    child: Text(
-                                      i18n('Reset'),
-                                    ),
-                                    onPressed: () {
-                                      setS(() {
-                                        setState(() {
-                                          blurLayer.color = Colors.white;
-                                        });
-                                      });
-                                    },
-                                  )
-                                ]),
-                                const SizedBox(height: 5.0),
-                                Text(
-                                  i18n('Color Opacity'),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const SizedBox(height: 10.0),
-                                Row(children: [
-                                  Expanded(
-                                    child: Slider(
-                                      activeColor: Colors.white,
-                                      inactiveColor: Colors.grey,
-                                      value: blurLayer.opacity,
-                                      min: 0.00,
-                                      max: 1.0,
-                                      onChanged: (v) {
-                                        setS(() {
-                                          setState(() {
-                                            blurLayer.opacity = v;
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  TextButton(
-                                    child: Text(
-                                      i18n('Reset'),
-                                    ),
-                                    onPressed: () {
-                                      setS(() {
-                                        setState(() {
-                                          blurLayer.opacity = 0.0;
-                                        });
-                                      });
-                                    },
-                                  )
-                                ]),
-                              ],
-                            ),
+                if (widget.features.brush)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.edit),
+                        Text(
+                          i18n('Brush'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      Uint8List? drawing = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ImageEditorDrawing(
+                            image: currentImage,
+                          ),
+                        ),
+                      );
+                      if (drawing != null) {
+                        undoLayers.clear();
+                        removedLayers.clear();
+                        layers.add(
+                          LayerData(
+                            key: UniqueKey(),
+                            object: Image.memory(drawing),
                           ),
                         );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          if (widget.features.filters)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.photo),
-                  Text(
-                    i18n('Filter'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                resetTransformation();
-                var mergedImage = await getMergedImage();
-                if (!mounted) return;
-                Uint8List? filterAppliedImage = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ImageFilters(
-                      image: mergedImage!,
-                    ),
+                        setState(() {});
+                      }
+                    },
                   ),
-                );
-                if (filterAppliedImage == null) return;
-                removedLayers.clear();
-                undoLayers.clear();
-                var layer = BackgroundLayerData(
-                  file: ImageItem(filterAppliedImage),
-                );
-                layers.add(layer);
-                await layer.file.status;
-                setState(() {});
-              },
+                if (widget.features.text)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.text_fields),
+                        Text(
+                          i18n('Text'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      LayerData? layer = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TextEditorImage(),
+                        ),
+                      );
+                      if (layer == null) return;
+                      undoLayers.clear();
+                      removedLayers.clear();
+                      layers.add(layer);
+                      setState(() {});
+                    },
+                  ),
+                if (widget.features.flip)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.flip),
+                        Text(
+                          i18n('Flip'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      setState(() {
+                        flipValue = flipValue == 0 ? math.pi : 0;
+                      });
+                    },
+                  ),
+                if (widget.features.rotate)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.rotate_left),
+                        Text(
+                          i18n('left'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      var t = currentImage.width;
+                      currentImage.width = currentImage.height;
+                      currentImage.height = t;
+                      rotateValue--;
+                      setState(() {});
+                    },
+                  ),
+                if (widget.features.rotate)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.rotate_right),
+                        Text(
+                          i18n('right'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      var t = currentImage.width;
+                      currentImage.width = currentImage.height;
+                      currentImage.height = t;
+                      rotateValue++;
+                      setState(() {});
+                    },
+                  ),
+                if (widget.features.blur)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.blur_on),
+                        Text(
+                          i18n('Blur'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      var blurLayer = BackgroundBlurLayerData(
+                        color: Colors.transparent,
+                        radius: 0.0,
+                        opacity: 0.0,
+                      );
+                      undoLayers.clear();
+                      removedLayers.clear();
+                      layers.add(blurLayer);
+                      setState(() {});
+                      showModalBottomSheet(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
+                        ),
+                        context: context,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            builder: (context, setS) {
+                              return SingleChildScrollView(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black87,
+                                    borderRadius:
+                                        BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
+                                  ),
+                                  padding: const EdgeInsets.all(20),
+                                  height: 400,
+                                  child: Column(
+                                    children: [
+                                      Center(
+                                          child: Text(
+                                        i18n('Slider Filter Color').toUpperCase(),
+                                        style: const TextStyle(color: Colors.white),
+                                      )),
+                                      const Divider(),
+                                      const SizedBox(height: 20.0),
+                                      Text(
+                                        i18n('Slider Color'),
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(children: [
+                                        Expanded(
+                                          child: BarColorPicker(
+                                            width: 300,
+                                            thumbColor: Colors.white,
+                                            cornerRadius: 10,
+                                            pickMode: PickMode.color,
+                                            colorListener: (int value) {
+                                              setS(() {
+                                                setState(() {
+                                                  blurLayer.color = Color(value);
+                                                });
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        TextButton(
+                                          child: Text(
+                                            i18n('Reset'),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              setS(() {
+                                                blurLayer.color = Colors.transparent;
+                                              });
+                                            });
+                                          },
+                                        )
+                                      ]),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        i18n('Blur Radius'),
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 10.0),
+                                      Row(children: [
+                                        Expanded(
+                                          child: Slider(
+                                            activeColor: Colors.white,
+                                            inactiveColor: Colors.grey,
+                                            value: blurLayer.radius,
+                                            min: 0.0,
+                                            max: 10.0,
+                                            onChanged: (v) {
+                                              setS(() {
+                                                setState(() {
+                                                  blurLayer.radius = v;
+                                                });
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        TextButton(
+                                          child: Text(
+                                            i18n('Reset'),
+                                          ),
+                                          onPressed: () {
+                                            setS(() {
+                                              setState(() {
+                                                blurLayer.color = Colors.white;
+                                              });
+                                            });
+                                          },
+                                        )
+                                      ]),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        i18n('Color Opacity'),
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      const SizedBox(height: 10.0),
+                                      Row(children: [
+                                        Expanded(
+                                          child: Slider(
+                                            activeColor: Colors.white,
+                                            inactiveColor: Colors.grey,
+                                            value: blurLayer.opacity,
+                                            min: 0.00,
+                                            max: 1.0,
+                                            onChanged: (v) {
+                                              setS(() {
+                                                setState(() {
+                                                  blurLayer.opacity = v;
+                                                });
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        TextButton(
+                                          child: Text(
+                                            i18n('Reset'),
+                                          ),
+                                          onPressed: () {
+                                            setS(() {
+                                              setState(() {
+                                                blurLayer.opacity = 0.0;
+                                              });
+                                            });
+                                          },
+                                        )
+                                      ]),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                if (widget.features.filters)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.photo),
+                        Text(
+                          i18n('Filter'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      resetTransformation();
+                      var mergedImage = await getMergedImage();
+                      if (!mounted) return;
+                      Uint8List? filterAppliedImage = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ImageFilters(
+                            image: mergedImage!,
+                          ),
+                        ),
+                      );
+                      if (filterAppliedImage == null) return;
+                      removedLayers.clear();
+                      undoLayers.clear();
+                      var layer = BackgroundLayerData(
+                        file: ImageItem(filterAppliedImage),
+                      );
+                      layers.add(layer);
+                      await layer.file.status;
+                      setState(() {});
+                    },
+                  ),
+                if (widget.features.sticker)
+                  ElevatedButton(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.face_5_outlined),
+                        Text(
+                          i18n('Sticker'),
+                        )
+                      ],
+                    ),
+                    onPressed: () async {
+                      LayerData? layer = await showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.black,
+                        builder: (BuildContext context) {
+                          return Stickers(
+                            stickers: widget.stickers,
+                          );
+                        },
+                      );
+                      if (layer == null) return;
+                      undoLayers.clear();
+                      removedLayers.clear();
+                      layers.add(layer);
+                      setState(() {});
+                    },
+                  ),
+              ],
             ),
-          if (widget.features.sticker)
-            ElevatedButton(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.face_5_outlined),
-                  Text(
-                    i18n('Sticker'),
-                  )
-                ],
-              ),
-              onPressed: () async {
-                LayerData? layer = await showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.black,
-                  builder: (BuildContext context) {
-                    return Stickers(
-                      stickers: widget.stickers,
-                    );
-                  },
-                );
-                if (layer == null) return;
-                undoLayers.clear();
-                removedLayers.clear();
-                layers.add(layer);
-                setState(() {});
-              },
-            ),
-        ],
+          ),
+        ),
       ),
     );
   }
