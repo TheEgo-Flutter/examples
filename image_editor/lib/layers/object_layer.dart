@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/data/layer.dart';
 
-/// Text layer
 class ObjectLayer extends StatefulWidget {
   final LayerData layerData;
-  final VoidCallback? onUpdate;
 
   const ObjectLayer({
     super.key,
     required this.layerData,
-    this.onUpdate,
   });
   @override
   createState() => _BaseLayerState();
 }
 
 class _BaseLayerState extends State<ObjectLayer> {
-  double initialSize = 0;
-  double initialRotation = 0;
+  double size = 0;
+  double rotation = 0;
+  @override
+  void initState() {
+    super.initState();
+    size = widget.layerData.size;
+    rotation = widget.layerData.rotation;
+  }
 
   @override
   Widget build(BuildContext context) {
-    initialSize = widget.layerData.size;
-    initialRotation = widget.layerData.rotation;
-
     return Positioned(
       left: widget.layerData.offset.dx,
       top: widget.layerData.offset.dy,
@@ -36,14 +36,16 @@ class _BaseLayerState extends State<ObjectLayer> {
               widget.layerData.offset.dy + detail.focalPointDelta.dy,
             );
           } else if (detail.pointerCount == 2) {
-            widget.layerData.size = initialSize + detail.scale * (detail.scale > 1 ? 1 : -1);
+            widget.layerData.size = size + detail.scale * (detail.scale > 1 ? 1 : -1);
+            size = widget.layerData.size;
 
             widget.layerData.rotation = detail.rotation;
+            rotation = detail.rotation;
           }
           setState(() {});
         },
         child: Transform.rotate(
-          angle: widget.layerData.rotation,
+          angle: rotation,
           child: Container(
             padding: const EdgeInsets.all(64),
             child: Padding(

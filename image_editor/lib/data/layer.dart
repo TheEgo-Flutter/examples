@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/data/image_item.dart';
+
+import 'image_item.dart';
 
 /// Layer class with some common properties
 class Layer {
@@ -22,10 +23,21 @@ class Layer {
 /// Attributes used by [BackgroundLayer]
 class BackgroundLayerData extends Layer {
   ImageItem file;
-
+  late double size;
   BackgroundLayerData({
     required this.file,
-  }) : super(offset: Offset.zero);
+    Offset? offset,
+    double? opacity,
+    double? rotation,
+    double? scale,
+    double? size,
+  })  : size = size ?? 400,
+        super(
+          offset: offset ?? const Offset(0, 0),
+          opacity: opacity,
+          rotation: rotation,
+          scale: scale,
+        );
 }
 
 /// Attributes used by [BackgroundBlurLayer]

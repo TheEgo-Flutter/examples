@@ -23,12 +23,12 @@ import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
+import 'layers/background_layer.dart';
 import 'modules/colors_picker.dart';
 import 'modules/text.dart';
 
 late Size viewportSize;
 double viewportRatio = 1;
-Widget? backgroundLayer;
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Map<String, String> _translations = {};
 
@@ -403,7 +403,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   @override
   void dispose() {
-    backgroundLayer = null;
     layers.clear();
     super.dispose();
   }
@@ -519,11 +518,11 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
 
   /// obtain image Uint8List by merging layers
   Future<Uint8List?> getMergedImage() async {
-    //TODO fix this
-    // if (layers.length == 1 && layers.first is BackgroundLayerData) {
-    //   return (layers.first as BackgroundLayerData).file.image;
-    // } else if (layers.length == 1 && layers.first is ImageLayerData) {
-    //   return (layers.first as ImageLayerData).image.image;
+    if (layers.length == 1 && layers.first is BackgroundLayerData) {
+      return (layers.first as BackgroundLayerData).file.image;
+    }
+    // else if (layers.length == 1 && layers.first is LayerData) {
+    //   return (layers.first as LayerData).object;
     // }
 
     return screenshotController.capture(
@@ -539,11 +538,10 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
       children: layers.map((layerItem) {
         // Background layer
         if (layerItem is BackgroundLayerData) {
-          return Container(
-            width: MediaQuery.sizeOf(context).width,
-            height: MediaQuery.sizeOf(context).height,
-            padding: EdgeInsets.zero,
-            child: Center(child: Image.memory(layerItem.file.image, fit: BoxFit.contain)),
+          return Center(
+            child: BackgroundLayer(
+              layerData: layerItem,
+            ),
           );
         }
 
@@ -561,9 +559,6 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
         if (layerItem is LayerData) {
           return ObjectLayer(
             layerData: layerItem,
-            onUpdate: () {
-              setState(() {});
-            },
           );
         }
 
@@ -583,64 +578,16 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
         backgroundColor: Colors.grey,
         appBar: filterActions,
         body: SizedBox(
+          height: MediaQuery.sizeOf(context).height,
+          width: MediaQuery.sizeOf(context).width / 0.6,
           child: Stack(children: [
-            backgroundLayer ?? Container(),
-            GestureDetector(
-              onScaleUpdate: (details) {
-                // print(details);
-
-                // move
-                if (details.pointerCount == 1) {
-                  // print(details.focalPointDelta);
-                  x += details.focalPointDelta.dx;
-                  y += details.focalPointDelta.dy;
-                  setState(() {});
-                }
-
-                // scale
-                if (details.pointerCount == 2) {
-                  // print([details.horizontalScale, details.verticalScale]);
-                  if (details.horizontalScale != 1) {
-                    scaleFactor = lastScaleFactor * math.min(details.horizontalScale, details.verticalScale);
-                    setState(() {});
-                  }
-                }
-              },
-              onScaleEnd: (details) {
-                lastScaleFactor = scaleFactor;
-              },
-              child: Center(
-                child: SizedBox(
-                  height: currentImage.height / pixelRatio,
-                  width: currentImage.width / pixelRatio,
-                  child: Screenshot(
-                    controller: screenshotController,
-                    child: RotatedBox(
-                      quarterTurns: rotateValue,
-                      child: Transform(
-                        transform: Matrix4(
-                          1,
-                          0,
-                          0,
-                          0,
-                          0,
-                          1,
-                          0,
-                          0,
-                          0,
-                          0,
-                          1,
-                          0,
-                          x,
-                          y,
-                          0,
-                          1 / scaleFactor,
-                        )..rotateY(flipValue),
-                        alignment: FractionalOffset.center,
-                        child: layersStack,
-                      ),
-                    ),
-                  ),
+            Center(
+              child: SizedBox(
+                height: currentImage.height / pixelRatio,
+                width: currentImage.width / pixelRatio,
+                child: Screenshot(
+                  controller: screenshotController,
+                  child: layersStack,
                 ),
               ),
             ),
@@ -652,10 +599,11 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
   }
 
   Widget bottomNavigationBar(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: const ButtonThemeData().height * 2,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      color: Colors.black87,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           if (widget.features.crop)
             ElevatedButton(
@@ -1042,7 +990,9 @@ class _SingleImageEditorState extends State<SingleImageEditor> {
     await currentImage.load(imageFile);
 
     layers.clear();
-    backgroundLayer = Center(child: Image.memory(currentImage.image, fit: BoxFit.fill));
+    layers.add(BackgroundLayerData(
+      file: currentImage,
+    ));
 
     setState(() {});
   }
