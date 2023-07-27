@@ -15,7 +15,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
   TextEditingController name = TextEditingController();
   Color currentColor = Colors.white;
   double slider = 32.0;
-  TextAlign align = TextAlign.left;
+  TextAlign align = TextAlign.center;
 
   AppBar get appBar => AppBar(
         actions: <Widget>[
@@ -55,6 +55,8 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     color: currentColor,
                     fontSize: slider.toDouble(),
                   ));
+              var padding = 8;
+              Size getTextSize = textSize(text, context);
               Navigator.pop(
                 context,
                 LayerData(
@@ -63,7 +65,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     text,
                     textAlign: align,
                   ),
-                  size: textSize(text, context),
+                  size: Size(getTextSize.width + padding, getTextSize.height + padding),
                 ),
               );
             },
@@ -88,11 +90,11 @@ class _TextEditorImageState extends State<TextEditorImage> {
                   height: size.height / 2.2,
                   child: TextField(
                     controller: name,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.all(10),
+                      contentPadding: EdgeInsets.all(10),
                       hintText: 'Insert Your Message',
-                      hintStyle: const TextStyle(color: Colors.white),
+                      hintStyle: TextStyle(color: Colors.white),
                       alignLabelWithHint: true,
                     ),
                     scrollPadding: const EdgeInsets.all(20.0),
@@ -111,7 +113,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                   child: Column(
                     children: [
                       //   SizedBox(height: 20.0),
-                      Text(
+                      const Text(
                         'Slider Color',
                       ),
                       //   SizedBox(height: 10.0),
@@ -131,13 +133,13 @@ class _TextEditorImageState extends State<TextEditorImage> {
                         ),
                         TextButton(
                           onPressed: () {},
-                          child: Text(
+                          child: const Text(
                             'Reset',
                           ),
                         ),
                       ]),
                       //   SizedBox(height: 20.0),
-                      Text(
+                      const Text(
                         'Slider White Black Color',
                       ),
                       //   SizedBox(height: 10.0),
@@ -157,7 +159,7 @@ class _TextEditorImageState extends State<TextEditorImage> {
                         ),
                         TextButton(
                           onPressed: () {},
-                          child: Text(
+                          child: const Text(
                             'Reset',
                           ),
                         )
