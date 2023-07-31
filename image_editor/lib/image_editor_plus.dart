@@ -1,7 +1,6 @@
 library image_editor_plus;
 
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 
@@ -47,6 +46,7 @@ class _ImageEditorState extends State<ImageEditor> {
   ScreenshotController screenshotController = ScreenshotController();
   Widget baseLayer = const SizedBox.shrink();
   Size viewportSize = const Size(0, 0);
+
   final picker = ImagePicker();
 
   @override
@@ -89,82 +89,6 @@ class _ImageEditorState extends State<ImageEditor> {
     );
   }
 
-  Widget buildScreenshotWidget(BuildContext context) {
-    return Screenshot(
-      controller: screenshotController,
-      child: RepaintBoundary(
-        key: editGlobalKey,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              baseLayer,
-              Positioned.fill(
-                child: GestureDetector(
-                  key: const Key('background_gestureDetector'),
-                  onTap: () {
-                    selectedAssetId = null;
-                    setState(() {});
-                  },
-                ),
-              ),
-              ...layers.map((layer) {
-                if (layer is BlurLayerData) {
-                  return Positioned.fill(
-                    child: GestureDetector(
-                      key: const Key('blurLayer_gestureDetector'),
-                      onTap: () {},
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: layer.radius,
-                          sigmaY: layer.radius,
-                        ),
-                        child: Container(
-                          color: layer.color.withOpacity(layer.opacity),
-                        ),
-                      ),
-                    ),
-                  );
-                } else if (layer is LayerData) {
-                  log('${layer.size}\n${layer.offset}');
-                  return DraggableResizable(
-                    key: Key('${layer.key}_draggableResizable_asset'),
-                    canTransform: selectedAssetId == layer.key ? true : false,
-                    onDragStart: () {
-                      selectedAssetId = layer.key;
-                      var listLength = layers.length;
-                      var index = layers.indexOf(layer);
-                      if (index != listLength) {
-                        layers.remove(layer);
-                        layers.add(layer);
-                      }
-                      setState(() {});
-                    },
-                    onDragEnd: () {
-                      selectedAssetId = null;
-                      setState(() {});
-                    },
-                    onDelete: () async {
-                      layers.remove(layer);
-                      setState(() {});
-                    },
-                 
-                    layer: layer,
-                  );
-                } else {
-                  return Container();
-                }
-              }).toList(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  //
   AppBar buildAppBar() {
     return AppBar(
       automaticallyImplyLeading: false,
@@ -250,6 +174,79 @@ class _ImageEditorState extends State<ImageEditor> {
     );
   }
 
+  Widget buildScreenshotWidget(BuildContext context) {
+    return Screenshot(
+      controller: screenshotController,
+      child: RepaintBoundary(
+        key: editGlobalKey,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            baseLayer,
+            Positioned.fill(
+              child: GestureDetector(
+                key: const Key('background_gestureDetector'),
+                onTap: () {
+                  selectedAssetId = null;
+                  setState(() {});
+                },
+              ),
+            ),
+            ...layers.map((layer) {
+              if (layer is BlurLayerData) {
+                return Positioned.fill(
+                  child: GestureDetector(
+                    key: const Key('blurLayer_gestureDetector'),
+                    onTap: () {},
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: layer.radius,
+                        sigmaY: layer.radius,
+                      ),
+                      child: Container(
+                        color: layer.color.withOpacity(layer.opacity),
+                      ),
+                    ),
+                  ),
+                );
+              } else if (layer is LayerData) {
+                return DraggableResizable(
+                  key: Key('${layer.key}_draggableResizable_asset'),
+                  canTransform: selectedAssetId == layer.key ? true : false,
+                  onDelete: () async {
+                    layers.remove(layer);
+                    setState(() {});
+                  },
+                  size: layer.size * layer.scale,
+                  constraints: BoxConstraints.tight(layer.size * layer.scale),
+                  child: GestureDetector(
+                    onTapDown: (TapDownDetails details) {
+                      selectedAssetId = layer.key;
+                      var listLength = layers.length;
+                      var index = layers.indexOf(layer);
+                      if (index != listLength) {
+                        layers.remove(layer);
+                        layers.add(layer);
+                      }
+                      setState(() {});
+                    },
+                    child: SizedBox(
+                      width: layer.size.width,
+                      height: layer.size.height,
+                      child: layer.object,
+                    ),
+                  ),
+                );
+              } else {
+                return Container();
+              }
+            }).toList()
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget get bottomBar => Container(
         height: const ButtonThemeData().height * 2,
         color: Colors.black87,
@@ -269,19 +266,25 @@ class _ImageEditorState extends State<ImageEditor> {
                   ],
                 ),
                 onPressed: () async {
-                  LayerData? layer = await Navigator.of(context).push(
-                    PageRouteBuilder(
-                      opaque: false, // set to false
-                      pageBuilder: (_, __, ___) => const BrushPainter(),
+                  Uint8List? drawing = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Brush(
+                        image: currentImage,
+                      ),
                     ),
                   );
-                  if (layer == null) return;
-                  undoLayers.clear();
-                  removedLayers.clear();
-
-                  layers.add(layer);
-
-                  setState(() {});
+                  if (drawing != null) {
+                    undoLayers.clear();
+                    removedLayers.clear();
+                    layers.add(
+                      LayerData(
+                        key: UniqueKey(),
+                        object: Image.memory(drawing),
+                      ),
+                    );
+                    setState(() {});
+                  }
                 },
               ),
               ElevatedButton(

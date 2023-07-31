@@ -41,6 +41,7 @@ class BlurLayerData extends Layer {
         );
 }
 
+@Deprecated('Use DraggableResizable instead, need to refactor All Layers')
 class LayerData extends Layer {
   Size size;
   final Widget object;
