@@ -1,7 +1,7 @@
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_editor/image_editor_plus.dart';
+import 'package:image_editor/image_editor.dart';
 
 void main() {
   runApp(

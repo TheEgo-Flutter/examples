@@ -7,7 +7,7 @@ ThemeData theme = ThemeData(
     background: Colors.black,
   ),
   appBarTheme: const AppBarTheme(
-    backgroundColor: Colors.black87,
+    backgroundColor: Colors.black,
     iconTheme: IconThemeData(color: Colors.white),
     systemOverlayStyle: SystemUiOverlayStyle.light,
     toolbarTextStyle: TextStyle(color: Colors.white),

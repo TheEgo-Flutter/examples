@@ -7,11 +7,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor/layers/draggable_resizable.dart';
-import 'package:image_editor/layers/image_item.dart';
 import 'package:image_editor/layers/layer.dart';
 import 'package:image_editor/loading_screen.dart';
 import 'package:image_editor/modules/sticker.dart';
 import 'package:image_editor/theme.dart';
+import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
@@ -23,30 +23,40 @@ import 'modules/text.dart';
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Key? selectedAssetId;
 final GlobalKey editGlobalKey = GlobalKey();
+const Key backgroundKey = Key('base_layer');
 
 class ImageEditor extends StatefulWidget {
   final Directory? savePath;
   final Uint8List? image;
   final List<String> stickers;
+  final AspectRatioOption aspectRatio;
 
   const ImageEditor({
     super.key,
     this.savePath,
     this.image,
     this.stickers = const [],
+    this.aspectRatio = AspectRatioOption.r16x9,
   });
-
   @override
   State<ImageEditor> createState() => _ImageEditorState();
 }
 
 class _ImageEditorState extends State<ImageEditor> {
-  ImageItem currentImage = ImageItem();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   ScreenshotController screenshotController = ScreenshotController();
+  Uint8List? currentImage;
   Widget baseLayer = const SizedBox.shrink();
   Size viewportSize = const Size(0, 0);
 
+  LinearGradient cardColor = const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Colors.transparent,
+      Colors.transparent,
+    ],
+  );
   final picker = ImagePicker();
 
   @override
@@ -68,10 +78,35 @@ class _ImageEditorState extends State<ImageEditor> {
   }
 
   Future<void> loadImage(dynamic imageFile) async {
-    await currentImage.load(imageFile, viewportSize);
-    baseLayer = Image.memory(currentImage.image, fit: BoxFit.contain);
-    layers.clear();
-    setState(() {});
+    currentImage = await _loadImage(imageFile);
+    if (currentImage != null) {
+      ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(currentImage!));
+      setState(() {
+        baseLayer = Image.memory(currentImage!, fit: BoxFit.cover);
+        //cardColor gradient
+        cardColor = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            newScheme.primary,
+            newScheme.secondary,
+          ],
+        );
+        layers.clear();
+      });
+    }
+  }
+
+  Future<Uint8List> _loadImage(dynamic imageFile) async {
+    if (imageFile is Uint8List) {
+      return imageFile;
+    } else if (imageFile is File || imageFile is XFile) {
+      final image = await imageFile.readAsBytes();
+
+      return image;
+    }
+
+    return Uint8List.fromList([]);
   }
 
   @override
@@ -79,15 +114,114 @@ class _ImageEditorState extends State<ImageEditor> {
     viewportSize = MediaQuery.of(context).size;
     return Theme(
       data: theme,
-      child: Scaffold(
-        key: scaffoldGlobalKey,
-        backgroundColor: Colors.grey,
-        appBar: buildAppBar(),
-        body: buildScreenshotWidget(context),
-        bottomNavigationBar: bottomBar,
+      child: GestureDetector(
+        key: const Key('background_gestureDetector'),
+        onTap: () {
+          selectedAssetId = null;
+          setState(() {});
+        },
+        child: Scaffold(
+          key: scaffoldGlobalKey,
+          backgroundColor: Colors.grey,
+          appBar: buildAppBar(),
+          body: buildScreenshotWidget(context),
+          bottomNavigationBar: bottomBar,
+        ),
       ),
     );
   }
+
+  Widget buildScreenshotWidget(BuildContext context) {
+    //shape radius all 16
+    return Center(
+      child: RepaintBoundary(
+        key: editGlobalKey,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Screenshot(
+            controller: screenshotController,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.all(Radius.circular(16)),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: cardColor,
+                ),
+                child: AspectRatio(
+                  aspectRatio: widget.aspectRatio.ratio ?? 1,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned.fill(
+                          child: Align(
+                              alignment: Alignment.center,
+                              child: BaseLayerWidget(
+                                key: backgroundKey,
+                                base: baseLayer,
+                                size: const Size(400, 600),
+                                canTransform: selectedAssetId == backgroundKey ? true : false,
+                                onDragStart: () {
+                                  setState(() {
+                                    selectedAssetId = backgroundKey;
+                                  });
+                                },
+                                onDragEnd: () {
+                                  setState(() {
+                                    selectedAssetId = null;
+                                  });
+                                },
+                              ))),
+                      ...layers.map((layer) {
+                        if (layer is BlurLayerData) {
+                          return BackdropFilter(
+                            key: const Key('blurLayer_gestureDetector'),
+                            filter: ImageFilter.blur(
+                              sigmaX: layer.radius,
+                              sigmaY: layer.radius,
+                            ),
+                            child: Container(
+                              color: layer.color.withOpacity(layer.opacity),
+                            ),
+                          );
+                        } else if (layer is LayerData) {
+                          return DraggableResizable(
+                            key: Key('${layer.key}_draggableResizable_asset'),
+                            canTransform: selectedAssetId == layer.key ? true : false,
+                            onLayerTapped: () {
+                              selectedAssetId = layer.key;
+                              var listLength = layers.length;
+                              var index = layers.indexOf(layer);
+                              if (index != listLength) {
+                                layers.remove(layer);
+                                layers.add(layer);
+                              }
+                              setState(() {});
+                            },
+                            onDragEnd: () {
+                              selectedAssetId = null;
+                              setState(() {});
+                            },
+                            onDelete: () async {
+                              layers.remove(layer);
+                              setState(() {});
+                            },
+                            layer: layer,
+                          );
+                        } else {
+                          return Container();
+                        }
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  //---------------------------------//
 
   AppBar buildAppBar() {
     return AppBar(
@@ -155,7 +289,9 @@ class _ImageEditorState extends State<ImageEditor> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 icon: const Icon(Icons.check),
                 onPressed: () async {
+                  selectedAssetId = null;
                   resetTransformation();
+
                   setState(() {});
 
                   LoadingScreen(scaffoldGlobalKey).show();
@@ -171,79 +307,6 @@ class _ImageEditorState extends State<ImageEditor> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget buildScreenshotWidget(BuildContext context) {
-    return Screenshot(
-      controller: screenshotController,
-      child: RepaintBoundary(
-        key: editGlobalKey,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              baseLayer,
-              Positioned.fill(
-                child: GestureDetector(
-                  key: const Key('background_gestureDetector'),
-                  onTap: () {
-                    selectedAssetId = null;
-                    setState(() {});
-                  },
-                ),
-              ),
-              ...layers.map((layer) {
-                if (layer is BlurLayerData) {
-                  return Positioned.fill(
-                    child: GestureDetector(
-                      key: const Key('blurLayer_gestureDetector'),
-                      onTap: () {},
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: layer.radius,
-                          sigmaY: layer.radius,
-                        ),
-                        child: Container(
-                          color: layer.color.withOpacity(layer.opacity),
-                        ),
-                      ),
-                    ),
-                  );
-                } else if (layer is LayerData) {
-                  return DraggableResizable(
-                    key: Key('${layer.key}_draggableResizable_asset'),
-                    canTransform: selectedAssetId == layer.key ? true : false,
-                    onLayerTapped: () {
-                      selectedAssetId = layer.key;
-                      var listLength = layers.length;
-                      var index = layers.indexOf(layer);
-                      if (index != listLength) {
-                        layers.remove(layer);
-                        layers.add(layer);
-                      }
-                      setState(() {});
-                    },
-                    onDragEnd: () {
-                      selectedAssetId = null;
-                      setState(() {});
-                    },
-                    onDelete: () async {
-                      layers.remove(layer);
-                      setState(() {});
-                    },
-                    layer: layer,
-                  );
-                } else {
-                  return Container();
-                }
-              }).toList(),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
