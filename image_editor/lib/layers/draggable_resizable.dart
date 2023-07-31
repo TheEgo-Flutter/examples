@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../data/layer.dart';
 import '../image_editor_plus.dart';
+import '../layers/layer.dart';
 
 class DraggableResizable extends StatefulWidget {
   DraggableResizable({

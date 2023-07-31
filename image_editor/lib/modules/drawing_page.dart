@@ -5,7 +5,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hand_signature/signature.dart';
 
-import '../data/layer.dart';
+import '../layers/layer.dart';
 
 class BrushPainter extends StatefulWidget {
   const BrushPainter({
@@ -40,7 +40,6 @@ class _BrushPainterState extends State<BrushPainter> {
     Colors.indigo,
     Colors.indigo,
   ];
-
 
   ValueNotifier<String?> svg = ValueNotifier<String?>(null);
   void changeColor(Color color) {

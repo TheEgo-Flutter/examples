@@ -6,9 +6,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_editor/data/image_item.dart';
-import 'package:image_editor/data/layer.dart';
 import 'package:image_editor/layers/draggable_resizable.dart';
+import 'package:image_editor/layers/image_item.dart';
+import 'package:image_editor/layers/layer.dart';
 import 'package:image_editor/loading_screen.dart';
 import 'package:image_editor/modules/sticker.dart';
 import 'package:image_editor/theme.dart';

@@ -5,7 +5,7 @@ import 'package:colorfilter_generator/presets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_editor/modules/src/src.dart' as src;
+// import 'package:image_editor/modules/src/src.dart' as src;
 import 'package:screenshot/screenshot.dart';
 
 import '../theme.dart';
@@ -218,21 +218,21 @@ class FilterAppliedImage extends StatelessWidget {
         return;
       }
 
-      final src.ImageEditorOption option = src.ImageEditorOption();
+      //   final src.ImageEditorOption option = src.ImageEditorOption();
 
-      option.addOption(src.ColorOption(matrix: filter.matrix));
+      //   option.addOption(src.ColorOption(matrix: filter.matrix));
 
-      src.ImageEditor.editImage(
-        image: image,
-        imageEditorOption: option,
-      ).then((result) {
-        if (result != null) {
-          onProcess!(result);
-        }
-      }).catchError((err, stack) {
-        // print(err);
-        // print(stack);
-      });
+      //   src.ImageEditor.editImage(
+      //     image: image,
+      //     imageEditorOption: option,
+      //   ).then((result) {
+      //     if (result != null) {
+      //       onProcess!(result);
+      //     }
+      //   }).catchError((err, stack) {
+      //     // print(err);
+      //     // print(stack);
+      //   });
     }
   }
 

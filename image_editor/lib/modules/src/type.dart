@@ -1,4 +1,0 @@
-enum SrcType {
-  file,
-  memory,
-}

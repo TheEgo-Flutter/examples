@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/data/layer.dart';
+import 'package:image_editor/layers/layer.dart';
 
 import 'colors_picker.dart';
 
