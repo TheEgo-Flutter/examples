@@ -266,25 +266,19 @@ class _ImageEditorState extends State<ImageEditor> {
                   ],
                 ),
                 onPressed: () async {
-                  Uint8List? drawing = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => Brush(
-                        image: currentImage,
-                      ),
+                  LayerData? layer = await Navigator.of(context).push(
+                    PageRouteBuilder(
+                      opaque: false, // set to false
+                      pageBuilder: (_, __, ___) => const BrushPainter(),
                     ),
                   );
-                  if (drawing != null) {
-                    undoLayers.clear();
-                    removedLayers.clear();
-                    layers.add(
-                      LayerData(
-                        key: UniqueKey(),
-                        object: Image.memory(drawing),
-                      ),
-                    );
-                    setState(() {});
-                  }
+                  if (layer == null) return;
+                  undoLayers.clear();
+                  removedLayers.clear();
+
+                  layers.add(layer);
+
+                  setState(() {});
                 },
               ),
               ElevatedButton(
