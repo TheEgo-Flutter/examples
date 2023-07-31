@@ -123,7 +123,6 @@ class _ImageEditorState extends State<ImageEditor> {
         child: Scaffold(
           key: scaffoldGlobalKey,
           backgroundColor: Colors.grey,
-          appBar: buildAppBar(),
           body: buildScreenshotWidget(context),
           bottomNavigationBar: bottomBar,
         ),
@@ -132,12 +131,12 @@ class _ImageEditorState extends State<ImageEditor> {
   }
 
   Widget buildScreenshotWidget(BuildContext context) {
-    //shape radius all 16
+    double statusBarHeight = MediaQuery.of(context).padding.top;
     return Center(
       child: RepaintBoundary(
         key: editGlobalKey,
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: EdgeInsets.fromLTRB(8.0, statusBarHeight + 8.0, 8.0, 8.0),
           child: Screenshot(
             controller: screenshotController,
             child: ClipRRect(
@@ -210,6 +209,7 @@ class _ImageEditorState extends State<ImageEditor> {
                           return Container();
                         }
                       }).toList(),
+                      Positioned(top: 0, right: 0, child: buildAppBar())
                     ],
                   ),
                 ),
@@ -223,96 +223,89 @@ class _ImageEditorState extends State<ImageEditor> {
 
   //---------------------------------//
 
-  AppBar buildAppBar() {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      actions: [
+  Widget buildAppBar() {
+    return SingleChildScrollView(
+      reverse: true,
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
         const BackButton(),
-        SizedBox(
-          width: MediaQuery.of(context).size.width - 48,
-          child: SingleChildScrollView(
-            reverse: true,
-            scrollDirection: Axis.horizontal,
-            child: Row(children: [
-              IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                icon:
-                    Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
-                onPressed: () {
-                  if (removedLayers.isNotEmpty) {
-                    layers.add(removedLayers.removeLast());
-                    setState(() {});
-                    return;
-                  }
+        /** 
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
+          onPressed: () {
+            if (removedLayers.isNotEmpty) {
+              layers.add(removedLayers.removeLast());
+              setState(() {});
+              return;
+            }
 
-                  if (layers.length <= 1) return; // do not remove image layer
+            if (layers.length <= 1) return; // do not remove image layer
 
-                  undoLayers.add(layers.removeLast());
+            undoLayers.add(layers.removeLast());
 
-                  setState(() {});
-                },
-              ),
-              IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
-                onPressed: () {
-                  if (undoLayers.isEmpty) return;
-
-                  layers.add(undoLayers.removeLast());
-
-                  setState(() {});
-                },
-              ),
-              IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                icon: const Icon(Icons.photo),
-                onPressed: () async {
-                  var image = await picker.pickImage(source: ImageSource.gallery);
-
-                  if (image == null) return;
-
-                  loadImage(image);
-                },
-              ),
-              IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                icon: const Icon(Icons.camera_alt),
-                onPressed: () async {
-                  var image = await picker.pickImage(source: ImageSource.camera);
-
-                  if (image == null) return;
-
-                  loadImage(image);
-                },
-              ),
-              IconButton(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                icon: const Icon(Icons.check),
-                onPressed: () async {
-                  selectedAssetId = null;
-                  resetTransformation();
-
-                  setState(() {});
-
-                  LoadingScreen(scaffoldGlobalKey).show();
-
-                  var binaryIntList = await screenshotController.capture();
-
-                  LoadingScreen(scaffoldGlobalKey).hide();
-
-                  if (mounted) Navigator.pop(context, binaryIntList);
-                },
-              ),
-            ]),
-          ),
+            setState(() {});
+          },
         ),
-      ],
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
+          onPressed: () {
+            if (undoLayers.isEmpty) return;
+
+            layers.add(undoLayers.removeLast());
+
+            setState(() {});
+          },
+        ),
+        */
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: const Icon(Icons.photo),
+          onPressed: () async {
+            var image = await picker.pickImage(source: ImageSource.gallery);
+
+            if (image == null) return;
+
+            loadImage(image);
+          },
+        ),
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: const Icon(Icons.camera_alt),
+          onPressed: () async {
+            var image = await picker.pickImage(source: ImageSource.camera);
+
+            if (image == null) return;
+
+            loadImage(image);
+          },
+        ),
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: const Icon(Icons.check),
+          onPressed: () async {
+            selectedAssetId = null;
+            resetTransformation();
+
+            setState(() {});
+
+            LoadingScreen(scaffoldGlobalKey).show();
+
+            var binaryIntList = await screenshotController.capture();
+
+            LoadingScreen(scaffoldGlobalKey).hide();
+
+            if (mounted) Navigator.pop(context, binaryIntList);
+          },
+        ),
+      ]),
     );
   }
 
   Widget get bottomBar => Container(
         height: const ButtonThemeData().height * 2,
-        color: Colors.black87,
+        color: Colors.black,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(

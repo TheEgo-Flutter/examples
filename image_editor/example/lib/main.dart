@@ -35,29 +35,31 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
         title: const Text("ImageEditor Example"),
         centerTitle: true,
       ),
-      body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        if (imageData != null) SizedBox(height: 400, child: Image.memory(imageData!)),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          child: const Text("Single image editor"),
-          onPressed: () async {
-            var editedImage = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ImageEditor(
-                  stickers: stickers,
+      body: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (imageData != null) SizedBox(height: 400, child: Image.memory(imageData!)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            child: const Text("Single image editor"),
+            onPressed: () async {
+              var editedImage = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ImageEditor(
+                    stickers: stickers,
+                  ),
                 ),
-              ),
-            );
+              );
 
-            // replace with edited image
-            if (editedImage != null) {
-              imageData = editedImage;
-              setState(() {});
-            }
-          },
-        ),
-      ]),
+              // replace with edited image
+              if (editedImage != null) {
+                imageData = editedImage;
+                setState(() {});
+              }
+            },
+          ),
+        ]),
+      ),
     );
   }
 }
