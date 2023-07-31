@@ -179,48 +179,44 @@ class _ImageEditorState extends State<ImageEditor> {
       controller: screenshotController,
       child: RepaintBoundary(
         key: editGlobalKey,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            baseLayer,
-            Positioned.fill(
-              child: GestureDetector(
-                key: const Key('background_gestureDetector'),
-                onTap: () {
-                  selectedAssetId = null;
-                  setState(() {});
-                },
-              ),
-            ),
-            ...layers.map((layer) {
-              if (layer is BlurLayerData) {
-                return Positioned.fill(
-                  child: GestureDetector(
-                    key: const Key('blurLayer_gestureDetector'),
-                    onTap: () {},
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: layer.radius,
-                        sigmaY: layer.radius,
-                      ),
-                      child: Container(
-                        color: layer.color.withOpacity(layer.opacity),
-                      ),
-                    ),
-                  ),
-                );
-              } else if (layer is LayerData) {
-                return DraggableResizable(
-                  key: Key('${layer.key}_draggableResizable_asset'),
-                  canTransform: selectedAssetId == layer.key ? true : false,
-                  onDelete: () async {
-                    layers.remove(layer);
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              baseLayer,
+              Positioned.fill(
+                child: GestureDetector(
+                  key: const Key('background_gestureDetector'),
+                  onTap: () {
+                    selectedAssetId = null;
                     setState(() {});
                   },
-                  size: layer.size * layer.scale,
-                  constraints: BoxConstraints.tight(layer.size * layer.scale),
-                  child: GestureDetector(
-                    onTapDown: (TapDownDetails details) {
+                ),
+              ),
+              ...layers.map((layer) {
+                if (layer is BlurLayerData) {
+                  return Positioned.fill(
+                    child: GestureDetector(
+                      key: const Key('blurLayer_gestureDetector'),
+                      onTap: () {},
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: layer.radius,
+                          sigmaY: layer.radius,
+                        ),
+                        child: Container(
+                          color: layer.color.withOpacity(layer.opacity),
+                        ),
+                      ),
+                    ),
+                  );
+                } else if (layer is LayerData) {
+                  return DraggableResizable(
+                    key: Key('${layer.key}_draggableResizable_asset'),
+                    canTransform: selectedAssetId == layer.key ? true : false,
+                    onLayerTapped: () {
                       selectedAssetId = layer.key;
                       var listLength = layers.length;
                       var index = layers.indexOf(layer);
@@ -230,18 +226,22 @@ class _ImageEditorState extends State<ImageEditor> {
                       }
                       setState(() {});
                     },
-                    child: SizedBox(
-                      width: layer.size.width,
-                      height: layer.size.height,
-                      child: layer.object,
-                    ),
-                  ),
-                );
-              } else {
-                return Container();
-              }
-            }).toList()
-          ],
+                    onDragEnd: () {
+                      selectedAssetId = null;
+                      setState(() {});
+                    },
+                    onDelete: () async {
+                      layers.remove(layer);
+                      setState(() {});
+                    },
+                    layer: layer,
+                  );
+                } else {
+                  return Container();
+                }
+              }).toList(),
+            ],
+          ),
         ),
       ),
     );
