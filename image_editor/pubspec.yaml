@@ -16,7 +16,9 @@ dependencies:
   image: ^4.0.15
   colorfilter_generator: ^0.0.8
   hand_signature: ^3.0.0
+  flutter_svg: ^2.0.7
   flutter_image_compress: ^2.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
