@@ -3,41 +3,28 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-class DragUpdate {
-  const DragUpdate({
-    required this.angle,
-    required this.position,
-    required this.size,
-    required this.constraints,
-  });
-
-  final double angle;
-  final Offset position;
-  final Size size;
-  final Size constraints;
-}
+import '../data/layer.dart';
+import '../image_editor_plus.dart';
 
 class DraggableResizable extends StatefulWidget {
   DraggableResizable({
     Key? key,
-    required this.child,
-    required this.size,
+    required this.layer,
     BoxConstraints? constraints,
-    this.onUpdate,
     this.onLayerTapped,
-    this.onEdit,
     this.onDelete,
+    this.onDragStart,
+    this.onDragEnd,
     this.canTransform = false,
   })  : constraints = constraints ?? BoxConstraints.loose(Size.infinite),
         super(key: key);
-
-  final Widget child;
-  final ValueSetter<DragUpdate>? onUpdate;
+  final LayerData layer;
   final VoidCallback? onDelete;
-  final VoidCallback? onEdit;
   final VoidCallback? onLayerTapped;
+  final VoidCallback? onDragStart;
+  final VoidCallback? onDragEnd;
+
   final bool canTransform;
-  final Size size;
   final BoxConstraints constraints;
 
   @override
@@ -49,19 +36,23 @@ class _DraggableResizableState extends State<DraggableResizable> {
   late BoxConstraints constraints;
   double angle = 0;
   Offset position = Offset.zero;
-
+  bool isCenteredHorizontally = false; // add this line
+  bool isCenteredVertically = false; // and this line
   @override
   void initState() {
     super.initState();
-    size = widget.size;
-    constraints = const BoxConstraints.expand(width: 1, height: 1);
+    size = widget.layer.size;
+    constraints = widget.constraints;
   }
 
   @override
   Widget build(BuildContext context) {
-    final aspectRatio = widget.size.width / widget.size.height;
+    final aspectRatio = size.width / size.height;
     return LayoutBuilder(
       builder: (context, constraints) {
+        //print one line constraint
+        print('${constraints.maxWidth} ${constraints.maxHeight}');
+
         position = position == Offset.zero
             ? Offset(
                 constraints.maxWidth / 2 - (size.width / 2),
@@ -84,15 +75,38 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
         return Stack(
           children: <Widget>[
+            if (selectedAssetId == widget.layer.key) ...[
+              Positioned(
+                top: constraints.maxHeight / 2,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 1,
+                  color: isCenteredVertically ? Colors.red : Colors.transparent,
+                ),
+              ),
+              Positioned(
+                left: constraints.maxWidth / 2,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 1,
+                  color: isCenteredHorizontally ? Colors.red : Colors.transparent,
+                ),
+              )
+            ],
             Positioned(
               top: normalizedTop,
               left: normalizedLeft,
               child: _DraggablePoint(
+                onDragStart: () => widget.onDragStart?.call(),
+                onDragEnd: () => widget.onDragEnd?.call(),
                 onDrag: widget.canTransform
                     ? (d) {
-                        log('onDrag');
                         setState(() {
                           position = Offset(position.dx + d.dx, position.dy + d.dy);
+                          isCenteredHorizontally = checkIfCenteredHorizontally(position, size, constraints.maxWidth);
+                          isCenteredVertically = checkIfCenteredVertically(position, size, constraints.maxHeight);
                         });
                       }
                     : null,
@@ -101,8 +115,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
                         log('onScale');
 
                         final updatedSize = Size(
-                          widget.size.width * s,
-                          widget.size.height * s,
+                          size.width * s,
+                          size.height * s,
                         );
 
                         if (updatedSize.width < 64 || updatedSize.height < 64) return;
@@ -146,7 +160,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                         color: widget.canTransform ? Colors.blue : Colors.transparent,
                       ),
                     ),
-                    child: widget.child,
+                    child: widget.layer.object,
                   ),
                 ),
               ),
@@ -156,6 +170,18 @@ class _DraggableResizableState extends State<DraggableResizable> {
       },
     );
   }
+
+  bool checkIfCenteredHorizontally(Offset position, Size size, double width) {
+    final centerX = width / 2;
+    final widgetCenterX = position.dx + size.width / 2;
+    return (centerX - widgetCenterX).abs() < 5;
+  }
+
+  bool checkIfCenteredVertically(Offset position, Size size, double height) {
+    final centerY = height / 2;
+    final widgetCenterY = position.dy + size.height / 2;
+    return (centerY - widgetCenterY).abs() < 5;
+  }
 }
 
 class _DraggablePoint extends StatefulWidget {
@@ -163,12 +189,16 @@ class _DraggablePoint extends StatefulWidget {
     Key? key,
     required this.child,
     this.onDrag,
+    this.onDragStart,
+    this.onDragEnd,
     this.onScale,
     this.onRotate,
   }) : super(key: key);
 
   final Widget child;
   final ValueSetter<Offset>? onDrag;
+  final VoidCallback? onDragStart;
+  final VoidCallback? onDragEnd;
   final ValueSetter<double>? onScale;
   final ValueSetter<double>? onRotate;
 
@@ -185,6 +215,10 @@ class _DraggablePointState extends State<_DraggablePoint> {
     return GestureDetector(
       onScaleStart: (details) {
         initPoint = details.localFocalPoint;
+        widget.onDragStart?.call();
+      },
+      onScaleEnd: (details) {
+        widget.onDragEnd?.call();
       },
       onScaleUpdate: (details) {
         final dx = details.localFocalPoint.dx - initPoint.dx;
@@ -206,3 +240,5 @@ class _DraggablePointState extends State<_DraggablePoint> {
     );
   }
 }
+
+// 
