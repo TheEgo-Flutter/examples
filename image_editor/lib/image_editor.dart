@@ -21,33 +21,36 @@ import 'modules/text.dart';
 
 // List of global variables
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
-Key? selectedAssetId;
-final GlobalKey editGlobalKey = GlobalKey();
+Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
-const Key backgroundKey = Key('base_layer');
+final GlobalKey backgroundKey = GlobalKey();
+Size get cardSize => _cardSize ?? Size.zero;
+Offset get cardPosition => _cardPosition ?? Offset.zero;
+Size? _cardSize;
+Offset? _cardPosition;
 
-class ImageEditor extends StatefulWidget {
+class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
   final Uint8List? image;
   final List<String> stickers;
   final AspectRatioOption aspectRatio;
 
-  const ImageEditor({
+  const PhotoEditor({
     super.key,
     this.savePath,
     this.image,
     this.stickers = const [],
     this.aspectRatio = AspectRatioOption.r16x9,
   });
+
   @override
-  State<ImageEditor> createState() => _ImageEditorState();
+  State<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _ImageEditorState extends State<ImageEditor> {
+class _PhotoEditorState extends State<PhotoEditor> {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   ScreenshotController screenshotController = ScreenshotController();
   Uint8List? currentImage;
-  Widget baseLayer = const SizedBox.shrink();
   Size viewportSize = const Size(0, 0);
   bool showAppBar = true;
   LinearGradient cardColor = const LinearGradient(
@@ -58,6 +61,7 @@ class _ImageEditorState extends State<ImageEditor> {
       Colors.transparent,
     ],
   );
+
   final picker = ImagePicker();
 
   @override
@@ -71,15 +75,16 @@ class _ImageEditorState extends State<ImageEditor> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       var image = await picker.pickImage(source: ImageSource.gallery);
-
       if (image == null) return;
-
-      loadImage(image);
+      await card();
+      await loadImage(image);
     });
   }
 
-  resetTransformation() {
-    setState(() {});
+  Future<void> card() async {
+    final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
+    _cardSize = renderBox.size; // The size of the card
+    _cardPosition = renderBox.localToGlobal(Offset.zero); // The position of the card
   }
 
   Future<void> loadImage(dynamic imageFile) async {
@@ -87,8 +92,6 @@ class _ImageEditorState extends State<ImageEditor> {
     if (currentImage != null) {
       ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(currentImage!));
       setState(() {
-        baseLayer = Image.memory(currentImage!, fit: BoxFit.cover);
-        //cardColor gradient
         cardColor = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -107,17 +110,9 @@ class _ImageEditorState extends State<ImageEditor> {
       return imageFile;
     } else if (imageFile is File || imageFile is XFile) {
       final image = await imageFile.readAsBytes();
-
       return image;
     }
-
     return Uint8List.fromList([]);
-  }
-
-  Size getScreenshotSize() {
-    final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
-
-    return renderBox.size;
   }
 
   @override
@@ -128,7 +123,7 @@ class _ImageEditorState extends State<ImageEditor> {
       child: GestureDetector(
         key: const Key('background_gestureDetector'),
         onTap: () {
-          selectedAssetId = null;
+          selectedKey = null;
           setState(() {});
         },
         child: Scaffold(
@@ -144,7 +139,6 @@ class _ImageEditorState extends State<ImageEditor> {
     double statusBarHeight = MediaQuery.of(context).padding.top;
     return Center(
       child: RepaintBoundary(
-        key: editGlobalKey,
         child: Padding(
           padding: EdgeInsets.fromLTRB(8.0, statusBarHeight + 8.0, 8.0, 8.0),
           child: Screenshot(
@@ -162,24 +156,28 @@ class _ImageEditorState extends State<ImageEditor> {
                     fit: StackFit.expand,
                     children: [
                       Positioned.fill(
-                          child: Align(
-                              alignment: Alignment.center,
-                              child: BaseLayerWidget(
-                                key: backgroundKey,
-                                base: baseLayer,
-                                size: const Size(400, 600),
-                                canTransform: selectedAssetId == backgroundKey ? true : false,
-                                onDragStart: () {
-                                  setState(() {
-                                    selectedAssetId = backgroundKey;
-                                  });
-                                },
-                                onDragEnd: () {
-                                  setState(() {
-                                    selectedAssetId = null;
-                                  });
-                                },
-                              ))),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            Size baseSize =
+                                cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
+                            return BaseLayerWidget(
+                              size: baseSize,
+                              uint8List: currentImage,
+                              canTransform: selectedKey == backgroundKey ? true : false,
+                              onDragStart: () {
+                                setState(() {
+                                  selectedKey = backgroundKey;
+                                });
+                              },
+                              onDragEnd: () {
+                                setState(() {
+                                  selectedKey = null;
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      ),
                       ...layers.map((layer) {
                         if (layer is BlurLayerData) {
                           return BackdropFilter(
@@ -195,9 +193,9 @@ class _ImageEditorState extends State<ImageEditor> {
                         } else if (layer is LayerData) {
                           return DraggableResizable(
                             key: Key('${layer.key}_draggableResizable_asset'),
-                            canTransform: selectedAssetId == layer.key ? true : false,
-                            onLayerTapped: () {
-                              selectedAssetId = layer.key;
+                            canTransform: selectedKey == layer.key ? true : false,
+                            onDragStart: () {
+                              selectedKey = layer.key;
                               var listLength = layers.length;
                               var index = layers.indexOf(layer);
                               if (index != listLength) {
@@ -207,7 +205,7 @@ class _ImageEditorState extends State<ImageEditor> {
                               setState(() {});
                             },
                             onDragEnd: () {
-                              selectedAssetId = null;
+                              selectedKey = null;
                               setState(() {});
                             },
                             onDelete: () async {
@@ -244,9 +242,6 @@ class _ImageEditorState extends State<ImageEditor> {
         IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
-              final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
-              final cardSize = renderBox.size; // The size of the card
-              final cardPosition = renderBox.localToGlobal(Offset.zero); // The position of the card
               setState(() {
                 showAppBar = false;
               });
@@ -340,45 +335,12 @@ class _ImageEditorState extends State<ImageEditor> {
             setState(() {});
           },
         ),
-
-        /** 
-            IconButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
-              onPressed: () {
-                if (removedLayers.isNotEmpty) {
-                  layers.add(removedLayers.removeLast());
-                  setState(() {});
-                  return;
-                }
-
-                if (layers.length <= 1) return; // do not remove image layer
-
-                undoLayers.add(layers.removeLast());
-
-                setState(() {});
-              },
-            ),
-            IconButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
-              onPressed: () {
-                if (undoLayers.isEmpty) return;
-
-                layers.add(undoLayers.removeLast());
-
-                setState(() {});
-              },
-            ),
-            */
-
         IconButton(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           icon: const Icon(Icons.check),
           onPressed: () async {
-            selectedAssetId = null;
+            selectedKey = null;
             showAppBar = false;
-            resetTransformation();
 
             setState(() {});
 
@@ -411,7 +373,7 @@ class PositionedWidget extends StatelessWidget {
         offset: Offset(position.dx, position.dy),
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
-          child: Container(
+          child: SizedBox(
             width: size.width,
             height: size.height,
             child: child,
@@ -421,3 +383,33 @@ class PositionedWidget extends StatelessWidget {
     );
   }
 }
+ /** 
+            IconButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
+              onPressed: () {
+                if (removedLayers.isNotEmpty) {
+                  layers.add(removedLayers.removeLast());
+                  setState(() {});
+                  return;
+                }
+
+                if (layers.length <= 1) return; // do not remove image layer
+
+                undoLayers.add(layers.removeLast());
+
+                setState(() {});
+              },
+            ),
+            IconButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
+              onPressed: () {
+                if (undoLayers.isEmpty) return;
+
+                layers.add(undoLayers.removeLast());
+
+                setState(() {});
+              },
+            ),
+            */
