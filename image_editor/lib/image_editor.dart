@@ -16,7 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
 import 'modules/blur.dart';
-import 'modules/drawing_page.dart';
+import 'modules/brush_painter.dart';
 import 'modules/text.dart';
 
 // List of global variables
