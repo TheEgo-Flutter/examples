@@ -23,6 +23,7 @@ import 'modules/text.dart';
 List<Layer> layers = [], undoLayers = [], removedLayers = [];
 Key? selectedAssetId;
 final GlobalKey editGlobalKey = GlobalKey();
+final GlobalKey cardKey = GlobalKey();
 const Key backgroundKey = Key('base_layer');
 
 class ImageEditor extends StatefulWidget {
@@ -48,7 +49,7 @@ class _ImageEditorState extends State<ImageEditor> {
   Uint8List? currentImage;
   Widget baseLayer = const SizedBox.shrink();
   Size viewportSize = const Size(0, 0);
-
+  bool showAppBar = true;
   LinearGradient cardColor = const LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -68,9 +69,13 @@ class _ImageEditorState extends State<ImageEditor> {
   @override
   void initState() {
     super.initState();
-    if (widget.image != null) {
-      loadImage(widget.image!);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) return;
+
+      loadImage(image);
+    });
   }
 
   resetTransformation() {
@@ -109,6 +114,12 @@ class _ImageEditorState extends State<ImageEditor> {
     return Uint8List.fromList([]);
   }
 
+  Size getScreenshotSize() {
+    final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
+
+    return renderBox.size;
+  }
+
   @override
   Widget build(BuildContext context) {
     viewportSize = MediaQuery.of(context).size;
@@ -123,8 +134,7 @@ class _ImageEditorState extends State<ImageEditor> {
         child: Scaffold(
           key: scaffoldGlobalKey,
           backgroundColor: Colors.grey,
-          body: buildScreenshotWidget(context),
-          bottomNavigationBar: bottomBar,
+          body: Scaffold(body: buildScreenshotWidget(context)),
         ),
       ),
     );
@@ -140,6 +150,7 @@ class _ImageEditorState extends State<ImageEditor> {
           child: Screenshot(
             controller: screenshotController,
             child: ClipRRect(
+              key: cardKey,
               borderRadius: const BorderRadius.all(Radius.circular(16)),
               child: Container(
                 decoration: BoxDecoration(
@@ -224,68 +235,149 @@ class _ImageEditorState extends State<ImageEditor> {
   //---------------------------------//
 
   Widget buildAppBar() {
+    if (!showAppBar) return const SizedBox.shrink();
     return SingleChildScrollView(
       reverse: true,
       scrollDirection: Axis.horizontal,
       child: Row(children: [
         const BackButton(),
+        IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
+              final cardSize = renderBox.size; // The size of the card
+              final cardPosition = renderBox.localToGlobal(Offset.zero); // The position of the card
+              setState(() {
+                showAppBar = false;
+              });
+              LayerData? layer = await showGeneralDialog(
+                context: context,
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return PositionedWidget(
+                    position: cardPosition,
+                    size: cardSize,
+                    child: const BrushPainter(),
+                  );
+                },
+              );
+              if (layer == null) {
+                setState(() {
+                  showAppBar = true;
+                });
+                return;
+              }
+              setState(() {
+                showAppBar = true;
+                undoLayers.clear();
+                removedLayers.clear();
+
+                layers.add(layer);
+              });
+            }),
+        IconButton(
+          icon: const Icon(Icons.text_fields),
+          onPressed: () async {
+            LayerData? layer = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TextEditorImage(),
+              ),
+            );
+            if (layer == null) return;
+            undoLayers.clear();
+            removedLayers.clear();
+            layers.add(layer);
+            setState(() {});
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.blur_on),
+          onPressed: () async {
+            var blurLayer = BlurLayerData(
+              color: Colors.transparent,
+              radius: 0.0,
+              opacity: 0.0,
+            );
+            undoLayers.clear();
+            removedLayers.clear();
+            layers.add(blurLayer);
+            setState(() {});
+            showModalBottomSheet(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
+              ),
+              context: context,
+              builder: (context) {
+                return Blur(
+                  blurLayer: blurLayer,
+                  onSelected: (BlurLayerData updatedBlurLayer) {
+                    setState(() {
+                      layers.removeWhere((element) => element is BlurLayerData);
+                      layers.add(updatedBlurLayer);
+                    });
+                  },
+                );
+              },
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.face_5_outlined),
+          onPressed: () async {
+            LayerData? layer = await showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.black,
+              builder: (BuildContext context) {
+                return Stickers(
+                  stickers: widget.stickers,
+                );
+              },
+            );
+            if (layer == null) return;
+            undoLayers.clear();
+            removedLayers.clear();
+            layers.add(layer);
+            setState(() {});
+          },
+        ),
+
         /** 
-        IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
-          onPressed: () {
-            if (removedLayers.isNotEmpty) {
-              layers.add(removedLayers.removeLast());
-              setState(() {});
-              return;
-            }
+            IconButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
+              onPressed: () {
+                if (removedLayers.isNotEmpty) {
+                  layers.add(removedLayers.removeLast());
+                  setState(() {});
+                  return;
+                }
 
-            if (layers.length <= 1) return; // do not remove image layer
+                if (layers.length <= 1) return; // do not remove image layer
 
-            undoLayers.add(layers.removeLast());
+                undoLayers.add(layers.removeLast());
 
-            setState(() {});
-          },
-        ),
-        IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
-          onPressed: () {
-            if (undoLayers.isEmpty) return;
+                setState(() {});
+              },
+            ),
+            IconButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
+              onPressed: () {
+                if (undoLayers.isEmpty) return;
 
-            layers.add(undoLayers.removeLast());
+                layers.add(undoLayers.removeLast());
 
-            setState(() {});
-          },
-        ),
-        */
-        IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: const Icon(Icons.photo),
-          onPressed: () async {
-            var image = await picker.pickImage(source: ImageSource.gallery);
+                setState(() {});
+              },
+            ),
+            */
 
-            if (image == null) return;
-
-            loadImage(image);
-          },
-        ),
-        IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: const Icon(Icons.camera_alt),
-          onPressed: () async {
-            var image = await picker.pickImage(source: ImageSource.camera);
-
-            if (image == null) return;
-
-            loadImage(image);
-          },
-        ),
         IconButton(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           icon: const Icon(Icons.check),
           onPressed: () async {
             selectedAssetId = null;
+            showAppBar = false;
             resetTransformation();
 
             setState(() {});
@@ -302,133 +394,30 @@ class _ImageEditorState extends State<ImageEditor> {
       ]),
     );
   }
+}
 
-  Widget get bottomBar => Container(
-        height: const ButtonThemeData().height * 2,
-        color: Colors.black,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit),
-                    Text(
-                      'Brush',
-                    )
-                  ],
-                ),
-                onPressed: () async {
-                  LayerData? layer = await Navigator.of(context).push(
-                    PageRouteBuilder(
-                      opaque: false, // set to false
-                      pageBuilder: (_, __, ___) => const BrushPainter(),
-                    ),
-                  );
-                  if (layer == null) return;
-                  undoLayers.clear();
-                  removedLayers.clear();
+class PositionedWidget extends StatelessWidget {
+  final Widget child;
+  final Size size;
+  final Offset position;
 
-                  layers.add(layer);
+  const PositionedWidget({super.key, required this.child, required this.size, required this.position});
 
-                  setState(() {});
-                },
-              ),
-              ElevatedButton(
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.text_fields),
-                    Text(
-                      'Text',
-                    )
-                  ],
-                ),
-                onPressed: () async {
-                  LayerData? layer = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TextEditorImage(),
-                    ),
-                  );
-                  if (layer == null) return;
-                  undoLayers.clear();
-                  removedLayers.clear();
-                  layers.add(layer);
-                  setState(() {});
-                },
-              ),
-              ElevatedButton(
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.blur_on),
-                    Text(
-                      'Blur',
-                    )
-                  ],
-                ),
-                onPressed: () async {
-                  var blurLayer = BlurLayerData(
-                    color: Colors.transparent,
-                    radius: 0.0,
-                    opacity: 0.0,
-                  );
-                  undoLayers.clear();
-                  removedLayers.clear();
-                  layers.add(blurLayer);
-                  setState(() {});
-                  showModalBottomSheet(
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
-                    ),
-                    context: context,
-                    builder: (context) {
-                      return Blur(
-                        blurLayer: blurLayer,
-                        onSelected: (BlurLayerData updatedBlurLayer) {
-                          setState(() {
-                            layers.removeWhere((element) => element is BlurLayerData);
-                            layers.add(updatedBlurLayer);
-                          });
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
-              ElevatedButton(
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.face_5_outlined),
-                    Text(
-                      'Sticker',
-                    )
-                  ],
-                ),
-                onPressed: () async {
-                  LayerData? layer = await showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.black,
-                    builder: (BuildContext context) {
-                      return Stickers(
-                        stickers: widget.stickers,
-                      );
-                    },
-                  );
-                  if (layer == null) return;
-                  undoLayers.clear();
-                  removedLayers.clear();
-                  layers.add(layer);
-                  setState(() {});
-                },
-              ),
-            ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Transform.translate(
+        offset: Offset(position.dx, position.dy),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(16)),
+          child: Container(
+            width: size.width,
+            height: size.height,
+            child: child,
           ),
         ),
-      );
+      ),
+    );
+  }
 }
