@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hand_signature/signature.dart';
-
-import '../layers/layer.dart';
+import 'package:image_editor/image_editor.dart';
 
 class BrushPainter extends StatefulWidget {
   const BrushPainter({
@@ -28,7 +27,6 @@ class _BrushPainterState extends State<BrushPainter> {
 
   List<CubicPath> undoList = [];
   bool skipNextEvent = false;
-
   List<Color> colorList = [
     Colors.black,
     Colors.white,
@@ -38,10 +36,9 @@ class _BrushPainterState extends State<BrushPainter> {
     Colors.purple,
     Colors.brown,
     Colors.indigo,
-    Colors.indigo,
   ];
 
-  ValueNotifier<String?> svg = ValueNotifier<String?>(null);
+  ValueNotifier<List<String?>> svg = ValueNotifier<List<String?>>([]);
   void changeColor(Color color) {
     currentColor = color;
     setState(() {});
@@ -56,8 +53,17 @@ class _BrushPainterState extends State<BrushPainter> {
         skipNextEvent = false;
         return;
       }
-
       undoList = [];
+      if (control.paths.isEmpty) {
+        svg.value.add(control.toSvg(
+          color: currentColor,
+          type: SignatureDrawType.shape,
+          fit: true,
+        ));
+        log(svg.value.last ?? '');
+        control.stepBack();
+      }
+
       setState(() {});
     });
 
@@ -127,25 +133,21 @@ class _BrushPainterState extends State<BrushPainter> {
 
           String viewBox = "relativeOffset: $offset\nSize($width, $height)";
           log(viewBox);
-          svg.value = control.toSvg(
-            color: currentColor,
-            type: SignatureDrawType.shape,
-            fit: true,
-          );
+
           if (!mounted) return;
-          var svgPic = SvgPicture.string(
-            svg.value!,
-            fit: BoxFit.contain,
-            width: width,
-            height: height,
-          );
-          LayerData data = LayerData(
-            key: UniqueKey(),
-            object: svgPic,
-            size: Size(width, height),
-            offset: offset, // Use relative offset
-          );
-          return Navigator.pop(context, data);
+          // var svgPic = SvgPicture.string(
+          //   svg.value!,
+          //   fit: BoxFit.contain,
+          //   width: width,
+          //   height: height,
+          // );
+          // LayerData data = LayerData(
+          //   key: UniqueKey(),
+          //   object: svgPic,
+          //   size: Size(width, height),
+          //   offset: offset, // Use relative offset
+          // );
+          // return Navigator.pop(context, data);
         },
       ),
     ]);
@@ -153,47 +155,65 @@ class _BrushPainterState extends State<BrushPainter> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
-          children: <Widget>[
-            Container(
-              constraints: const BoxConstraints.expand(),
-              child: HandSignature(
-                control: control,
-                type: SignatureDrawType.shape,
-                color: currentColor,
-              ),
-            ),
-            CustomPaint(
-              painter: DebugSignaturePainterCP(
-                control: control,
-                cp: false,
-                cpStart: false,
-                cpEnd: false,
-              ),
-            ),
-            Transform.translate(
-              offset: Offset(0, 0),
-              child: buildAppBar(),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              child: Row(
-                children: [
-                  ColorButton(
-                    color: Colors.yellow,
+    return Stack(
+      children: <Widget>[
+        svg.value.isNotEmpty && svg.value.last != null
+            ? SvgPicture.string(
+                svg.value.last!,
+                fit: BoxFit.contain,
+                width: cardSize.width,
+                height: cardSize.height,
+              )
+            : const SizedBox.shrink(),
+        Container(
+          constraints: const BoxConstraints.expand(),
+          child: HandSignature(
+            control: control,
+            type: SignatureDrawType.shape,
+            color: currentColor,
+          ),
+        ),
+        // CustomPaint(
+        //   painter: DebugSignaturePainterCP(
+        //     control: control,
+        //     cp: false,
+        //     cpStart: false,
+        //     cpEnd: false,
+        //   ),
+        // ),
+        Transform.translate(
+          offset: const Offset(0, 0),
+          child: buildAppBar(),
+        ),
+        Transform.translate(
+            offset: Offset(0, cardSize.height - 60),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        stops: [
+                          0.1,
+                          0.4,
+                          0.6,
+                          0.9,
+                        ],
+                        colors: [
+                          Colors.yellow,
+                          Colors.red,
+                          Colors.indigo,
+                          Colors.teal,
+                        ],
+                      )),
+                  child: ColorButton(
+                    color: Colors.transparent,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     onTap: (color) {
                       showModalBottomSheet(
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(10),
-                            topLeft: Radius.circular(10),
-                          ),
-                        ),
                         context: context,
                         builder: (context) {
                           return Container(
@@ -213,18 +233,16 @@ class _BrushPainterState extends State<BrushPainter> {
                       );
                     },
                   ),
-                  for (int i = 0; i < colorList.length; i++)
-                    ColorButton(
-                      color: colorList[i],
-                      onTap: (color) => changeColor(color),
-                      isSelected: colorList[i] == currentColor,
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
+                for (int i = 0; i < colorList.length; i++)
+                  ColorButton(
+                    color: colorList[i],
+                    onTap: (color) => changeColor(color),
+                    isSelected: colorList[i] == currentColor,
+                  ),
+              ],
+            )),
+      ],
     );
   }
 }
@@ -234,24 +252,25 @@ class ColorButton extends StatelessWidget {
   final Color color;
   final Function onTap;
   final bool isSelected;
-
+  final EdgeInsetsGeometry? margin;
   const ColorButton({
     super.key,
     required this.color,
     required this.onTap,
+    this.margin = const EdgeInsets.symmetric(vertical: 16),
     this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         onTap(color);
       },
       child: Container(
-        height: 28,
-        width: 28,
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 23),
+        height: 24,
+        width: 24,
+        margin: margin,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
