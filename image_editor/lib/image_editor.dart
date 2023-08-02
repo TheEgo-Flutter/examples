@@ -15,7 +15,6 @@ import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
-import 'modules/blur.dart';
 import 'modules/brush_painter.dart';
 import 'modules/text.dart';
 
@@ -237,11 +236,11 @@ class _PhotoEditorState extends State<PhotoEditor> {
 
   Widget buildAppBar() {
     if (!showAppBar) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      reverse: true,
-      scrollDirection: Axis.horizontal,
+    return SizedBox(
+      width: cardSize.width,
       child: Row(children: [
         const BackButton(),
+        const Spacer(),
         IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
@@ -288,37 +287,37 @@ class _PhotoEditorState extends State<PhotoEditor> {
             setState(() {});
           },
         ),
-        IconButton(
-          icon: const Icon(Icons.blur_on),
-          onPressed: () async {
-            var blurLayer = BlurLayerData(
-              color: Colors.transparent,
-              radius: 0.0,
-              opacity: 0.0,
-            );
-            undoLayers.clear();
-            removedLayers.clear();
-            layers.add(blurLayer);
-            setState(() {});
-            showModalBottomSheet(
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
-              ),
-              context: context,
-              builder: (context) {
-                return Blur(
-                  blurLayer: blurLayer,
-                  onSelected: (BlurLayerData updatedBlurLayer) {
-                    setState(() {
-                      layers.removeWhere((element) => element is BlurLayerData);
-                      layers.add(updatedBlurLayer);
-                    });
-                  },
-                );
-              },
-            );
-          },
-        ),
+        // IconButton(
+        //   icon: const Icon(Icons.blur_on),
+        //   onPressed: () async {
+        //     var blurLayer = BlurLayerData(
+        //       color: Colors.transparent,
+        //       radius: 0.0,
+        //       opacity: 0.0,
+        //     );
+        //     undoLayers.clear();
+        //     removedLayers.clear();
+        //     layers.add(blurLayer);
+        //     setState(() {});
+        //     showModalBottomSheet(
+        //       shape: const RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
+        //       ),
+        //       context: context,
+        //       builder: (context) {
+        //         return Blur(
+        //           blurLayer: blurLayer,
+        //           onSelected: (BlurLayerData updatedBlurLayer) {
+        //             setState(() {
+        //               layers.removeWhere((element) => element is BlurLayerData);
+        //               layers.add(updatedBlurLayer);
+        //             });
+        //           },
+        //         );
+        //       },
+        //     );
+        //   },
+        // ),
         IconButton(
           icon: const Icon(Icons.face_5_outlined),
           onPressed: () async {
