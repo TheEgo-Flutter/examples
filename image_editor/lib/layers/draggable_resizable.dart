@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_editor/image_editor.dart';
 
-import '../layers/layer.dart';
 import 'matrix_gesture_detector.dart';
 
 class DraggableResizable extends StatelessWidget {
   DraggableResizable.background({
-    required Key key,
+    super.key = backgroundKey,
     required Uint8List? uint8List,
     required Size size,
     VoidCallback? onDragStart,
@@ -29,30 +29,20 @@ class DraggableResizable extends StatelessWidget {
             : const SizedBox.shrink();
   DraggableResizable.object({
     required Key key,
-    required LayerData layer,
+    required Widget child,
+    required Size size,
     VoidCallback? onDragStart,
     VoidCallback? onDragEnd,
     VoidCallback? onDelete,
     bool canTransform = false,
   })  : _widget = DraggableBase(
           key: key,
-          size: layer.size,
+          size: size,
           onDragStart: onDragStart,
           onDragEnd: onDragEnd,
           canTransform: canTransform,
-          child: layer.object,
+          child: child,
         ),
-        // = Container(
-        //         width: layer.size.width,
-        //         height: layer.size.height,
-        //         decoration: BoxDecoration(
-        //           border: Border.all(
-        //             width: 2,
-        //             color: canTransform ? Colors.blue : Colors.transparent,
-        //           ),
-        //         ),
-        //         child: ,
-        //       ),
         super(key: key);
 
   late final Widget _widget;
@@ -63,15 +53,15 @@ class DraggableResizable extends StatelessWidget {
 }
 
 class DraggableBase extends StatefulWidget {
-  DraggableBase({
-    required key,
+  const DraggableBase({
+    super.key,
     required this.child,
     required this.size,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.canTransform = false,
-  }) : super(key: key);
+  });
   final Widget child;
   final Size size;
   final VoidCallback? onDelete;
@@ -93,23 +83,37 @@ class _DraggableBaseState extends State<DraggableBase> {
 
   @override
   Widget build(BuildContext context) {
-    return MatrixGestureDetector(
-      onLayerTapped: () => widget.onDragStart?.call(),
-      onMatrixUpdate: (m, tm, sm, rm) {
-        widget.canTransform ? notifier.value = m : null;
-      },
-      onDragStart: () {
-        widget.onDragStart?.call();
-      },
-      onDragEnd: () {
-        widget.onDragEnd?.call();
-      },
+    return SizedBox(
+      width: widget.size.width,
+      height: widget.size.height,
       child: AnimatedBuilder(
         animation: notifier,
         builder: (ctx, child) {
-          return Transform(
-            transform: notifier.value,
-            child: widget.child,
+          return FittedBox(
+            child: Transform(
+              transform: notifier.value,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: widget.canTransform ? Colors.white : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: MatrixGestureDetector(
+                  onLayerTapped: () => widget.onDragStart?.call(),
+                  onMatrixUpdate: (m, tm, sm, rm) {
+                    widget.canTransform ? notifier.value = m : null;
+                  },
+                  onDragStart: () {
+                    widget.onDragStart?.call();
+                  },
+                  onDragEnd: () {
+                    widget.onDragEnd?.call();
+                  },
+                  child: widget.child,
+                ),
+              ),
+            ),
           );
         },
       ),

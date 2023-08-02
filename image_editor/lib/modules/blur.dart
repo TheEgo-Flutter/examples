@@ -1,23 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/layers/layer.dart';
 
 import 'colors_picker.dart';
 
-class Blur extends StatefulWidget {
-  const Blur({
-    Key? key,
-    required this.blurLayer,
-    required this.onSelected, // Add the onSelected callback
-  }) : super(key: key);
+class BlurData {
+  Color color;
+  double radius;
+  Offset offset;
+  double opacity;
 
-  final BlurLayerData blurLayer;
-  final ValueChanged<BlurLayerData> onSelected; // Updated this line
-
-  @override
-  State<Blur> createState() => _BlurState();
+  BlurData(this.color, this.radius, this.offset, this.opacity);
+  BlurData.zero({
+    this.color = Colors.transparent,
+    this.radius = 0.0,
+    this.offset = Offset.zero,
+    this.opacity = 0.0,
+  });
 }
 
-class _BlurState extends State<Blur> {
+// ignore: must_be_immutable
+class BlurLayer extends StatefulWidget {
+  BlurLayer({Key? key, required this.onSelected, BlurData? blur})
+      : blur = blur ?? BlurData.zero(),
+        super(key: key);
+
+  BlurData blur;
+  final ValueChanged<Color> onSelected;
+
+  @override
+  State<BlurLayer> createState() => _BlurLayerState();
+}
+
+class _BlurLayerState extends State<BlurLayer> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -40,9 +53,9 @@ class _BlurState extends State<Blur> {
                   pickMode: PickMode.color,
                   colorListener: (int value) {
                     setState(() {
-                      widget.blurLayer.color = Color(value);
+                      widget.blur.color = Color(value);
                     });
-                    widget.onSelected(widget.blurLayer);
+                    widget.onSelected(widget.blur.color);
                   },
                 ),
               ),
@@ -52,9 +65,9 @@ class _BlurState extends State<Blur> {
                 ),
                 onPressed: () {
                   setState(() {
-                    widget.blurLayer.color = Colors.transparent;
+                    widget.blur.color = Colors.transparent;
                   });
-                  widget.onSelected(widget.blurLayer);
+                  widget.onSelected(widget.blur.color);
                 },
               )
             ]),
@@ -69,14 +82,14 @@ class _BlurState extends State<Blur> {
                 child: Slider(
                   activeColor: Colors.white,
                   inactiveColor: Colors.grey,
-                  value: widget.blurLayer.radius,
+                  value: widget.blur.radius,
                   min: 0.0,
                   max: 10.0,
                   onChanged: (v) {
                     setState(() {
-                      widget.blurLayer.radius = v;
+                      widget.blur.radius = v;
                     });
-                    widget.onSelected(widget.blurLayer);
+                    widget.onSelected(widget.blur.color);
                   },
                 ),
               ),
@@ -86,9 +99,9 @@ class _BlurState extends State<Blur> {
                 ),
                 onPressed: () {
                   setState(() {
-                    widget.blurLayer.color = Colors.white;
+                    widget.blur.color = Colors.white;
                   });
-                  widget.onSelected(widget.blurLayer);
+                  widget.onSelected(widget.blur.color);
                 },
               )
             ]),
@@ -103,14 +116,14 @@ class _BlurState extends State<Blur> {
                 child: Slider(
                   activeColor: Colors.white,
                   inactiveColor: Colors.grey,
-                  value: widget.blurLayer.opacity,
+                  value: widget.blur.opacity,
                   min: 0.00,
                   max: 1.0,
                   onChanged: (v) {
                     setState(() {
-                      widget.blurLayer.opacity = v;
+                      widget.blur.opacity = v;
                     });
-                    widget.onSelected(widget.blurLayer);
+                    widget.onSelected(widget.blur.color);
                   },
                 ),
               ),
@@ -120,9 +133,9 @@ class _BlurState extends State<Blur> {
                 ),
                 onPressed: () {
                   setState(() {
-                    widget.blurLayer.opacity = 0.0;
+                    widget.blur.opacity = 0.0;
                   });
-                  widget.onSelected(widget.blurLayer);
+                  widget.onSelected(widget.blur.color);
                 },
               )
             ]),

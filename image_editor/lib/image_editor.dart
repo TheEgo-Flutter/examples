@@ -2,12 +2,11 @@ library image_editor_plus;
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_editor/layers/draggable_resizable.dart';
-import 'package:image_editor/layers/layer.dart';
 import 'package:image_editor/loading_screen.dart';
 import 'package:image_editor/modules/sticker.dart';
 import 'package:image_editor/theme.dart';
@@ -19,10 +18,10 @@ import 'modules/brush_painter.dart';
 import 'modules/text.dart';
 
 // List of global variables
-List<Layer> layers = [], undoLayers = [], removedLayers = [];
+List<Widget> layers = [], undoLayers = [], removedLayers = [];
 Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
-final GlobalKey backgroundKey = GlobalKey();
+const Key backgroundKey = Key('backgroundKey');
 Size get cardSize => _cardSize ?? Size.zero;
 Offset get cardPosition => _cardPosition ?? Offset.zero;
 Size? _cardSize;
@@ -151,77 +150,61 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 ),
                 child: AspectRatio(
                   aspectRatio: widget.aspectRatio.ratio ?? 1,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Positioned.fill(
-                        child: DraggableResizable.background(
-                          key: backgroundKey,
-                          size: cardSize,
-                          uint8List: currentImage,
-                          canTransform: selectedKey == backgroundKey ? true : false,
-                          onDragStart: () {
-                            setState(() {
-                              selectedKey = backgroundKey;
-                            });
-                          },
-                          onDragEnd: () {
-                            setState(() {
-                              selectedKey = null;
-                            });
-                          },
-                        ),
-                        //   child: LayoutBuilder(
-                        //     // key: Key('background_draggableResizable'),
-                        //     builder: (context, constraints) {
-                        //       Size baseSize =
-                        //           cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
-                        //       return ;
-                        //     },
-                        //   ),
-                      ),
-                      ...layers.map((layer) {
-                        if (layer is BlurLayerData) {
-                          return BackdropFilter(
-                            key: const Key('blurLayer_gestureDetector'),
-                            filter: ImageFilter.blur(
-                              sigmaX: layer.radius,
-                              sigmaY: layer.radius,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: DraggableResizable.background(
+                              size: cardSize,
+                              uint8List: currentImage,
+                              canTransform: selectedKey == backgroundKey ? true : false,
+                              onDragStart: () {
+                                setState(() {
+                                  selectedKey = backgroundKey;
+                                });
+                              },
+                              onDragEnd: () {
+                                setState(() {
+                                  selectedKey = null;
+                                });
+                              },
                             ),
-                            child: Container(
-                              color: layer.color.withOpacity(layer.opacity),
-                            ),
-                          );
-                        } else if (layer is LayerData) {
-                          return DraggableResizable.object(
-                            key: Key('${layer.key}_draggableResizable_asset'),
-                            canTransform: selectedKey == layer.key ? true : false,
-                            onDragStart: () {
-                              selectedKey = layer.key;
-                              var listLength = layers.length;
-                              var index = layers.indexOf(layer);
-                              if (index != listLength) {
-                                layers.remove(layer);
-                                layers.add(layer);
-                              }
-                              setState(() {});
-                            },
-                            onDragEnd: () {
-                              selectedKey = null;
-                              setState(() {});
-                            },
-                            onDelete: () async {
-                              layers.remove(layer);
-                              setState(() {});
-                            },
-                            layer: layer,
-                          );
-                        } else {
-                          return Container();
-                        }
-                      }).toList(),
-                      Positioned(top: 0, right: 0, child: buildAppBar())
-                    ],
+                          ),
+                          ...layers.map((layer) {
+                            return DraggableResizable.object(
+                              key: Key('${layer.key}_draggableResizable_asset'),
+                              size: cardSize,
+                              canTransform: selectedKey == layer.key ? true : false,
+                              onDragStart: () {
+                                selectedKey = layer.key;
+                                var listLength = layers.length;
+                                var index = layers.indexOf(layer);
+                                if (index != listLength) {
+                                  layers.remove(layer);
+                                  layers.add(layer);
+                                }
+                                setState(() {});
+                              },
+                              onDragEnd: () {
+                                selectedKey = null;
+                                setState(() {});
+                              },
+                              // onDelete: () async {
+                              //   layers.remove(layer);
+                              //   setState(() {});
+                              // },
+                              child: layer,
+                            );
+                            // } else {
+                            //   return Container();
+                            // }
+                          }).toList(),
+                          Positioned(top: 0, right: 0, child: buildAppBar())
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -247,7 +230,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
               setState(() {
                 showAppBar = false;
               });
-              LayerData? layer = await showGeneralDialog(
+              SvgPicture? layer = await showGeneralDialog(
+                //TODO: check this
                 context: context,
                 pageBuilder: (context, animation, secondaryAnimation) {
                   return PositionedWidget(
@@ -274,7 +258,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
         IconButton(
           icon: const Icon(Icons.text_fields),
           onPressed: () async {
-            LayerData? layer = await Navigator.push(
+            Widget? layer = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const TextEditorImage(),
@@ -287,41 +271,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
             setState(() {});
           },
         ),
-        // IconButton(
-        //   icon: const Icon(Icons.blur_on),
-        //   onPressed: () async {
-        //     var blurLayer = BlurLayerData(
-        //       color: Colors.transparent,
-        //       radius: 0.0,
-        //       opacity: 0.0,
-        //     );
-        //     undoLayers.clear();
-        //     removedLayers.clear();
-        //     layers.add(blurLayer);
-        //     setState(() {});
-        //     showModalBottomSheet(
-        //       shape: const RoundedRectangleBorder(
-        //         borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
-        //       ),
-        //       context: context,
-        //       builder: (context) {
-        //         return Blur(
-        //           blurLayer: blurLayer,
-        //           onSelected: (BlurLayerData updatedBlurLayer) {
-        //             setState(() {
-        //               layers.removeWhere((element) => element is BlurLayerData);
-        //               layers.add(updatedBlurLayer);
-        //             });
-        //           },
-        //         );
-        //       },
-        //     );
-        //   },
-        // ),
         IconButton(
           icon: const Icon(Icons.face_5_outlined),
           onPressed: () async {
-            LayerData? layer = await showModalBottomSheet(
+            Widget? layer = await showModalBottomSheet(
               context: context,
               backgroundColor: Colors.black,
               builder: (BuildContext context) {
@@ -384,8 +337,52 @@ class PositionedWidget extends StatelessWidget {
       ),
     );
   }
-}
- /** 
+}     /** Blur Layer Code
+
+         IconButton(
+           icon: const Icon(Icons.blur_on),
+           onPressed: () async {
+             var blurLayer = BlurLayerData(
+               color: Colors.transparent,
+               radius: 0.0,
+               opacity: 0.0,
+             );
+             undoLayers.clear();
+             removedLayers.clear();
+             layers.add(blurLayer);
+             setState(() {});
+             showModalBottomSheet(
+               shape: const RoundedRectangleBorder(
+                 borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10)),
+               ),
+               context: context,
+               builder: (context) {
+                 return Blur(
+                   blurLayer: blurLayer,
+                   onSelected: (BlurLayerData updatedBlurLayer) {
+                     setState(() {
+                       layers.removeWhere((element) => element is BlurLayerData);
+                       layers.add(updatedBlurLayer);
+                     });
+                   },
+                 );
+               },
+             );
+           },
+         ),
+
+          return BackdropFilter(
+            key: const Key('blurLayer_gestureDetector'),
+            filter: ImageFilter.blur(
+              sigmaX: layer.radius,
+              sigmaY: layer.radius,
+            ),
+            child: Container(
+              color: layer.color.withOpacity(layer.opacity),
+            ),
+          );
+        */
+ /** Undo/Redo Code
             IconButton(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
