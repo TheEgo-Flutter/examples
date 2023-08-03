@@ -129,7 +129,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
         child: Scaffold(
           key: scaffoldGlobalKey,
           backgroundColor: Colors.grey,
-          body: buildScreenshotWidget(context),
+          body: Scaffold(body: buildScreenshotWidget(context)),
         ),
       ),
     );
@@ -156,30 +156,27 @@ class _PhotoEditorState extends State<PhotoEditor> {
                     fit: StackFit.expand,
                     children: [
                       Positioned.fill(
-                        child: DraggableResizable.background(
-                          key: backgroundKey,
-                          size: cardSize,
-                          uint8List: currentImage,
-                          canTransform: selectedKey == backgroundKey ? true : false,
-                          onDragStart: () {
-                            setState(() {
-                              selectedKey = backgroundKey;
-                            });
-                          },
-                          onDragEnd: () {
-                            setState(() {
-                              selectedKey = null;
-                            });
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            Size baseSize =
+                                cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
+                            return BaseLayerWidget(
+                              size: baseSize,
+                              uint8List: currentImage,
+                              canTransform: selectedKey == backgroundKey ? true : false,
+                              onDragStart: () {
+                                setState(() {
+                                  selectedKey = backgroundKey;
+                                });
+                              },
+                              onDragEnd: () {
+                                setState(() {
+                                  selectedKey = null;
+                                });
+                              },
+                            );
                           },
                         ),
-                        //   child: LayoutBuilder(
-                        //     // key: Key('background_draggableResizable'),
-                        //     builder: (context, constraints) {
-                        //       Size baseSize =
-                        //           cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
-                        //       return ;
-                        //     },
-                        //   ),
                       ),
                       ...layers.map((layer) {
                         if (layer is BlurLayerData) {
@@ -194,7 +191,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                             ),
                           );
                         } else if (layer is LayerData) {
-                          return DraggableResizable.object(
+                          return DraggableResizable(
                             key: Key('${layer.key}_draggableResizable_asset'),
                             canTransform: selectedKey == layer.key ? true : false,
                             onDragStart: () {
