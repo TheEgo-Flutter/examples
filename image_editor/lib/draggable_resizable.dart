@@ -4,22 +4,21 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../image_editor.dart';
-import '../layers/layer.dart';
+import 'image_editor.dart';
 
 class DraggableObject extends DraggableBase {
   DraggableObject({
     required Key key,
-    required LayerData layer,
+    required this.child,
+    required Size size,
     BoxConstraints? constraints,
     VoidCallback? onDelete,
     VoidCallback? onDragStart,
     VoidCallback? onDragEnd,
     bool canTransform = false,
-  })  : layer = layer,
-        super(
+  }) : super(
           key: key,
-          size: layer.size,
+          size: size,
           constraints: constraints,
           onDelete: onDelete,
           onDragStart: onDragStart,
@@ -27,7 +26,7 @@ class DraggableObject extends DraggableBase {
           canTransform: canTransform,
         );
 
-  final LayerData layer;
+  final Widget child;
 
   @override
   Widget buildChild(BuildContext context, Size size, BoxConstraints constraints) {
@@ -40,7 +39,7 @@ class DraggableObject extends DraggableBase {
           color: canTransform ? Colors.blue : Colors.transparent,
         ),
       ),
-      child: layer.object,
+      child: child,
     );
   }
 }

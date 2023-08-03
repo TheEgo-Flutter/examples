@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/layers/layer.dart';
 import 'package:image_editor/utils.dart';
 
 import 'colors_picker.dart';
@@ -59,13 +58,10 @@ class _TextEditorImageState extends State<TextEditorImage> {
               Size getTextSize = textSize(text, context);
               Navigator.pop(
                 context,
-                LayerData(
+                Text.rich(
                   key: UniqueKey(),
-                  object: Text.rich(
-                    text,
-                    textAlign: align,
-                  ),
-                  size: Size(getTextSize.width + padding, getTextSize.height + padding),
+                  text,
+                  textAlign: align,
                 ),
               );
             },

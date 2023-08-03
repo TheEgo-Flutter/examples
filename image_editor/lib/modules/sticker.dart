@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/layers/layer.dart';
 import 'package:lottie/lottie.dart';
 
 class Stickers extends StatefulWidget {
@@ -56,12 +55,14 @@ class _StickersState extends State<Stickers> {
                   //if .json contains sticker type
                   if (sticker.contains('.json')) {
                     object = Lottie.asset(
+                      key: UniqueKey(),
                       'assets/$sticker',
                       height: 200.0,
                       width: 200.0,
                     );
                   } else {
                     object = Image.asset(
+                      key: UniqueKey(),
                       'assets/$sticker',
                       height: 200.0,
                       width: 200.0,
@@ -73,11 +74,7 @@ class _StickersState extends State<Stickers> {
                     onTap: () {
                       Navigator.pop(
                         context,
-                        LayerData(
-                          key: UniqueKey(),
-                          object: object,
-                          size: const Size(200.0, 200.0),
-                        ),
+                        object,
                       );
                     },
                     child: object,

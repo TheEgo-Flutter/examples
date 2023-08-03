@@ -5,8 +5,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hand_signature/signature.dart';
 
-import '../layers/layer.dart';
-
 class BrushPainter extends StatefulWidget {
   const BrushPainter({
     Key? key,
@@ -134,18 +132,14 @@ class _BrushPainterState extends State<BrushPainter> {
           );
           if (!mounted) return;
           var svgPic = SvgPicture.string(
+            key: UniqueKey(),
             svg.value!,
             fit: BoxFit.contain,
             width: width,
             height: height,
           );
-          LayerData data = LayerData(
-            key: UniqueKey(),
-            object: svgPic,
-            size: Size(width, height),
-            offset: offset, // Use relative offset
-          );
-          return Navigator.pop(context, data);
+
+          return Navigator.pop(context, svgPic);
         },
       ),
     ]);
