@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../utils.dart';
 import 'colors_picker.dart';
 
 class TextEditorImage extends StatefulWidget {
@@ -55,20 +54,15 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     fontSize: slider.toDouble(),
                   ));
               /** get Text Size   
-              */
               var padding = 8;
               Size getTextSize = textSize(text, context);
+              */
               Navigator.pop(
                   context,
-                  SizedBox(
+                  Text.rich(
                     key: UniqueKey(),
-                    // padding: EdgeInsets.all(padding.toDouble()),
-                    width: getTextSize.width + padding,
-                    height: getTextSize.height + padding,
-                    child: Text.rich(
-                      text,
-                      textAlign: align,
-                    ),
+                    text,
+                    textAlign: align,
                   ));
             },
             color: Colors.white,
