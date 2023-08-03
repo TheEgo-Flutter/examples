@@ -118,8 +118,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
       child: GestureDetector(
         key: const Key('background_gestureDetector'),
         onTap: () {
-          selectedKey = null;
-          setState(() {});
+          setState(() {
+            selectedKey = null;
+          });
         },
         child: Scaffold(
           key: scaffoldGlobalKey,
@@ -170,22 +171,25 @@ class _PhotoEditorState extends State<PhotoEditor> {
                           key: Key('${layer.key}_draggableResizable_asset'),
                           canTransform: selectedKey == layer.key ? true : false,
                           onDragStart: () {
-                            selectedKey = layer.key;
-                            var listLength = layerManager.layers.length;
-                            var index = layerManager.layers.indexOf(layer);
-                            if (index != listLength) {
-                              layerManager.layers.remove(layer);
-                              layerManager.layers.add(layer);
-                            }
-                            setState(() {});
+                            setState(() {
+                              selectedKey = layer.key;
+                              var listLength = layerManager.layers.length;
+                              var index = layerManager.layers.indexOf(layer);
+                              if (index != listLength) {
+                                layerManager.layers.remove(layer);
+                                layerManager.layers.add(layer);
+                              }
+                            });
                           },
                           onDragEnd: () {
-                            selectedKey = null;
-                            setState(() {});
+                            setState(() {
+                              selectedKey = null;
+                            });
                           },
                           onDelete: () async {
-                            layerManager.removeLayer(layer);
-                            setState(() {});
+                            setState(() {
+                              layerManager.removeLayer(layer);
+                            });
                           },
                           size: const Size(150, 150),
                           child: layer,
@@ -213,24 +217,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
         const BackButton(),
         const Spacer(),
         IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: Icon(Icons.undo,
-              color:
-                  layerManager.layers.length > 1 || layerManager.removedLayers.isNotEmpty ? Colors.white : Colors.grey),
-          onPressed: () {
-            layerManager.undo();
-            setState(() {});
-          },
-        ),
-        IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          icon: Icon(Icons.redo, color: layerManager.undoLayers.isNotEmpty ? Colors.white : Colors.grey),
-          onPressed: () {
-            layerManager.redo();
-            setState(() {});
-          },
-        ),
-        IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
               setState(() {
@@ -254,9 +240,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
               }
               setState(() {
                 showAppBar = true;
-                layerManager.undoLayers.clear();
-                layerManager.removedLayers.clear();
-
                 layerManager.addLayer(layer);
               });
             }),
@@ -270,8 +253,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
               ),
             );
             if (layer == null) return;
-            layerManager.undoLayers.clear();
-            layerManager.removedLayers.clear();
             layerManager.addLayer(layer);
             setState(() {});
           },
@@ -289,8 +270,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
               },
             );
             if (layer == null) return;
-            layerManager.undoLayers.clear();
-            layerManager.removedLayers.clear();
             layerManager.addLayer(layer);
             setState(() {});
           },
