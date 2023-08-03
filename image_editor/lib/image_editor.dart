@@ -152,28 +152,20 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Positioned.fill(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            Size baseSize =
-                                cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
-                            return DraggableBackground(
-                              size: baseSize,
-                              uint8List: currentImage,
-                              canTransform: selectedKey == backgroundKey ? true : false,
-                              onDragStart: () {
-                                setState(() {
-                                  selectedKey = backgroundKey;
-                                });
-                              },
-                              onDragEnd: () {
-                                setState(() {
-                                  selectedKey = null;
-                                });
-                              },
-                            );
-                          },
-                        ),
+                      DraggableBackground(
+                        size: cardSize != Size.zero ? cardSize : MediaQuery.of(context).size,
+                        uint8List: currentImage,
+                        canTransform: selectedKey == backgroundKey ? true : false,
+                        onDragStart: () {
+                          setState(() {
+                            selectedKey = backgroundKey;
+                          });
+                        },
+                        onDragEnd: () {
+                          setState(() {
+                            selectedKey = null;
+                          });
+                        },
                       ),
                       ...layers.map((layer) {
                         return DraggableObject(

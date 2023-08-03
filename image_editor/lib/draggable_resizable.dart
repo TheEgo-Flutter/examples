@@ -132,8 +132,7 @@ class _DraggableBaseState extends State<DraggableBase> {
 
         return Stack(
           children: <Widget>[
-            if (selectedKey == widget.key)
-              ..._buildCenterLine(constraints, isCenteredHorizontally, isCenteredVertically),
+            if (widget.canTransform) ..._buildCenterLine(constraints, isCenteredHorizontally, isCenteredVertically),
             Positioned(
               top: position.dy,
               left: position.dx,
