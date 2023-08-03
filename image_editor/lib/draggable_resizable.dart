@@ -11,7 +11,6 @@ class DraggableObject extends DraggableBase {
     required Key key,
     required this.child,
     required Size size,
-    BoxConstraints? constraints,
     VoidCallback? onDelete,
     VoidCallback? onDragStart,
     VoidCallback? onDragEnd,
@@ -19,7 +18,6 @@ class DraggableObject extends DraggableBase {
   }) : super(
           key: key,
           size: size,
-          constraints: constraints,
           onDelete: onDelete,
           onDragStart: onDragStart,
           onDragEnd: onDragEnd,
@@ -33,34 +31,30 @@ class DraggableObject extends DraggableBase {
     const double iconArea = 16;
     return Stack(
       children: [
-        Container(
+        Padding(
           padding: const EdgeInsets.all(iconArea / 2),
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 2,
-              color: canTransform ? Colors.red : Colors.transparent,
-            ),
-          ),
           child: Container(
-                height: size.height,
-                width: size.width,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    width: 2,
-                    color: canTransform ? Colors.blue : Colors.transparent,
-                  ),
-                ),
-                child: child,
+            height: size.height,
+            width: size.width,
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: 2,
+                color: canTransform ? Colors.blue : Colors.transparent,
               ),
+            ),
+            child: child,
+          ),
         ),
-       canTransform? Positioned(
-                top: iconArea /4,
-                right: iconArea /4,
+        canTransform
+            ? Positioned(
+                top: 2,
+                right: 2,
                 child: GestureDetector(
                   onTap: onDelete,
                   child: Container(
+                    padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: Colors.grey[800],
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
@@ -70,7 +64,8 @@ class DraggableObject extends DraggableBase {
                     ),
                   ),
                 ),
-              ):const SizedBox.shrink()
+              )
+            : const SizedBox.shrink()
       ],
     );
   }
@@ -86,7 +81,6 @@ class DraggableBackground extends DraggableBase {
   }) : super(
           key: backgroundKey,
           size: size,
-          constraints: const BoxConstraints(),
           onDragStart: onDragStart,
           onDragEnd: onDragEnd,
           canTransform: canTransform,
@@ -115,20 +109,17 @@ abstract class DraggableBase extends StatefulWidget {
   DraggableBase({
     required key,
     required this.size,
-    BoxConstraints? constraints,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.canTransform = false,
-  })  : constraints = constraints ?? BoxConstraints.loose(Size.infinite),
-        super(key: key);
+  }) : super(key: key);
 
   final Size size;
   final VoidCallback? onDelete;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
   final bool canTransform;
-  final BoxConstraints constraints;
 
   Widget buildChild(BuildContext context, Size size, BoxConstraints constraints);
 
@@ -137,8 +128,8 @@ abstract class DraggableBase extends StatefulWidget {
 }
 
 class _DraggableBaseState extends State<DraggableBase> {
-  late Size size;
-  late BoxConstraints constraints;
+  Size size = Size.zero;
+  BoxConstraints constraints = BoxConstraints.loose(Size.infinite);
   double angle = 0;
   Offset position = Offset.zero;
   bool isCenteredHorizontally = false;
@@ -148,7 +139,6 @@ class _DraggableBaseState extends State<DraggableBase> {
   void initState() {
     super.initState();
     size = widget.size;
-    constraints = widget.constraints;
   }
 
   @override
@@ -189,13 +179,10 @@ class _DraggableBaseState extends State<DraggableBase> {
     final aspectRatio = size.width / size.height;
     final normalizedWidth = size.width;
     final normalizedHeight = normalizedWidth / aspectRatio;
-    final newSize = Size(normalizedWidth, normalizedHeight);
-
-    if (widget.constraints.isSatisfiedBy(newSize)) size = newSize;
-
     final normalizedLeft = position.dx;
     final normalizedTop = position.dy;
 
+    size = Size(normalizedWidth, normalizedHeight);
     position = Offset(normalizedLeft, normalizedTop);
   }
 
