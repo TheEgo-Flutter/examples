@@ -26,6 +26,7 @@ Size get cardSize => _cardSize ?? Size.zero;
 Offset get cardPosition => _cardPosition ?? Offset.zero;
 Size? _cardSize;
 Offset? _cardPosition;
+final _initialStickerScale = 5.0;
 
 class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
@@ -157,6 +158,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                         children: [
                           Positioned.fill(
                             child: DraggableResizable.background(
+                              key: backgroundKey,
                               size: cardSize,
                               uint8List: currentImage,
                               canTransform: selectedKey == backgroundKey ? true : false,
@@ -175,7 +177,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                           ...layers.map((layer) {
                             return DraggableResizable.object(
                               key: Key('${layer.key}_draggableResizable_asset'),
-                              size: cardSize,
+                              size: Size(cardSize.width / 2, cardSize.width / 2),
                               canTransform: selectedKey == layer.key ? true : false,
                               onDragStart: () {
                                 selectedKey = layer.key;
