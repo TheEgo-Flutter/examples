@@ -136,14 +136,18 @@ class _BrushPainterState extends State<BrushPainter> {
 
           if (!mounted) return;
           // var svgPic = SvgPicture.string(
-          //   key: UniqueKey(),
           //   svg.value!,
           //   fit: BoxFit.contain,
           //   width: width,
           //   height: height,
           // );
-
-          // return Navigator.pop(context, svgPic);
+          // LayerData data = LayerData(
+          //   key: UniqueKey(),
+          //   object: svgPic,
+          //   size: Size(width, height),
+          //   offset: offset, // Use relative offset
+          // );
+          // return Navigator.pop(context, data);
         },
       ),
     ]);
