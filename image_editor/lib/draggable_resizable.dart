@@ -30,16 +30,48 @@ class DraggableObject extends DraggableBase {
 
   @override
   Widget buildChild(BuildContext context, Size size, BoxConstraints constraints) {
-    return Container(
-      height: size.height,
-      width: size.width,
-      decoration: BoxDecoration(
-        border: Border.all(
-          width: 2,
-          color: canTransform ? Colors.blue : Colors.transparent,
+    const double iconArea = 16;
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(iconArea / 2),
+          decoration: BoxDecoration(
+            border: Border.all(
+              width: 2,
+              color: canTransform ? Colors.red : Colors.transparent,
+            ),
+          ),
+          child: Container(
+                height: size.height,
+                width: size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    width: 2,
+                    color: canTransform ? Colors.blue : Colors.transparent,
+                  ),
+                ),
+                child: child,
+              ),
         ),
-      ),
-      child: child,
+       canTransform? Positioned(
+                top: iconArea /4,
+                right: iconArea /4,
+                child: GestureDetector(
+                  onTap: onDelete,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: iconArea,
+                    ),
+                  ),
+                ),
+              ):const SizedBox.shrink()
+      ],
     );
   }
 }
