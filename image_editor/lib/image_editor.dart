@@ -1,5 +1,3 @@
-library image_editor_plus;
-
 import 'dart:async';
 import 'dart:io';
 
@@ -13,11 +11,10 @@ import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
 
+import 'layer_manager.dart';
 import 'modules/brush_painter.dart';
 import 'modules/text.dart';
 
-// List of global variables
-List<Widget> layers = [], undoLayers = [], removedLayers = [];
 Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
 final GlobalKey backgroundKey = GlobalKey();
@@ -45,6 +42,7 @@ class PhotoEditor extends StatefulWidget {
 }
 
 class _PhotoEditorState extends State<PhotoEditor> {
+  LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   ScreenshotController screenshotController = ScreenshotController();
   Uint8List? currentImage;
@@ -63,7 +61,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
 
   @override
   void dispose() {
-    layers.clear();
+    layerManager.layers.clear();
     super.dispose();
   }
 
@@ -97,7 +95,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             newScheme.secondary,
           ],
         );
-        layers.clear();
+        layerManager.layers.clear();
       });
     }
   }
@@ -167,17 +165,17 @@ class _PhotoEditorState extends State<PhotoEditor> {
                           });
                         },
                       ),
-                      ...layers.map((layer) {
+                      ...layerManager.layers.map((layer) {
                         return DraggableObject(
                           key: Key('${layer.key}_draggableResizable_asset'),
                           canTransform: selectedKey == layer.key ? true : false,
                           onDragStart: () {
                             selectedKey = layer.key;
-                            var listLength = layers.length;
-                            var index = layers.indexOf(layer);
+                            var listLength = layerManager.layers.length;
+                            var index = layerManager.layers.indexOf(layer);
                             if (index != listLength) {
-                              layers.remove(layer);
-                              layers.add(layer);
+                              layerManager.layers.remove(layer);
+                              layerManager.layers.add(layer);
                             }
                             setState(() {});
                           },
@@ -186,7 +184,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                             setState(() {});
                           },
                           onDelete: () async {
-                            layers.remove(layer);
+                            layerManager.removeLayer(layer);
                             setState(() {});
                           },
                           size: const Size(150, 150),
@@ -215,6 +213,24 @@ class _PhotoEditorState extends State<PhotoEditor> {
         const BackButton(),
         const Spacer(),
         IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: Icon(Icons.undo,
+              color:
+                  layerManager.layers.length > 1 || layerManager.removedLayers.isNotEmpty ? Colors.white : Colors.grey),
+          onPressed: () {
+            layerManager.undo();
+            setState(() {});
+          },
+        ),
+        IconButton(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          icon: Icon(Icons.redo, color: layerManager.undoLayers.isNotEmpty ? Colors.white : Colors.grey),
+          onPressed: () {
+            layerManager.redo();
+            setState(() {});
+          },
+        ),
+        IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
               setState(() {
@@ -238,10 +254,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
               }
               setState(() {
                 showAppBar = true;
-                undoLayers.clear();
-                removedLayers.clear();
+                layerManager.undoLayers.clear();
+                layerManager.removedLayers.clear();
 
-                layers.add(layer);
+                layerManager.addLayer(layer);
               });
             }),
         IconButton(
@@ -254,9 +270,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
               ),
             );
             if (layer == null) return;
-            undoLayers.clear();
-            removedLayers.clear();
-            layers.add(layer);
+            layerManager.undoLayers.clear();
+            layerManager.removedLayers.clear();
+            layerManager.addLayer(layer);
             setState(() {});
           },
         ),
@@ -273,9 +289,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
               },
             );
             if (layer == null) return;
-            undoLayers.clear();
-            removedLayers.clear();
-            layers.add(layer);
+            layerManager.undoLayers.clear();
+            layerManager.removedLayers.clear();
+            layerManager.addLayer(layer);
             setState(() {});
           },
         ),
@@ -327,33 +343,3 @@ class PositionedWidget extends StatelessWidget {
     );
   }
 }
- /** 
-            IconButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              icon: Icon(Icons.undo, color: layers.length > 1 || removedLayers.isNotEmpty ? Colors.white : Colors.grey),
-              onPressed: () {
-                if (removedLayers.isNotEmpty) {
-                  layers.add(removedLayers.removeLast());
-                  setState(() {});
-                  return;
-                }
-
-                if (layers.length <= 1) return; // do not remove image layer
-
-                undoLayers.add(layers.removeLast());
-
-                setState(() {});
-              },
-            ),
-            IconButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              icon: Icon(Icons.redo, color: undoLayers.isNotEmpty ? Colors.white : Colors.grey),
-              onPressed: () {
-                if (undoLayers.isEmpty) return;
-
-                layers.add(undoLayers.removeLast());
-
-                setState(() {});
-              },
-            ),
-            */
