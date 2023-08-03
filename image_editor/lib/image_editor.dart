@@ -159,7 +159,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                           builder: (context, constraints) {
                             Size baseSize =
                                 cardSize == Size.zero ? Size(constraints.maxWidth, constraints.maxWidth) : cardSize;
-                            return BaseLayerWidget(
+                            return DraggableBackground(
                               size: baseSize,
                               uint8List: currentImage,
                               canTransform: selectedKey == backgroundKey ? true : false,
@@ -190,7 +190,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                             ),
                           );
                         } else if (layer is LayerData) {
-                          return DraggableResizable(
+                          return DraggableObject(
                             key: Key('${layer.key}_draggableResizable_asset'),
                             canTransform: selectedKey == layer.key ? true : false,
                             onDragStart: () {

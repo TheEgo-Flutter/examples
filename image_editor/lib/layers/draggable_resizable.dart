@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import '../image_editor.dart';
 import '../layers/layer.dart';
 
-class DraggableResizable extends DraggableBase {
-  DraggableResizable({
+class DraggableObject extends DraggableBase {
+  DraggableObject({
     required Key key,
     required LayerData layer,
     BoxConstraints? constraints,
@@ -45,8 +45,8 @@ class DraggableResizable extends DraggableBase {
   }
 }
 
-class BaseLayerWidget extends DraggableBase {
-  BaseLayerWidget({
+class DraggableBackground extends DraggableBase {
+  DraggableBackground({
     required this.uint8List,
     required Size size,
     VoidCallback? onDragStart,
