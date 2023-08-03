@@ -215,8 +215,8 @@ class _DraggableBaseState extends State<DraggableBase> {
   void _handleScale(double scale, BoxConstraints constraints) {
     log('onScale');
     final updatedSize = Size(
-      size.width * scale,
-      size.height * scale,
+      widget.size.width * scale,
+      widget.size.height * scale,
     );
 
     if (_isSizeTooSmall(updatedSize) || _isSizeTooLarge(updatedSize, constraints)) {
