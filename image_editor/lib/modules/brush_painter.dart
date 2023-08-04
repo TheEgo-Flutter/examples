@@ -8,6 +8,8 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 
+import '../image_editor.dart';
+
 class BrushPainter extends StatefulWidget {
   const BrushPainter({Key? key}) : super(key: key);
 
@@ -41,7 +43,10 @@ class _BrushPainterState extends State<BrushPainter> {
 
   Future<void> _getImageData(BuildContext context) async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    Navigator.pop(context, data);
+
+    Size? size = _drawingController.drawConfig.value.size; // same as cardSize
+
+    Navigator.pop(context, (data, size));
   }
 
   Future<void> _getJson() async {
@@ -74,8 +79,8 @@ class _BrushPainterState extends State<BrushPainter> {
         DrawingBoard(
           controller: _drawingController,
           background: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
+            width: cardSize.width,
+            height: cardSize.height,
             color: Colors.transparent,
           ),
           boardPanEnabled: false,

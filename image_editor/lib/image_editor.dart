@@ -151,23 +151,30 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      DraggableBackground(
-                        size: cardSize != Size.zero ? cardSize : MediaQuery.of(context).size,
-                        uint8List: currentImage,
-                        canTransform: selectedKey == backgroundKey ? true : false,
-                        onDragStart: () {
-                          setState(() {
-                            selectedKey = backgroundKey;
-                          });
-                        },
-                        onDragEnd: () {
-                          setState(() {
-                            selectedKey = null;
-                          });
-                        },
-                      ),
+                      currentImage != null
+                          ? DraggableResizable(
+                              key: Key('${backgroundKey}_draggableResizable_asset'),
+                              canTransform: selectedKey == backgroundKey ? true : false,
+                              onDragStart: () {
+                                setState(() {
+                                  selectedKey = backgroundKey;
+                                });
+                              },
+                              onDragEnd: () {
+                                setState(() {
+                                  selectedKey = null;
+                                });
+                              },
+                              layerItem: LayerItem(
+                                backgroundKey,
+                                type: LayerType.background,
+                                widget: Image.memory(currentImage!),
+                                position: cardPosition,
+                                size: cardSize != Size.zero ? cardSize : MediaQuery.of(context).size,
+                              ))
+                          : const SizedBox.shrink(),
                       ...layerManager.layers.map((layer) {
-                        return DraggableObject(
+                        return DraggableResizable(
                           key: Key('${layer.key}_draggableResizable_asset'),
                           canTransform: selectedKey == layer.key ? true : false,
                           onDragStart: () {
@@ -191,8 +198,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                               layerManager.removeLayer(layer);
                             });
                           },
-                          size: const Size(150, 150),
-                          child: layer.widget,
+                          layerItem: layer,
                         );
                       }).toList(),
                       Positioned(top: 0, right: 0, child: buildAppBar())
@@ -222,7 +228,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
               setState(() {
                 showAppBar = false;
               });
-              Uint8List? data = await showGeneralDialog(
+              (Uint8List?, Size?)? data = await showGeneralDialog(
                 context: context,
                 pageBuilder: (context, animation, secondaryAnimation) {
                   return PositionedWidget(
@@ -232,25 +238,28 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   );
                 },
               );
-              if (data == null) {
+              if (data == null || data.$1 == null || data.$2 == null) {
                 setState(() {
                   showAppBar = true;
                 });
                 return;
+              } else {
+                var image = Image.memory(data.$1!);
+                var size = data.$2!;
+                setState(() {
+                  showAppBar = true;
+                  //card center
+                  Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+                  var layer = LayerItem(
+                    UniqueKey(),
+                    type: LayerType.drawing,
+                    widget: image,
+                    position: offset,
+                    size: size,
+                  );
+                  layerManager.addLayer(layer);
+                });
               }
-              setState(() {
-                showAppBar = true;
-                Widget image = Image.memory(data);
-                Size size = MediaQuery.of(context).size;
-                Offset offset = const Offset(0, 0);
-                var layer = LayerItem(
-                  UniqueKey(),
-                  widget: image,
-                  position: offset,
-                  size: size,
-                );
-                layerManager.addLayer(layer);
-              });
             }),
         IconButton(
           icon: const Icon(Icons.text_fields),
@@ -266,6 +275,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             Offset textOffset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
             var layer = LayerItem(
               UniqueKey(),
+              type: LayerType.text,
               widget: Text.rich(text),
               position: textOffset,
               size: size,
@@ -292,6 +302,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
             LayerItem layer = LayerItem(
               UniqueKey(),
+              type: LayerType.sticker,
               widget: sticker,
               position: offset,
               size: size,

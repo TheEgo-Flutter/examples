@@ -1,133 +1,31 @@
 import 'dart:developer';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import 'image_editor.dart';
+import 'layer_manager.dart';
 
-class DraggableObject extends DraggableBase {
-  DraggableObject({
-    required Key key,
-    required this.child,
-    required Size size,
-    VoidCallback? onDelete,
-    VoidCallback? onDragStart,
-    VoidCallback? onDragEnd,
-    bool canTransform = false,
-  }) : super(
-          key: key,
-          size: size,
-          onDelete: onDelete,
-          onDragStart: onDragStart,
-          onDragEnd: onDragEnd,
-          canTransform: canTransform,
-        );
-
-  final Widget child;
-
-  @override
-  Widget buildChild(BuildContext context, Size size, BoxConstraints constraints) {
-    const double iconArea = 16;
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(iconArea / 2),
-          child: Container(
-            height: size.height,
-            width: size.width,
-            decoration: BoxDecoration(
-              border: Border.all(
-                width: 2,
-                color: canTransform ? Colors.blue : Colors.transparent,
-              ),
-            ),
-            child: child,
-          ),
-        ),
-        canTransform
-            ? Positioned(
-                top: 2,
-                right: 2,
-                child: GestureDetector(
-                  onTap: onDelete,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: iconArea,
-                    ),
-                  ),
-                ),
-              )
-            : const SizedBox.shrink()
-      ],
-    );
-  }
-}
-
-class DraggableBackground extends DraggableBase {
-  DraggableBackground({
-    required this.uint8List,
-    required Size size,
-    VoidCallback? onDragStart,
-    VoidCallback? onDragEnd,
-    bool canTransform = false,
-  }) : super(
-          key: backgroundKey,
-          size: size,
-          onDragStart: onDragStart,
-          onDragEnd: onDragEnd,
-          canTransform: canTransform,
-        );
-
-  final Uint8List? uint8List;
-
-  @override
-  Widget buildChild(BuildContext context, Size size, BoxConstraints constraints) {
-    if (uint8List == null) {
-      return Container();
-    }
-
-    return SizedBox(
-      height: size.height,
-      width: size.width,
-      child: Image.memory(
-        uint8List!,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
-}
-
-abstract class DraggableBase extends StatefulWidget {
-  DraggableBase({
+class DraggableResizable extends StatefulWidget {
+  const DraggableResizable({
     required key,
-    required this.size,
+    required this.layerItem,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.canTransform = false,
   }) : super(key: key);
 
-  final Size size;
   final VoidCallback? onDelete;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
   final bool canTransform;
-
-  Widget buildChild(BuildContext context, Size size, BoxConstraints constraints);
+  final LayerItem layerItem;
 
   @override
-  State<DraggableBase> createState() => _DraggableBaseState();
+  State<DraggableResizable> createState() => _DraggableResizableState();
 }
 
-class _DraggableBaseState extends State<DraggableBase> {
+class _DraggableResizableState extends State<DraggableResizable> {
   Size size = Size.zero;
   BoxConstraints constraints = BoxConstraints.loose(Size.infinite);
   double angle = 0;
@@ -138,7 +36,65 @@ class _DraggableBaseState extends State<DraggableBase> {
   @override
   void initState() {
     super.initState();
-    size = widget.size;
+    size = widget.layerItem.size;
+  }
+
+  Widget buildChild(BuildContext context, Size size, BoxConstraints constraints) {
+    const double iconArea = 16;
+    switch (widget.layerItem.type) {
+      case LayerType.sticker:
+      case LayerType.text:
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(iconArea / 2),
+              child: Container(
+                height: size.height,
+                width: size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    width: 2,
+                    color: widget.canTransform ? Colors.blue : Colors.transparent,
+                  ),
+                ),
+                child: widget.layerItem.widget, // LayerItem의 widget을 사용
+              ),
+            ),
+            widget.canTransform
+                ? Positioned(
+                    top: 2,
+                    right: 2,
+                    child: GestureDetector(
+                      onTap: widget.onDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: iconArea,
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink()
+          ],
+        );
+
+      case LayerType.drawing:
+      case LayerType.frame:
+      case LayerType.background:
+      default:
+        return SizedBox(
+          height: size.height,
+          width: size.width,
+
+          child: widget.layerItem.widget, // LayerItem의 widget을 사용
+        );
+    }
   }
 
   @override
@@ -232,8 +188,8 @@ class _DraggableBaseState extends State<DraggableBase> {
   void _handleScale(double scale, BoxConstraints constraints) {
     log('onScale');
     final updatedSize = Size(
-      widget.size.width * scale,
-      widget.size.height * scale,
+      widget.layerItem.size.width * scale,
+      widget.layerItem.size.height * scale,
     );
 
     if (_isSizeTooSmall(updatedSize) || _isSizeTooLarge(updatedSize, constraints)) {
@@ -286,13 +242,13 @@ class _DraggableBaseState extends State<DraggableBase> {
       transform: Matrix4.identity()
         ..scale(1.0)
         ..rotateZ(angle),
-      child: widget.buildChild(context, size, constraints),
+      child: buildChild(context, size, constraints),
     );
   }
 }
 
 class _DraggablePoint extends StatefulWidget {
-  _DraggablePoint({
+  const _DraggablePoint({
     Key? key,
     required this.child,
     this.onLayerTapped,

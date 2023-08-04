@@ -1,13 +1,17 @@
 import 'package:flutter/widgets.dart';
 
+enum LayerType { sticker, text, drawing, background, frame }
+
 class LayerItem {
   final Key key;
+  final LayerType type;
   final Widget widget;
   final Offset position;
   final Size size;
 
   LayerItem(
     this.key, {
+    required this.type,
     required this.widget,
     required this.position,
     required this.size,
