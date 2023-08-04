@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/utils.dart';
 
 import 'colors_picker.dart';
 
@@ -54,15 +53,10 @@ class _TextEditorImageState extends State<TextEditorImage> {
                     color: currentColor,
                     fontSize: slider.toDouble(),
                   ));
-              var padding = 8;
-              Size getTextSize = textSize(text, context);
+
               Navigator.pop(
                 context,
-                Text.rich(
-                  key: UniqueKey(),
-                  text,
-                  textAlign: align,
-                ),
+                text,
               );
             },
             color: Colors.white,

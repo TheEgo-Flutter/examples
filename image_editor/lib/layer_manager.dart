@@ -1,16 +1,30 @@
 import 'package:flutter/widgets.dart';
 
-class LayerManager {
-  List<Widget> layers = [];
-  List<Widget> undoLayers = [];
-  List<Widget> removedLayers = [];
+class LayerItem {
+  final Key key;
+  final Widget widget;
+  final Offset position;
+  final Size size;
 
-  void addLayer(Widget layer) {
+  LayerItem(
+    this.key, {
+    required this.widget,
+    required this.position,
+    required this.size,
+  });
+}
+
+class LayerManager {
+  List<LayerItem> layers = [];
+  List<LayerItem> undoLayers = [];
+  List<LayerItem> removedLayers = [];
+
+  void addLayer(LayerItem layer) {
     layers.add(layer);
   }
 
-  void removeLayer(Widget layer) {
-    int index = layers.indexOf(layer);
+  void removeLayer(LayerItem layer) {
+    int index = layers.indexWhere((item) => item.widget == layer.widget);
     if (index >= 0) {
       layers.removeAt(index);
       removedLayers.add(layer);

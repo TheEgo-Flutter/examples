@@ -192,7 +192,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                             });
                           },
                           size: const Size(150, 150),
-                          child: layer,
+                          child: layer.widget,
                         );
                       }).toList(),
                       Positioned(top: 0, right: 0, child: buildAppBar())
@@ -222,7 +222,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
               setState(() {
                 showAppBar = false;
               });
-              Widget? layer = await showGeneralDialog(
+              Uint8List? data = await showGeneralDialog(
                 context: context,
                 pageBuilder: (context, animation, secondaryAnimation) {
                   return PositionedWidget(
@@ -232,7 +232,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   );
                 },
               );
-              if (layer == null) {
+              if (data == null) {
                 setState(() {
                   showAppBar = true;
                 });
@@ -240,19 +240,36 @@ class _PhotoEditorState extends State<PhotoEditor> {
               }
               setState(() {
                 showAppBar = true;
+                Widget image = Image.memory(data);
+                Size size = MediaQuery.of(context).size;
+                Offset offset = const Offset(0, 0);
+                var layer = LayerItem(
+                  UniqueKey(),
+                  widget: image,
+                  position: offset,
+                  size: size,
+                );
                 layerManager.addLayer(layer);
               });
             }),
         IconButton(
           icon: const Icon(Icons.text_fields),
           onPressed: () async {
-            Widget? layer = await Navigator.push(
+            InlineSpan? text = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const TextEditorImage(),
               ),
             );
-            if (layer == null) return;
+            if (text == null) return;
+            Size size = textSize(text, context);
+            Offset textOffset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+            var layer = LayerItem(
+              UniqueKey(),
+              widget: Text.rich(text),
+              position: textOffset,
+              size: size,
+            );
             layerManager.addLayer(layer);
             setState(() {});
           },
@@ -260,7 +277,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
         IconButton(
           icon: const Icon(Icons.face_5_outlined),
           onPressed: () async {
-            Widget? layer = await showModalBottomSheet(
+            Widget? sticker = await showModalBottomSheet(
               context: context,
               backgroundColor: Colors.black,
               builder: (BuildContext context) {
@@ -269,7 +286,16 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 );
               },
             );
-            if (layer == null) return;
+            if (sticker == null) return;
+            // size dynamic change for device (default is 150X150)
+            Size size = const Size(150, 150);
+            Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+            LayerItem layer = LayerItem(
+              UniqueKey(),
+              widget: sticker,
+              position: offset,
+              size: size,
+            );
             layerManager.addLayer(layer);
             setState(() {});
           },

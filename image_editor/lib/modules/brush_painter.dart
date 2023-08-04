@@ -16,7 +16,6 @@ class BrushPainter extends StatefulWidget {
 }
 
 class _BrushPainterState extends State<BrushPainter> {
-  /// 绘制控制器
   final DrawingController _drawingController = DrawingController(
       config: DrawConfig(
     contentType: SmoothLine,
@@ -42,10 +41,7 @@ class _BrushPainterState extends State<BrushPainter> {
 
   Future<void> _getImageData(BuildContext context) async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    if (data != null) {
-      Widget widget = Image.memory(data);
-      Navigator.pop(context, widget);
-    }
+    Navigator.pop(context, data);
   }
 
   Future<void> _getJson() async {

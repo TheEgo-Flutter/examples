@@ -51,21 +51,15 @@ class _StickersState extends State<Stickers> {
                   maxCrossAxisExtent: 60.0,
                 ),
                 children: widget.stickers.map((String sticker) {
-                  late Widget object;
+                  late Widget image;
                   //if .json contains sticker type
                   if (sticker.contains('.json')) {
-                    object = Lottie.asset(
-                      key: UniqueKey(),
+                    image = Lottie.asset(
                       'assets/$sticker',
-                      height: 200.0,
-                      width: 200.0,
                     );
                   } else {
-                    object = Image.asset(
-                      key: UniqueKey(),
+                    image = Image.asset(
                       'assets/$sticker',
-                      height: 200.0,
-                      width: 200.0,
                     );
                   }
 
@@ -74,10 +68,10 @@ class _StickersState extends State<Stickers> {
                     onTap: () {
                       Navigator.pop(
                         context,
-                        object,
+                        image,
                       );
                     },
-                    child: object,
+                    child: image,
                   ));
                 }).toList(),
               ),
