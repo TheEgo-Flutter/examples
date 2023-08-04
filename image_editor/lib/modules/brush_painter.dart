@@ -1,229 +1,188 @@
-import 'dart:developer';
+import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hand_signature/signature.dart';
+import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+import 'package:flutter_drawing_board/helpers.dart';
+import 'package:flutter_drawing_board/paint_contents.dart';
 
 class BrushPainter extends StatefulWidget {
-  const BrushPainter({
-    Key? key,
-  }) : super(key: key);
+  const BrushPainter({Key? key}) : super(key: key);
 
   @override
   State<BrushPainter> createState() => _BrushPainterState();
 }
 
 class _BrushPainterState extends State<BrushPainter> {
-  final control = HandSignatureControl(
-    threshold: 3.0,
-    smoothRatio: 0.65,
-    velocityRange: 2.0,
-  );
-
-  Color pickerColor = Colors.white;
-  Color currentColor = Colors.white;
-
-  List<CubicPath> undoList = [];
-  bool skipNextEvent = false;
-
-  List<Color> colorList = [
-    Colors.black,
-    Colors.white,
-    Colors.blue,
-    Colors.green,
-    Colors.pink,
-    Colors.purple,
-    Colors.brown,
-    Colors.indigo,
-    Colors.indigo,
-  ];
-
-  ValueNotifier<String?> svg = ValueNotifier<String?>(null);
-  void changeColor(Color color) {
-    currentColor = color;
-    setState(() {});
-  }
-
+  /// 绘制控制器
+  final DrawingController _drawingController = DrawingController(
+      config: DrawConfig(
+    contentType: SmoothLine,
+    color: Colors.black,
+    strokeWidth: 15,
+  ));
   @override
   void initState() {
-    control.addListener(() {
-      if (control.hasActivePath) return;
-
-      if (skipNextEvent) {
-        skipNextEvent = false;
-        return;
-      }
-
-      undoList = [];
-      setState(() {});
-    });
-
     super.initState();
   }
 
-  Widget buildAppBar() {
-    return Row(children: [
-      IconButton(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
-      const Spacer(),
-      IconButton(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        icon: Icon(
-          Icons.undo,
-          color: control.paths.isNotEmpty ? Colors.white : Colors.white.withAlpha(80),
-        ),
-        onPressed: () {
-          if (control.paths.isEmpty) return;
-          skipNextEvent = true;
-          undoList.add(control.paths.last);
-          control.stepBack();
-          setState(() {});
-        },
-      ),
-      IconButton(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        icon: Icon(
-          Icons.redo,
-          color: undoList.isNotEmpty ? Colors.white : Colors.white.withAlpha(80),
-        ),
-        onPressed: () {
-          if (undoList.isEmpty) return;
+  @override
+  void dispose() {
+    _drawingController.dispose();
+    super.dispose();
+  }
 
-          control.paths.add(undoList.removeLast());
-          setState(() {});
-        },
-      ),
-      IconButton(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        icon: const Icon(Icons.check),
-        onPressed: () async {
-          if (control.paths.isEmpty) return Navigator.pop(context);
-          double minX = double.infinity;
-          double minY = double.infinity;
-          double maxX = double.negativeInfinity;
-          double maxY = double.negativeInfinity;
+  void changeColor(Color color) {
+    _drawingController.drawConfig.value = _drawingController.drawConfig.value.copyWith(color: color);
 
-          for (var path in control.paths) {
-            for (var point in path.points) {
-              if (point.dx < minX) minX = point.dx;
-              if (point.dy < minY) minY = point.dy;
-              if (point.dx > maxX) maxX = point.dx;
-              if (point.dy > maxY) maxY = point.dy;
-            }
-          }
+    setState(() {});
+  }
 
-          double width = maxX - minX;
-          double height = maxY - minY;
+  Future<void> _getImageData(BuildContext context) async {
+    final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
+    if (data != null) {
+      Widget widget = Image.memory(data);
+      Navigator.pop(context, widget);
+    }
+  }
 
-          Offset offset = Offset(minX, minY);
-
-          String viewBox = "relativeOffset: $offset\nSize($width, $height)";
-          log(viewBox);
-          svg.value = control.toSvg(
-            color: currentColor,
-            type: SignatureDrawType.shape,
-            fit: true,
-          );
-          if (!mounted) return;
-          var svgPic = SvgPicture.string(
-            key: UniqueKey(),
-            svg.value!,
-            fit: BoxFit.contain,
-            width: width,
-            height: height,
-          );
-
-          return Navigator.pop(context, svgPic);
-        },
-      ),
-    ]);
+  Future<void> _getJson() async {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext c) {
+        return Center(
+          child: Material(
+            color: Colors.white,
+            child: InkWell(
+              onTap: () => Navigator.pop(c),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500, maxHeight: 800),
+                padding: const EdgeInsets.all(20.0),
+                child: SelectableText(
+                  const JsonEncoder.withIndent('  ').convert(_drawingController.getJsonList()),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
-          children: <Widget>[
-            Container(
-              constraints: const BoxConstraints.expand(),
-              child: HandSignature(
-                control: control,
-                type: SignatureDrawType.shape,
-                color: currentColor,
-              ),
-            ),
-            CustomPaint(
-              painter: DebugSignaturePainterCP(
-                control: control,
-                cp: false,
-                cpStart: false,
-                cpEnd: false,
-              ),
-            ),
-            Transform.translate(
-              offset: Offset(0, 0),
-              child: buildAppBar(),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              child: Row(
-                children: [
-                  ColorButton(
-                    color: Colors.yellow,
-                    onTap: (color) {
-                      showModalBottomSheet(
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(10),
-                            topLeft: Radius.circular(10),
-                          ),
-                        ),
-                        context: context,
-                        builder: (context) {
-                          return Container(
-                            color: Colors.black87,
-                            padding: const EdgeInsets.all(20),
-                            child: SingleChildScrollView(
-                              child: Container(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: HueRingPicker(
-                                  pickerColor: pickerColor,
-                                  onColorChanged: changeColor,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  for (int i = 0; i < colorList.length; i++)
-                    ColorButton(
-                      color: colorList[i],
-                      onTap: (color) => changeColor(color),
-                      isSelected: colorList[i] == currentColor,
-                    ),
-                ],
-              ),
-            ),
-          ],
+      child: Stack(children: [
+        DrawingBoard(
+          controller: _drawingController,
+          background: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: Colors.transparent,
+          ),
+          boardPanEnabled: false,
+          boardScaleEnabled: false,
+          showDefaultActions: false,
+          showDefaultTools: false,
         ),
-      ),
+        Transform.translate(
+          offset: const Offset(0, 0),
+          child: buildAppBar(context),
+        ),
+      ]),
+    );
+  }
+
+  Widget buildAppBar(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        IconButton(
+          icon: const Icon(Icons.format_size),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Brush Size'),
+                  content: SizedBox(
+                    height: 24,
+                    width: 160,
+                    child: ExValueBuilder<DrawConfig>(
+                      valueListenable: _drawingController.drawConfig,
+                      shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
+                      builder: (_, DrawConfig dc, ___) {
+                        return Slider(
+                          value: dc.strokeWidth,
+                          max: 50,
+                          min: 1,
+                          onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+        ColorButton(
+          color: _drawingController.getColor,
+          onTap: (color) {
+            showModalBottomSheet(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(10),
+                  topLeft: Radius.circular(10),
+                ),
+              ),
+              context: context,
+              builder: (context) {
+                return Theme(
+                  data: ThemeData.from(colorScheme: ColorScheme.fromSeed(seedColor: Colors.black87)),
+                  child: SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: HueRingPicker(
+                        pickerColor: _drawingController.getColor,
+                        onColorChanged: changeColor,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.undo),
+          onPressed: () => _drawingController.undo(),
+        ),
+        IconButton(
+          icon: const Icon(Icons.cleaning_services_rounded),
+          onPressed: () => _drawingController.clear(),
+        ),
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () => _drawingController.setPaintContent(SimpleLine()),
+        ),
+        IconButton(
+          icon: const Icon(Icons.brush),
+          onPressed: () => _drawingController.setPaintContent(SmoothLine()),
+        ),
+        IconButton(
+          icon: const Icon(Icons.phonelink_erase_rounded),
+          onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.transparent)),
+        ),
+        //add check Icon _getImageData
+        IconButton(icon: const Icon(Icons.check), onPressed: () => _getImageData(context)),
+      ]),
     );
   }
 }
 
-/// Button used in bottomNavigationBar in ImageEditorDrawing
 class ColorButton extends StatelessWidget {
   final Color color;
   final Function onTap;
