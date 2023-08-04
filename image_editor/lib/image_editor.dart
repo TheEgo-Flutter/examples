@@ -96,6 +96,14 @@ class _PhotoEditorState extends State<PhotoEditor> {
           ],
         );
         layerManager.layers.clear();
+        LayerItem background = LayerItem(
+          backgroundKey,
+          type: LayerType.background,
+          widget: Image.memory(currentImage!),
+          position: Offset.zero,
+          size: cardSize,
+        );
+        layerManager.addLayer(background);
       });
     }
   }
@@ -151,40 +159,15 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      currentImage != null
-                          ? DraggableResizable(
-                              key: Key('${backgroundKey}_draggableResizable_asset'),
-                              canTransform: selectedKey == backgroundKey ? true : false,
-                              onDragStart: () {
-                                setState(() {
-                                  selectedKey = backgroundKey;
-                                });
-                              },
-                              onDragEnd: () {
-                                setState(() {
-                                  selectedKey = null;
-                                });
-                              },
-                              layerItem: LayerItem(
-                                backgroundKey,
-                                type: LayerType.background,
-                                widget: Image.memory(currentImage!),
-                                position: cardPosition,
-                                size: cardSize != Size.zero ? cardSize : MediaQuery.of(context).size,
-                              ))
-                          : const SizedBox.shrink(),
                       ...layerManager.layers.map((layer) {
                         return DraggableResizable(
                           key: Key('${layer.key}_draggableResizable_asset'),
-                          canTransform: selectedKey == layer.key ? true : false,
+                          isFocus: selectedKey == layer.key ? true : false,
                           onDragStart: () {
                             setState(() {
                               selectedKey = layer.key;
-                              var listLength = layerManager.layers.length;
-                              var index = layerManager.layers.indexOf(layer);
-                              if (index != listLength) {
-                                layerManager.layers.remove(layer);
-                                layerManager.layers.add(layer);
+                              if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
+                                layerManager.moveLayerToFront(layer);
                               }
                             });
                           },

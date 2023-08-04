@@ -8,6 +8,9 @@ class LayerItem {
   final Widget widget;
   final Offset position;
   final Size size;
+  bool get isFixed {
+    return type == LayerType.frame || type == LayerType.drawing;
+  }
 
   LayerItem(
     this.key, {
@@ -19,12 +22,52 @@ class LayerItem {
 }
 
 class LayerManager {
-  List<LayerItem> layers = [];
   List<LayerItem> undoLayers = [];
   List<LayerItem> removedLayers = [];
+  LayerItem? _backgroundLayer;
+  LayerItem? _frameLayer;
+  LayerItem? _drawingLayer;
+  List<LayerItem> _otherLayers = [];
 
-  void addLayer(LayerItem layer) {
-    layers.add(layer);
+  List<LayerItem> get layers {
+    List<LayerItem> layers = [];
+    if (_backgroundLayer != null) {
+      layers.add(_backgroundLayer!);
+    }
+    if (_frameLayer != null) {
+      layers.add(_frameLayer!);
+    }
+    if (_drawingLayer != null) {
+      layers.add(_drawingLayer!);
+    }
+    layers.addAll(_otherLayers);
+    return layers;
+  }
+
+  void addLayer(LayerItem item) {
+    switch (item.type) {
+      case LayerType.background:
+        _backgroundLayer = item;
+        break;
+      case LayerType.frame:
+        _frameLayer = item;
+        break;
+      case LayerType.drawing:
+        _drawingLayer = item;
+        break;
+      case LayerType.text:
+      case LayerType.sticker:
+        _otherLayers.add(item);
+        break;
+    }
+  }
+
+  void moveLayerToFront(LayerItem layer) {
+    int index = _otherLayers.indexOf(layer);
+    if (index != -1) {
+      _otherLayers.removeAt(index);
+      _otherLayers.add(layer);
+    }
   }
 
   void removeLayer(LayerItem layer) {
