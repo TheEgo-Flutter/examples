@@ -13,7 +13,7 @@ import 'package:screenshot/screenshot.dart';
 
 import 'layer_manager.dart';
 import 'modules/brush_painter.dart';
-import 'modules/text.dart';
+import 'modules/text_layer/text_editor.dart';
 
 Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
@@ -131,9 +131,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
           });
         },
         child: Scaffold(
+          resizeToAvoidBottomInset: false,
           key: scaffoldGlobalKey,
           backgroundColor: Colors.grey,
-          body: Scaffold(body: buildScreenshotWidget(context)),
+          body: buildScreenshotWidget(context),
         ),
       ),
     );
@@ -247,11 +248,15 @@ class _PhotoEditorState extends State<PhotoEditor> {
         IconButton(
           icon: const Icon(Icons.text_fields),
           onPressed: () async {
-            InlineSpan? text = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const TextEditorImage(),
-              ),
+            InlineSpan? text = await showGeneralDialog(
+              context: context,
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return PositionedWidget(
+                  position: cardPosition,
+                  size: cardSize,
+                  child: const TextEditor(),
+                );
+              },
             );
             if (text == null) return;
             Size size = textSize(text, context);
