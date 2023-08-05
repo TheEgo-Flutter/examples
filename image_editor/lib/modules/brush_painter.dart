@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +7,8 @@ import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 
 import '../image_editor.dart';
+
+List<PaintContent> drawingData = [];
 
 class BrushPainter extends StatefulWidget {
   const BrushPainter({Key? key}) : super(key: key);
@@ -23,7 +23,8 @@ class _BrushPainterState extends State<BrushPainter> {
     contentType: SmoothLine,
     color: Colors.black,
     strokeWidth: 15,
-  ));
+  ))
+    ..addContents(drawingData);
   @override
   void initState() {
     super.initState();
@@ -37,39 +38,13 @@ class _BrushPainterState extends State<BrushPainter> {
 
   void changeColor(Color color) {
     _drawingController.drawConfig.value = _drawingController.drawConfig.value.copyWith(color: color);
-
     setState(() {});
   }
 
   Future<void> _getImageData(BuildContext context) async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-
     Size? size = _drawingController.drawConfig.value.size; // same as cardSize
-
     Navigator.pop(context, (data, size));
-  }
-
-  Future<void> _getJson() async {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext c) {
-        return Center(
-          child: Material(
-            color: Colors.white,
-            child: InkWell(
-              onTap: () => Navigator.pop(c),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 500, maxHeight: 800),
-                padding: const EdgeInsets.all(20.0),
-                child: SelectableText(
-                  const JsonEncoder.withIndent('  ').convert(_drawingController.getJsonList()),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -178,7 +153,12 @@ class _BrushPainterState extends State<BrushPainter> {
           onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.transparent)),
         ),
         //add check Icon _getImageData
-        IconButton(icon: const Icon(Icons.check), onPressed: () => _getImageData(context)),
+        IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () {
+              drawingData = _drawingController.getHistory;
+              _getImageData(context);
+            }),
       ]),
     );
   }
