@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_editor/image_editor.dart';
+import 'package:image_editor/utils.dart';
 
 import '../brush_painter.dart';
+import 'constants/constants.dart';
 
 class TextEditor extends StatefulWidget {
   const TextEditor({super.key});
@@ -12,12 +16,25 @@ class TextEditor extends StatefulWidget {
 
 class _TextEditorState extends State<TextEditor> {
   TextEditingController controller = TextEditingController();
-  FocusNode focusNode = FocusNode();
   double slider = 32.0;
   Color currentColor = Colors.white;
-
+  Color textBackgroundColor = Colors.transparent;
+  List<String> koreanFonts = [];
+  ValueNotifier<String> textNotifier = ValueNotifier<String>("");
+  bool isFontBarVisible = true;
   TextAlign align = TextAlign.center;
-  bool get isTextEditing => focusNode.hasFocus;
+  int selectedFontIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    koreanFonts = googleFontsDetails.entries
+        .where((entry) => (entry.value['subsets'] as String).contains('korean'))
+        .map((entry) => entry.key)
+        .toList();
+    controller.addListener(() => textNotifier.value = controller.text);
+  }
+
   IconData get icon {
     switch (align) {
       case TextAlign.left:
@@ -28,23 +45,6 @@ class _TextEditorState extends State<TextEditor> {
       default:
         return Icons.align_horizontal_center;
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    focusNode.addListener(_onFocusChange); // 리스너 추가
-  }
-
-  @override
-  void dispose() {
-    focusNode.removeListener(_onFocusChange); // 리스너 제거
-    focusNode.dispose(); // FocusNode 정리
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    setState(() {}); // 포커스 상태가 변경되면 화면을 다시 그림
   }
 
   void _toggleAlign() {
@@ -69,44 +69,95 @@ class _TextEditorState extends State<TextEditor> {
     setState(() {});
   }
 
-  List<Color> colorList = [
-    Colors.black,
-    Colors.white,
-    Colors.blue,
-    Colors.green,
-    Colors.pink,
-    Colors.purple,
-    Colors.brown,
-    Colors.indigo,
-    Colors.indigo,
-  ];
+  TextSpan get textSpan => TextSpan(
+        text: controller.text,
+        style: GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
+          color: currentColor,
+          fontSize: slider.toDouble(),
+        ),
+      );
 
-  Row buildAppBar() {
+  Align _buildTextField() {
+    return Align(
+      alignment: align == TextAlign.center
+          ? Alignment.center
+          : align == TextAlign.left
+              ? Alignment.centerLeft
+              : Alignment.centerRight,
+      child: ValueListenableBuilder<String>(
+          valueListenable: textNotifier,
+          builder: (context, text, child) {
+            double textWidth = textSize(textSpan, context).width;
+            const double spacing = 10;
+            textWidth = textWidth + (spacing * 4);
+            return Container(
+              width: textWidth,
+              margin: const EdgeInsets.all(spacing),
+              decoration: BoxDecoration(
+                color: textBackgroundColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TextField(
+                controller: controller,
+                textAlign: align,
+                enableSuggestions: false,
+                autocorrect: false,
+                style: textSpan.style,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(spacing),
+                ),
+                textAlignVertical: TextAlignVertical.center,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
+                autofocus: true,
+              ),
+            );
+          }),
+    );
+  }
+
+  Row _buildAppBar() {
     return Row(
       children: [
         IconButton(
-          icon: Icon(icon, color: Colors.white),
+          icon: Icon(icon),
           onPressed: _toggleAlign,
+          color: Colors.white,
+          padding: const EdgeInsets.all(15),
+        ),
+        IconButton(
+          icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
+          onPressed: () {
+            setState(() {
+              isFontBarVisible = !isFontBarVisible;
+            });
+          },
+          color: Colors.white,
+          padding: const EdgeInsets.all(15),
+        ),
+        IconButton(
+          icon: const Icon(Icons.format_color_text_sharp),
+          onPressed: () {
+            setState(() {
+              textBackgroundColor = textBackgroundColor == Colors.transparent
+                  ? Colors.black45
+                  : textBackgroundColor == Colors.black45
+                      ? Colors.white54
+                      : Colors.transparent;
+            });
+          },
+          color: Colors.white,
+          padding: const EdgeInsets.all(15),
         ),
         const Spacer(),
         IconButton(
           icon: const Icon(Icons.check),
           onPressed: () {
-            // need if TextSpan is null
             if (controller.text.isEmpty) {
               Navigator.pop(context);
             } else {
-              TextSpan text = TextSpan(
-                  text: controller.text,
-                  style: TextStyle(
-                    color: currentColor,
-                    fontSize: slider.toDouble(),
-                  ));
-
-              Navigator.pop(
-                context,
-                text,
-              );
+              Navigator.pop(context, textSpan);
             }
           },
           color: Colors.white,
@@ -116,121 +167,39 @@ class _TextEditorState extends State<TextEditor> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
-          children: <Widget>[
-            Container(
-              constraints: const BoxConstraints.expand(),
-              child: Center(
-                child: TextField(
-                  controller: controller, focusNode: focusNode,
-                  textAlign: align,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  style: TextStyle(
-                    decoration: TextDecoration.none,
-                    color: currentColor,
-                    fontSize: slider.toDouble(),
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(10),
-                    labelStyle: TextStyle(decoration: TextDecoration.none),
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                  keyboardType: TextInputType.multiline,
-                  textAlignVertical: TextAlignVertical.center,
-                  minLines: 1,
-                  maxLines: null, //<- fix
-                  autofocus: true,
-                ),
+  Widget _fontBar(BuildContext context) {
+    return SizedBox(
+      width: cardSize.width,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: koreanFonts.asMap().entries.map((entry) {
+            int index = entry.key;
+            String fontFamily = entry.value;
+
+            return ChoiceChip(
+              label: Text(
+                'Aa',
+                style: GoogleFonts.getFont(fontFamily),
               ),
-            ),
-            Transform.translate(
-              offset: const Offset(0, 0),
-              child: buildAppBar(),
-            ),
-            Visibility(
-              visible: MediaQuery.of(context).viewInsets.bottom == 0,
-              child: Positioned(
-                bottom: 25,
-                left: 0,
-                child: colorBar(context),
-              ),
-            ),
-          ],
+              shape: const CircleBorder(),
+              selected: selectedFontIndex == index,
+              onSelected: (bool selected) {
+                setState(() {
+                  if (selected) {
+                    selectedFontIndex = index;
+                    controller.text = controller.text;
+                  }
+                });
+              },
+            );
+          }).toList(),
         ),
       ),
     );
   }
 
-  // Row fontBar(BuildContext context) {
-  //   return Row(
-  //     children: [
-  //       Container(
-  //         decoration: const BoxDecoration(
-  //             shape: BoxShape.circle,
-  //             gradient: LinearGradient(
-  //               begin: Alignment.topRight,
-  //               end: Alignment.bottomLeft,
-  //               stops: [
-  //                 0.1,
-  //                 0.4,
-  //                 0.6,
-  //                 0.9,
-  //               ],
-  //               colors: [
-  //                 Colors.yellow,
-  //                 Colors.red,
-  //                 Colors.indigo,
-  //                 Colors.teal,
-  //               ],
-  //             )),
-  //         child: ColorButton(
-  //           color: Colors.transparent,
-  //           margin: const EdgeInsets.symmetric(horizontal: 8),
-  //           onTap: (color) {
-  //             showModalBottomSheet(
-  //               context: context,
-  //               builder: (context) {
-  //                 return Container(
-  //                   color: Colors.black87,
-  //                   padding: const EdgeInsets.all(20),
-  //                   child: SingleChildScrollView(
-  //                     child: Container(
-  //                       padding: const EdgeInsets.only(top: 16),
-  //                       child: HueRingPicker(
-  //                         pickerColor: currentColor,
-  //                         onColorChanged: changeColor,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 );
-  //               },
-  //             );
-  //           },
-  //         ),
-  //       ),
-  //       for (int i = 0; i < colorList.length; i++)
-  //         Padding(
-  //           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-  //           child: ColorButton(
-  //             color: colorList[i],
-  //             onTap: (color) => changeColor(color),
-  //             isSelected: colorList[i] == currentColor,
-  //           ),
-  //         ),
-  //     ],
-  //   );
-  // }
-
-  Row colorBar(BuildContext context) {
+  Row _colorBar(BuildContext context) {
     return Row(
       children: [
         Container(
@@ -260,7 +229,7 @@ class _TextEditorState extends State<TextEditor> {
                 context: context,
                 builder: (context) {
                   return Container(
-                    color: Colors.black87,
+                    color: textBackgroundColor,
                     padding: const EdgeInsets.all(20),
                     child: SingleChildScrollView(
                       child: Container(
@@ -277,16 +246,44 @@ class _TextEditorState extends State<TextEditor> {
             },
           ),
         ),
-        for (int i = 0; i < colorList.length; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ColorButton(
-              color: colorList[i],
-              onTap: (color) => changeColor(color),
-              isSelected: colorList[i] == currentColor,
-            ),
-          ),
+        Slider(
+          min: 8.0,
+          max: 72.0,
+          value: slider,
+          onChanged: (value) {
+            setState(() {
+              slider = value;
+            });
+          },
+        )
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: Stack(
+          children: <Widget>[
+            _buildTextField(),
+            Transform.translate(
+              offset: const Offset(0, 0),
+              child: _buildAppBar(),
+            ),
+            Visibility(
+              visible: MediaQuery.of(context).viewInsets.bottom == 0,
+              child: Positioned(
+                bottom: 25,
+                left: 0,
+                child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
