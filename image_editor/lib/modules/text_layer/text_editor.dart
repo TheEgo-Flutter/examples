@@ -10,16 +10,14 @@ class TextEditor extends StatefulWidget {
   createState() => _TextEditorState();
 }
 
-class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
+class _TextEditorState extends State<TextEditor> {
   TextEditingController controller = TextEditingController();
-
+  FocusNode focusNode = FocusNode();
   double slider = 32.0;
-  Color pickerColor = Colors.white;
   Color currentColor = Colors.white;
-  bool isKeyboardActive = false;
-  double keyboardHeight = 0.0;
-  TextAlign align = TextAlign.center;
 
+  TextAlign align = TextAlign.center;
+  bool get isTextEditing => focusNode.hasFocus;
   IconData get icon {
     switch (align) {
       case TextAlign.left:
@@ -30,6 +28,23 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
       default:
         return Icons.align_horizontal_center;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    focusNode.addListener(_onFocusChange); // 리스너 추가
+  }
+
+  @override
+  void dispose() {
+    focusNode.removeListener(_onFocusChange); // 리스너 제거
+    focusNode.dispose(); // FocusNode 정리
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {}); // 포커스 상태가 변경되면 화면을 다시 그림
   }
 
   void _toggleAlign() {
@@ -49,27 +64,6 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    final keyboardBottomInset = MediaQuery.of(context).viewInsets.bottom;
-    isKeyboardActive = keyboardBottomInset > 0;
-    keyboardHeight = keyboardBottomInset;
-    setState(() {});
-  }
-
   void changeColor(Color color) {
     currentColor = color;
     setState(() {});
@@ -86,17 +80,6 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
     Colors.indigo,
     Colors.indigo,
   ];
-  double get availableHeight {
-    double appBarHeight = 56.0; // 앱바의 기본 높이
-    double extraHeight = 25.0; // 추가 UI 요소 높이
-    return MediaQuery.of(context).size.height - appBarHeight - keyboardHeight - extraHeight;
-  }
-
-  int get maxLines {
-    double lineHeight = slider.toDouble(); // 현재 글꼴 크기를 줄 높이로 사용
-    if (lineHeight == 0) return 1;
-    return (availableHeight / lineHeight).floor();
-  }
 
   Row buildAppBar() {
     return Row(
@@ -145,7 +128,7 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
               constraints: const BoxConstraints.expand(),
               child: Center(
                 child: TextField(
-                  controller: controller,
+                  controller: controller, focusNode: focusNode,
                   textAlign: align,
                   enableSuggestions: false,
                   autocorrect: false,
@@ -164,7 +147,7 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
                   keyboardType: TextInputType.multiline,
                   textAlignVertical: TextAlignVertical.center,
                   minLines: 1,
-                  maxLines: maxLines, //<- fix
+                  maxLines: null, //<- fix
                   autofocus: true,
                 ),
               ),
@@ -173,53 +156,137 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
               offset: const Offset(0, 0),
               child: buildAppBar(),
             ),
-            if (isKeyboardActive)
-              Positioned(
+            Visibility(
+              visible: MediaQuery.of(context).viewInsets.bottom == 0,
+              child: Positioned(
                 bottom: 25,
                 left: 0,
-                child: Row(
-                  children: [
-                    ColorButton(
-                      color: Colors.yellow,
-                      onTap: (color) {
-                        showModalBottomSheet(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(10),
-                              topLeft: Radius.circular(10),
-                            ),
-                          ),
-                          context: context,
-                          builder: (context) {
-                            return Container(
-                              color: Colors.black87,
-                              padding: const EdgeInsets.all(20),
-                              child: SingleChildScrollView(
-                                child: Container(
-                                  padding: const EdgeInsets.only(top: 16),
-                                  child: HueRingPicker(
-                                    pickerColor: pickerColor,
-                                    onColorChanged: changeColor,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    for (int i = 0; i < colorList.length; i++)
-                      ColorButton(
-                        color: colorList[i],
-                        onTap: (color) => changeColor(color),
-                        isSelected: colorList[i] == currentColor,
-                      ),
-                  ],
-                ),
+                child: colorBar(context),
               ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  // Row fontBar(BuildContext context) {
+  //   return Row(
+  //     children: [
+  //       Container(
+  //         decoration: const BoxDecoration(
+  //             shape: BoxShape.circle,
+  //             gradient: LinearGradient(
+  //               begin: Alignment.topRight,
+  //               end: Alignment.bottomLeft,
+  //               stops: [
+  //                 0.1,
+  //                 0.4,
+  //                 0.6,
+  //                 0.9,
+  //               ],
+  //               colors: [
+  //                 Colors.yellow,
+  //                 Colors.red,
+  //                 Colors.indigo,
+  //                 Colors.teal,
+  //               ],
+  //             )),
+  //         child: ColorButton(
+  //           color: Colors.transparent,
+  //           margin: const EdgeInsets.symmetric(horizontal: 8),
+  //           onTap: (color) {
+  //             showModalBottomSheet(
+  //               context: context,
+  //               builder: (context) {
+  //                 return Container(
+  //                   color: Colors.black87,
+  //                   padding: const EdgeInsets.all(20),
+  //                   child: SingleChildScrollView(
+  //                     child: Container(
+  //                       padding: const EdgeInsets.only(top: 16),
+  //                       child: HueRingPicker(
+  //                         pickerColor: currentColor,
+  //                         onColorChanged: changeColor,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 );
+  //               },
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //       for (int i = 0; i < colorList.length; i++)
+  //         Padding(
+  //           padding: const EdgeInsets.symmetric(horizontal: 8.0),
+  //           child: ColorButton(
+  //             color: colorList[i],
+  //             onTap: (color) => changeColor(color),
+  //             isSelected: colorList[i] == currentColor,
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
+
+  Row colorBar(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [
+                  0.1,
+                  0.4,
+                  0.6,
+                  0.9,
+                ],
+                colors: [
+                  Colors.yellow,
+                  Colors.red,
+                  Colors.indigo,
+                  Colors.teal,
+                ],
+              )),
+          child: ColorButton(
+            color: Colors.transparent,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            onTap: (color) {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) {
+                  return Container(
+                    color: Colors.black87,
+                    padding: const EdgeInsets.all(20),
+                    child: SingleChildScrollView(
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: HueRingPicker(
+                          pickerColor: currentColor,
+                          onColorChanged: changeColor,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        for (int i = 0; i < colorList.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ColorButton(
+              color: colorList[i],
+              onTap: (color) => changeColor(color),
+              isSelected: colorList[i] == currentColor,
+            ),
+          ),
+      ],
     );
   }
 }

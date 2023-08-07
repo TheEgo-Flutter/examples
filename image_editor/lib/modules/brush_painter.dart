@@ -164,28 +164,30 @@ class _BrushPainterState extends State<BrushPainter> {
   }
 }
 
+/// Button used in bottomNavigationBar in ImageEditorDrawing
 class ColorButton extends StatelessWidget {
   final Color color;
   final Function onTap;
   final bool isSelected;
-
+  final EdgeInsetsGeometry? margin;
   const ColorButton({
     super.key,
     required this.color,
     required this.onTap,
+    this.margin = const EdgeInsets.symmetric(vertical: 16),
     this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
-        onTap(color);
+        onTap(color == Colors.transparent ? Colors.black : color);
       },
       child: Container(
-        height: 28,
-        width: 28,
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 23),
+        height: 24,
+        width: 24,
+        margin: margin,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
