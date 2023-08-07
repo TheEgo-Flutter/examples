@@ -78,6 +78,30 @@ class LayerManager {
     }
   }
 
+  /// Remove layer by type background, frame, drawing
+  void removeLayerByType(LayerType type) {
+    LayerItem? layer;
+    switch (type) {
+      case LayerType.background:
+        layer = _backgroundLayer;
+        _backgroundLayer = null;
+        break;
+      case LayerType.frame:
+        layer = _frameLayer;
+        _frameLayer = null;
+        break;
+      case LayerType.drawing:
+        layer = _drawingLayer;
+        _drawingLayer = null;
+        break;
+      default:
+        break;
+    }
+    if (layer != null) {
+      removeLayer(layer);
+    }
+  }
+
   void undo() {
     if (removedLayers.isNotEmpty) {
       layers.add(removedLayers.removeLast());

@@ -210,6 +210,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             icon: const Icon(Icons.edit),
             onPressed: () async {
               setState(() {
+                layerManager.removeLayerByType(LayerType.drawing);
                 showAppBar = false;
               });
               (Uint8List?, Size?)? data = await showGeneralDialog(
@@ -222,17 +223,14 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   );
                 },
               );
-              if (data == null || data.$1 == null || data.$2 == null) {
-                setState(() {
-                  showAppBar = true;
-                });
-                return;
-              } else {
+              setState(() {
+                showAppBar = true;
+              });
+              if ((data != null && data.$1 != null && data.$2 != null)) {
                 var image = Image.memory(data.$1!);
                 var size = data.$2!;
                 setState(() {
                   showAppBar = true;
-                  //card center
                   Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
                   var layer = LayerItem(
                     UniqueKey(),
