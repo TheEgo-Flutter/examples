@@ -5,7 +5,7 @@ enum LayerType { sticker, text, drawing, background, frame }
 class LayerItem {
   final Key key;
   final LayerType type;
-  final Widget widget;
+  final dynamic object;
   final Offset position;
   final Size size;
   bool get isFixed {
@@ -15,7 +15,7 @@ class LayerItem {
   LayerItem(
     this.key, {
     required this.type,
-    required this.widget,
+    required this.object,
     required this.position,
     required this.size,
   });
@@ -71,7 +71,7 @@ class LayerManager {
   }
 
   void removeLayer(LayerItem layer) {
-    int index = layers.indexWhere((item) => item.widget == layer.widget);
+    int index = layers.indexWhere((item) => item.object == layer.object);
     if (index >= 0) {
       layers.removeAt(index);
       removedLayers.add(layer);

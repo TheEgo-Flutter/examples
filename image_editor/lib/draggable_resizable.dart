@@ -200,7 +200,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
     const double iconArea = 16;
     switch (widget.layerItem.type) {
       case LayerType.sticker:
-      case LayerType.text:
         return Stack(
           children: [
             Padding(
@@ -214,7 +213,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                     color: widget.isFocus ? Colors.blue : Colors.transparent,
                   ),
                 ),
-                child: widget.layerItem.widget, // LayerItem의 widget을 사용
+                child: widget.layerItem.object,
               ),
             ),
             widget.isFocus
@@ -240,7 +239,52 @@ class _DraggableResizableState extends State<DraggableResizable> {
                 : const SizedBox.shrink()
           ],
         );
+      case LayerType.text:
+        InlineSpan object = widget.layerItem.object as InlineSpan;
+        //InlineSpan font size scale
+        Widget child = Text.rich(
+          object,
+        );
 
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(iconArea / 2),
+              child: Container(
+                height: size.height,
+                width: size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    width: 2,
+                    color: widget.isFocus ? Colors.blue : Colors.transparent,
+                  ),
+                ),
+                child: FittedBox(child: child),
+              ),
+            ),
+            widget.isFocus
+                ? Positioned(
+                    top: 2,
+                    right: 2,
+                    child: GestureDetector(
+                      onTap: widget.onDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: iconArea,
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink()
+          ],
+        );
       case LayerType.drawing:
       case LayerType.frame:
       case LayerType.background:
@@ -248,8 +292,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
         return SizedBox(
           height: size.height,
           width: size.width,
-
-          child: widget.layerItem.widget, // LayerItem의 widget을 사용
+          child: widget.layerItem.object,
         );
     }
   }

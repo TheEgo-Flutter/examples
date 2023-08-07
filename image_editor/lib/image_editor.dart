@@ -99,7 +99,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
         LayerItem background = LayerItem(
           backgroundKey,
           type: LayerType.background,
-          widget: Image.memory(currentImage!),
+          object: Image.memory(currentImage!),
           position: Offset.zero,
           size: cardSize,
         );
@@ -235,7 +235,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   var layer = LayerItem(
                     UniqueKey(),
                     type: LayerType.drawing,
-                    widget: image,
+                    object: image,
                     position: offset,
                     size: size,
                   );
@@ -246,6 +246,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
         IconButton(
           icon: const Icon(Icons.text_fields),
           onPressed: () async {
+            setState(() {
+              showAppBar = false;
+            });
             InlineSpan? text = await showGeneralDialog(
               context: context,
               pageBuilder: (context, animation, secondaryAnimation) {
@@ -256,13 +259,19 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 );
               },
             );
+            setState(() {
+              showAppBar = true;
+            });
+
             if (text == null) return;
-            Size size = textSize(text, context);
+            Size getSize = textSize(text, context);
+            Size size = Size(getSize.width + 4, getSize.height + 4);
+
             Offset textOffset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
             var layer = LayerItem(
               UniqueKey(),
               type: LayerType.text,
-              widget: Text.rich(text),
+              object: text,
               position: textOffset,
               size: size,
             );
@@ -289,7 +298,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             LayerItem layer = LayerItem(
               UniqueKey(),
               type: LayerType.sticker,
-              widget: sticker,
+              object: sticker,
               position: offset,
               size: size,
             );

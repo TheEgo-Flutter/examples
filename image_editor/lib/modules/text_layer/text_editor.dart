@@ -14,11 +14,40 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
   TextEditingController controller = TextEditingController();
 
   double slider = 32.0;
-  TextAlign align = TextAlign.center;
   Color pickerColor = Colors.white;
   Color currentColor = Colors.white;
   bool isKeyboardActive = false;
   double keyboardHeight = 0.0;
+  TextAlign align = TextAlign.center;
+
+  IconData get icon {
+    switch (align) {
+      case TextAlign.left:
+        return Icons.align_horizontal_left;
+      case TextAlign.right:
+        return Icons.align_horizontal_right;
+      case TextAlign.center:
+      default:
+        return Icons.align_horizontal_center;
+    }
+  }
+
+  void _toggleAlign() {
+    setState(() {
+      switch (align) {
+        case TextAlign.left:
+          align = TextAlign.center;
+          break;
+        case TextAlign.right:
+          align = TextAlign.left;
+          break;
+        case TextAlign.center:
+        default:
+          align = TextAlign.right;
+          break;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -57,36 +86,26 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
     Colors.indigo,
     Colors.indigo,
   ];
+  double get availableHeight {
+    double appBarHeight = 56.0; // 앱바의 기본 높이
+    double extraHeight = 25.0; // 추가 UI 요소 높이
+    return MediaQuery.of(context).size.height - appBarHeight - keyboardHeight - extraHeight;
+  }
+
+  int get maxLines {
+    double lineHeight = slider.toDouble(); // 현재 글꼴 크기를 줄 높이로 사용
+    if (lineHeight == 0) return 1;
+    return (availableHeight / lineHeight).floor();
+  }
+
   Row buildAppBar() {
     return Row(
       children: [
         IconButton(
-          icon: Icon(Icons.align_horizontal_left,
-              color: align == TextAlign.left ? Colors.white : Colors.white.withAlpha(80)),
-          onPressed: () {
-            setState(() {
-              align = TextAlign.left;
-            });
-          },
+          icon: Icon(icon, color: Colors.white),
+          onPressed: _toggleAlign,
         ),
-        IconButton(
-          icon: Icon(Icons.align_horizontal_center,
-              color: align == TextAlign.center ? Colors.white : Colors.white.withAlpha(80)),
-          onPressed: () {
-            setState(() {
-              align = TextAlign.center;
-            });
-          },
-        ),
-        IconButton(
-          icon: Icon(Icons.align_horizontal_right,
-              color: align == TextAlign.right ? Colors.white : Colors.white.withAlpha(80)),
-          onPressed: () {
-            setState(() {
-              align = TextAlign.right;
-            });
-          },
-        ),
+        const Spacer(),
         IconButton(
           icon: const Icon(Icons.check),
           onPressed: () {
@@ -127,27 +146,31 @@ class _TextEditorState extends State<TextEditor> with WidgetsBindingObserver {
               child: Center(
                 child: TextField(
                   controller: controller,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(10),
-                    hintText: 'Insert Your Message',
-                    hintStyle: TextStyle(color: Colors.white),
-                    alignLabelWithHint: true,
-                  ),
-                  scrollPadding: const EdgeInsets.all(20.0),
-                  keyboardType: TextInputType.multiline,
-                  minLines: 5,
-                  maxLines: 99999,
+                  textAlign: align,
+                  enableSuggestions: false,
+                  autocorrect: false,
                   style: TextStyle(
+                    decoration: TextDecoration.none,
                     color: currentColor,
                     fontSize: slider.toDouble(),
                   ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(10),
+                    labelStyle: TextStyle(decoration: TextDecoration.none),
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  textAlignVertical: TextAlignVertical.center,
+                  minLines: 1,
+                  maxLines: maxLines, //<- fix
                   autofocus: true,
                 ),
               ),
             ),
             Transform.translate(
-              offset: Offset(0, 0),
+              offset: const Offset(0, 0),
               child: buildAppBar(),
             ),
             if (isKeyboardActive)
