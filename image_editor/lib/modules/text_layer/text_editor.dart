@@ -8,9 +8,9 @@ import '../brush_painter.dart';
 import 'constants/constants.dart';
 
 class TextEditor extends StatefulWidget {
-  final InlineSpan? initialInlineSpan;
+  final InlineSpan? inlineSpan;
 
-  const TextEditor({Key? key, this.initialInlineSpan}) : super(key: key);
+  const TextEditor({Key? key, this.inlineSpan}) : super(key: key);
 
   @override
   createState() => _TextEditorState();
@@ -33,8 +33,8 @@ class _TextEditorState extends State<TextEditor> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialInlineSpan != null) {
-      controller.text = widget.initialInlineSpan?.toPlainText() ?? '';
+    if (widget.inlineSpan != null) {
+      controller.text = widget.inlineSpan?.toPlainText() ?? '';
 
       if (textSpan.style != null) {
         selectedFontIndex = koreanFonts.indexOf(textSpan.style?.fontFamily ?? '');

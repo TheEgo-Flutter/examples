@@ -181,7 +181,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                                     position: cardPosition,
                                     size: cardSize,
                                     child: TextEditor(
-                                      initialInlineSpan: layer.object,
+                                      inlineSpan: layer.object,
                                     ),
                                   );
                                 },
