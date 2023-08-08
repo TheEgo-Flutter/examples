@@ -26,7 +26,7 @@ Offset? _cardPosition;
 class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
   final Uint8List? image;
-  final List<String> stickers;
+  final List<dynamic> stickers;
   final AspectRatioOption aspectRatio;
 
   const PhotoEditor({

@@ -23,6 +23,16 @@ class ImageEditorExample extends StatefulWidget {
 class _ImageEditorExampleState extends State<ImageEditorExample> {
   Uint8List? imageData;
 
+  Future<List<Uint8List>> loadStickers(List<String> assetPaths) async {
+    List<Uint8List> stickers = [];
+    for (String path in assetPaths) {
+      final ByteData data = await rootBundle.load('assets/$path');
+      final List<int> bytes = data.buffer.asUint8List();
+      stickers.add(Uint8List.fromList(bytes));
+    }
+    return stickers;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -42,11 +52,12 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
           ElevatedButton(
             child: const Text("Single image editor"),
             onPressed: () async {
+              List<Uint8List> stickerList = await loadStickers(stickers);
               var editedImage = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PhotoEditor(
-                    stickers: stickers,
+                    stickers: stickerList,
                   ),
                 ),
               );

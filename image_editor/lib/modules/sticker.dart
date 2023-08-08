@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
 class Stickers extends StatefulWidget {
   const Stickers({super.key, required this.stickers});
-  final List<String> stickers;
+  final List<dynamic> stickers;
   @override
   createState() => _StickersState();
 }
@@ -28,17 +31,29 @@ class _StickersState extends State<Stickers> {
                     mainAxisSpacing: 0.0,
                     maxCrossAxisExtent: 60.0,
                   ),
-                  children: widget.stickers.map((String sticker) {
-                    late Widget image;
-                    //if .json contains sticker type
-                    if (sticker.contains('.json')) {
-                      image = Lottie.asset(
-                        'assets/$sticker',
-                      );
-                    } else {
-                      image = Image.asset(
-                        'assets/$sticker',
-                      );
+                  children: widget.stickers.map((dynamic sticker) {
+                    Widget? image;
+                    if (sticker is Uint8List) {
+                      try {
+                        // 시도해 보기: JSON 파싱
+                        json.decode(utf8.decode(sticker));
+                        // 성공하면 Lottie로 처리
+                        image = LottieBuilder.memory(sticker);
+                      } catch (e) {
+                        // 실패하면 이미지로 처리
+                        image = Image.memory(sticker);
+                      }
+                    } else if (sticker is String) {
+                      if (sticker.contains('.json')) {
+                        // asset의 Lottie 처리
+                        image = Lottie.asset('assets/$sticker');
+                      } else if (sticker.startsWith('http')) {
+                        // 네트워크 이미지 처리
+                        image = Image.network(sticker);
+                      } else {
+                        // 로컬 asset 이미지 처리
+                        image = Image.asset('assets/$sticker');
+                      }
                     }
 
                     return GridTile(
