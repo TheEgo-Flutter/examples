@@ -89,7 +89,7 @@ class LayerManager {
     }
   }
 
-  void removeLayer(LayerItem layer) {
+  void _removeLayer(LayerItem layer) {
     int index = layers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
       removedLayers.add(layers[index]);
@@ -113,7 +113,7 @@ class LayerManager {
       _otherLayers.remove(layer);
     }
     if (layer != null) {
-      removeLayer(layer);
+      _removeLayer(layer);
     }
   }
 
@@ -137,7 +137,7 @@ class LayerManager {
         break;
     }
     if (layer != null) {
-      removeLayer(layer);
+      _removeLayer(layer);
     }
   }
 

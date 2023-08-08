@@ -109,13 +109,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
   }
 
   Future<Uint8List> _loadImage(dynamic imageFile) async {
-    if (imageFile is Uint8List) {
-      return imageFile;
-    } else if (imageFile is File || imageFile is XFile) {
-      final image = await imageFile.readAsBytes();
-      return image;
-    }
-    return Uint8List.fromList([]);
+    if (imageFile is Uint8List) return imageFile;
+    final image = await (imageFile as dynamic).readAsBytes();
+    return image;
   }
 
   @override
@@ -154,92 +150,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             child: ClipRRect(
               key: cardKey,
               borderRadius: const BorderRadius.all(Radius.circular(16)),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: cardColor,
-                ),
-                child: AspectRatio(
-                  aspectRatio: widget.aspectRatio.ratio ?? 1,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ...layerManager.layers.map((layer) {
-                        return DraggableResizable(
-                          key: Key('${layer.key}_draggableResizable_asset'),
-                          isFocus: selectedKey == layer.key ? true : false,
-                          onLayerChanged: (LayerItem item) {
-                            setState(() {
-                              layerManager.updateLayer(item);
-                            });
-                          },
-                          onLayerTapped: (LayerItem item) async {
-                            if (layer.type == LayerType.text) {
-                              setState(() {
-                                layerManager.removeLayerByKey(layer.key);
-                                showAppBar = false;
-                              });
-
-                              InlineSpan? text = await showGeneralDialog(
-                                context: context,
-                                pageBuilder: (context, animation, secondaryAnimation) {
-                                  return PositionedWidget(
-                                    position: cardPosition,
-                                    size: cardSize,
-                                    child: TextEditor(
-                                      inlineSpan: layer.object,
-                                    ),
-                                  );
-                                },
-                              );
-                              setState(() {
-                                showAppBar = true;
-                              });
-                              if (text == null) return;
-
-                              var newLayer = LayerItem(
-                                UniqueKey(),
-                                type: LayerType.text,
-                                object: text,
-                                position: item.position,
-                                size: item.size,
-                              );
-                              layerManager.addLayer(newLayer);
-                              setState(() {});
-                            }
-                            setState(() {
-                              selectedKey = layer.key;
-
-                              if (layer.type == LayerType.sticker) {
-                                layerManager.moveLayerToFront(layer);
-                              }
-                            });
-                          },
-                          onDragStart: () {
-                            setState(() {
-                              selectedKey = layer.key;
-                              if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
-                                layerManager.moveLayerToFront(layer);
-                              }
-                            });
-                          },
-                          onDragEnd: () {
-                            setState(() {
-                              selectedKey = null;
-                            });
-                          },
-                          onDelete: () async {
-                            setState(() {
-                              layerManager.removeLayer(layer);
-                            });
-                          },
-                          layerItem: layer,
-                        );
-                      }).toList(),
-                      Positioned(top: 0, right: 0, child: buildAppBar())
-                    ],
-                  ),
-                ),
-              ),
+              child: buildImageLayer(context),
             ),
           ),
         ),
@@ -247,6 +158,96 @@ class _PhotoEditorState extends State<PhotoEditor> {
     );
   }
 
+  Widget buildImageLayer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: cardColor,
+      ),
+      child: AspectRatio(
+        aspectRatio: widget.aspectRatio.ratio ?? 1,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+            Positioned(top: 0, right: 0, child: buildAppBar())
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildLayerWidgets(LayerItem layer) {
+    return DraggableResizable(
+      key: Key('${layer.key}_draggableResizable_asset'),
+      isFocus: selectedKey == layer.key ? true : false,
+      onLayerChanged: (LayerItem item) {
+        setState(() {
+          layerManager.updateLayer(item);
+        });
+      },
+      onLayerTapped: (LayerItem item) async {
+        if (layer.type == LayerType.text) {
+          setState(() {
+            layerManager.removeLayerByKey(layer.key);
+            showAppBar = false;
+          });
+
+          InlineSpan? text = await showGeneralDialog(
+            context: context,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return PositionedWidget(
+                position: cardPosition,
+                size: cardSize,
+                child: TextEditor(
+                  inlineSpan: layer.object,
+                ),
+              );
+            },
+          );
+          setState(() {
+            showAppBar = true;
+          });
+          if (text == null) return;
+
+          var newLayer = LayerItem(
+            UniqueKey(),
+            type: LayerType.text,
+            object: text,
+            position: item.position,
+            size: item.size,
+          );
+          layerManager.addLayer(newLayer);
+          setState(() {});
+        }
+        setState(() {
+          selectedKey = layer.key;
+
+          if (layer.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(layer);
+          }
+        });
+      },
+      onDragStart: () {
+        setState(() {
+          selectedKey = layer.key;
+          if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(layer);
+          }
+        });
+      },
+      onDragEnd: () {
+        setState(() {
+          selectedKey = null;
+        });
+      },
+      onDelete: () {
+        setState(() {
+          layerManager.removeLayerByKey(layer.key);
+        });
+      },
+      layerItem: layer,
+    );
+  }
   //---------------------------------//
 
   Widget buildAppBar() {
