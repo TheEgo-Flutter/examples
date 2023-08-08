@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:image_editor/image_editor.dart';
 
 enum LayerType { sticker, text, drawing, background, frame }
 
@@ -8,6 +9,7 @@ class LayerItem {
   final dynamic object;
   final Offset position;
   final Size size;
+  final double rotation;
   bool get isFixed {
     return type == LayerType.frame || type == LayerType.drawing;
   }
@@ -16,13 +18,15 @@ class LayerItem {
     this.key, {
     required this.type,
     required this.object,
-    required this.position,
     required this.size,
-  });
+    Offset? position,
+    this.rotation = 0,
+  }) : position = position ?? cardPosition;
 
   LayerItem copyWith({
     Offset? position,
     Size? size,
+    double? rotation,
     dynamic object,
   }) {
     return LayerItem(
@@ -31,6 +35,7 @@ class LayerItem {
       object: object ?? this.object,
       position: position ?? this.position,
       size: size ?? this.size,
+      rotation: rotation ?? this.rotation,
     );
   }
 }
@@ -137,10 +142,10 @@ class LayerManager {
   }
 
   /// old Layer.object new object
-  void updateLayer(LayerItem layer, dynamic object) {
-    int index = layers.indexWhere((item) => item.object == layer.object);
-    if (index >= 0) {
-      layers[index] = layer.copyWith(object: object);
+  void updateLayer(LayerItem layer) {
+    int index = layers.indexWhere((item) => item.key == layer.key);
+    if (index != -1) {
+      layers[index] = layer;
     }
   }
 
