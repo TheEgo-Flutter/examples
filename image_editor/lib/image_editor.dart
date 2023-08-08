@@ -89,10 +89,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
       setState(() {
         cardColor = LinearGradient(
           begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          end: Alignment.bottomCenter,
           colors: [
+            newScheme.primaryContainer,
             newScheme.primary,
-            newScheme.secondary,
           ],
         );
         layerManager.layers.clear();
