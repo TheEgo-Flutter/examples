@@ -123,18 +123,21 @@ class _PhotoEditorState extends State<PhotoEditor> {
     viewportSize = MediaQuery.of(context).size;
     return Theme(
       data: theme,
-      child: GestureDetector(
-        key: const Key('background_gestureDetector'),
-        onTap: () {
-          setState(() {
-            selectedKey = null;
-          });
-        },
-        child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          key: scaffoldGlobalKey,
-          backgroundColor: Colors.grey,
-          body: buildScreenshotWidget(context),
+      child: WillPopScope(
+        onWillPop: () async => false,
+        child: GestureDetector(
+          key: const Key('background_gestureDetector'),
+          onTap: () {
+            setState(() {
+              selectedKey = null;
+            });
+          },
+          child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            key: scaffoldGlobalKey,
+            backgroundColor: Colors.grey,
+            body: buildScreenshotWidget(context),
+          ),
         ),
       ),
     );
@@ -164,6 +167,52 @@ class _PhotoEditorState extends State<PhotoEditor> {
                         return DraggableResizable(
                           key: Key('${layer.key}_draggableResizable_asset'),
                           isFocus: selectedKey == layer.key ? true : false,
+                          onLayerTapped: () async {
+                            if (layer.type == LayerType.text) {
+                              setState(() {
+                                layerManager.removeLayerByKey(layer.key);
+                                showAppBar = false;
+                              });
+
+                              InlineSpan? text = await showGeneralDialog(
+                                context: context,
+                                pageBuilder: (context, animation, secondaryAnimation) {
+                                  return PositionedWidget(
+                                    position: cardPosition,
+                                    size: cardSize,
+                                    child: TextEditor(
+                                      initialInlineSpan: layer.object,
+                                    ),
+                                  );
+                                },
+                              );
+                              setState(() {
+                                showAppBar = true;
+                              });
+                              if (text == null) return;
+                              Size getSize = textSize(text, context);
+                              Size size = Size(getSize.width + 4, getSize.height + 4);
+
+                              Offset textOffset =
+                                  Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+                              var newLayer = LayerItem(
+                                UniqueKey(),
+                                type: LayerType.text,
+                                object: text,
+                                position: textOffset,
+                                size: size,
+                              );
+                              layerManager.addLayer(newLayer);
+                              setState(() {});
+                            }
+                            setState(() {
+                              selectedKey = layer.key;
+
+                              if (layer.type == LayerType.sticker) {
+                                layerManager.moveLayerToFront(layer);
+                              }
+                            });
+                          },
                           onDragStart: () {
                             setState(() {
                               selectedKey = layer.key;

@@ -19,6 +19,20 @@ class LayerItem {
     required this.position,
     required this.size,
   });
+
+  LayerItem copyWith({
+    Offset? position,
+    Size? size,
+    dynamic object,
+  }) {
+    return LayerItem(
+      key,
+      type: type,
+      object: object ?? this.object,
+      position: position ?? this.position,
+      size: size ?? this.size,
+    );
+  }
 }
 
 class LayerManager {
@@ -71,10 +85,30 @@ class LayerManager {
   }
 
   void removeLayer(LayerItem layer) {
-    int index = layers.indexWhere((item) => item.object == layer.object);
-    if (index >= 0) {
+    int index = layers.indexWhere((item) => item.key == layer.key);
+    if (index != -1) {
+      removedLayers.add(layers[index]);
       layers.removeAt(index);
-      removedLayers.add(layer);
+    }
+  }
+
+  void removeLayerByKey(Key key) {
+    LayerItem? layer;
+    if (_backgroundLayer?.key == key) {
+      layer = _backgroundLayer;
+      _backgroundLayer = null;
+    } else if (_frameLayer?.key == key) {
+      layer = _frameLayer;
+      _frameLayer = null;
+    } else if (_drawingLayer?.key == key) {
+      layer = _drawingLayer;
+      _drawingLayer = null;
+    } else {
+      layer = _otherLayers.firstWhere((item) => item.key == key);
+      _otherLayers.remove(layer);
+    }
+    if (layer != null) {
+      removeLayer(layer);
     }
   }
 
@@ -99,6 +133,14 @@ class LayerManager {
     }
     if (layer != null) {
       removeLayer(layer);
+    }
+  }
+
+  /// old Layer.object new object
+  void updateLayer(LayerItem layer, dynamic object) {
+    int index = layers.indexWhere((item) => item.object == layer.object);
+    if (index >= 0) {
+      layers[index] = layer.copyWith(object: object);
     }
   }
 

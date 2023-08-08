@@ -8,7 +8,9 @@ import '../brush_painter.dart';
 import 'constants/constants.dart';
 
 class TextEditor extends StatefulWidget {
-  const TextEditor({super.key});
+  final InlineSpan? initialInlineSpan;
+
+  const TextEditor({Key? key, this.initialInlineSpan}) : super(key: key);
 
   @override
   createState() => _TextEditorState();
@@ -19,7 +21,10 @@ class _TextEditorState extends State<TextEditor> {
   double slider = 32.0;
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
-  List<String> koreanFonts = [];
+  List<String> koreanFonts = googleFontsDetails.entries
+      .where((entry) => (entry.value['subsets'] as String).contains('korean'))
+      .map((entry) => entry.key)
+      .toList();
   ValueNotifier<String> textNotifier = ValueNotifier<String>("");
   bool isFontBarVisible = true;
   TextAlign align = TextAlign.center;
@@ -28,10 +33,17 @@ class _TextEditorState extends State<TextEditor> {
   @override
   void initState() {
     super.initState();
-    koreanFonts = googleFontsDetails.entries
-        .where((entry) => (entry.value['subsets'] as String).contains('korean'))
-        .map((entry) => entry.key)
-        .toList();
+    if (widget.initialInlineSpan != null) {
+      controller.text = widget.initialInlineSpan?.toPlainText() ?? '';
+
+      if (textSpan.style != null) {
+        selectedFontIndex = koreanFonts.indexOf(textSpan.style?.fontFamily ?? '');
+        selectedFontIndex = selectedFontIndex != -1 ? selectedFontIndex : 0;
+        slider = textSpan.style?.fontSize ?? 32.0;
+        currentColor = textSpan.style?.color ?? Colors.white;
+      }
+    }
+
     controller.addListener(() => textNotifier.value = controller.text);
   }
 
@@ -78,42 +90,44 @@ class _TextEditorState extends State<TextEditor> {
       );
 
   Align _buildTextField() {
-    return Align(
-      alignment: align == TextAlign.center
-          ? Alignment.center
-          : align == TextAlign.left
-              ? Alignment.centerLeft
-              : Alignment.centerRight,
-      child: ValueListenableBuilder<String>(
-          valueListenable: textNotifier,
-          builder: (context, text, child) {
-            double textWidth = textSize(textSpan, context).width;
-            const double spacing = 10;
-            textWidth = textWidth + (spacing * 4);
-            return Container(
-              width: textWidth,
-              margin: const EdgeInsets.all(spacing),
-              decoration: BoxDecoration(
-                color: textBackgroundColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                controller: controller,
-                textAlign: align,
-                enableSuggestions: false,
-                autocorrect: false,
-                style: textSpan.style,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(spacing),
+    return Center(
+      child: Align(
+        alignment: align == TextAlign.center
+            ? Alignment.center
+            : align == TextAlign.left
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+        child: ValueListenableBuilder<String>(
+            valueListenable: textNotifier,
+            builder: (context, text, child) {
+              double textWidth = textSize(textSpan, context).width;
+              const double spacing = 10;
+              textWidth = textWidth + (spacing * 4);
+              return Container(
+                width: textWidth,
+                margin: const EdgeInsets.all(spacing),
+                decoration: BoxDecoration(
+                  color: textBackgroundColor,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                textAlignVertical: TextAlignVertical.center,
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                autofocus: true,
-              ),
-            );
-          }),
+                child: TextField(
+                  controller: controller,
+                  textAlign: align,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  style: textSpan.style,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(spacing),
+                  ),
+                  textAlignVertical: TextAlignVertical.center,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  autofocus: true,
+                ),
+              );
+            }),
+      ),
     );
   }
 
@@ -262,26 +276,29 @@ class _TextEditorState extends State<TextEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
-          children: <Widget>[
-            _buildTextField(),
-            Transform.translate(
-              offset: const Offset(0, 0),
-              child: _buildAppBar(),
-            ),
-            Visibility(
-              visible: MediaQuery.of(context).viewInsets.bottom == 0,
-              child: Positioned(
-                bottom: 25,
-                left: 0,
-                child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: <Widget>[
+              _buildTextField(),
+              Transform.translate(
+                offset: const Offset(0, 0),
+                child: _buildAppBar(),
               ),
-            ),
-          ],
+              Visibility(
+                visible: MediaQuery.of(context).viewInsets.bottom == 0,
+                child: Positioned(
+                  bottom: 25,
+                  left: 0,
+                  child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

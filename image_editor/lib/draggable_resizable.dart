@@ -9,12 +9,14 @@ class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
     required key,
     required this.layerItem,
+    this.onLayerTapped,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.isFocus = false,
   }) : super(key: key);
 
+  final VoidCallback? onLayerTapped;
   final VoidCallback? onDelete;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
@@ -116,7 +118,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
       );
     }
     return _DraggablePoint(
-      onLayerTapped: () => widget.onDragStart?.call(),
+      onLayerTapped: () => widget.onLayerTapped?.call(),
       onDragStart: () => widget.onDragStart?.call(),
       onDragEnd: () => widget.onDragEnd?.call(),
       onDrag: widget.isFocus ? (d) => _handleDrag(d, constraints) : null,
