@@ -167,7 +167,12 @@ class _PhotoEditorState extends State<PhotoEditor> {
                         return DraggableResizable(
                           key: Key('${layer.key}_draggableResizable_asset'),
                           isFocus: selectedKey == layer.key ? true : false,
-                          onLayerTapped: () async {
+                          onLayerChanged: (LayerItem item) {
+                            setState(() {
+                              layerManager.updateLayer(item);
+                            });
+                          },
+                          onLayerTapped: (LayerItem item) async {
                             if (layer.type == LayerType.text) {
                               setState(() {
                                 layerManager.removeLayerByKey(layer.key);
@@ -190,17 +195,13 @@ class _PhotoEditorState extends State<PhotoEditor> {
                                 showAppBar = true;
                               });
                               if (text == null) return;
-                              Size getSize = textSize(text, context);
-                              Size size = Size(getSize.width + 4, getSize.height + 4);
 
-                              Offset textOffset =
-                                  Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
                               var newLayer = LayerItem(
                                 UniqueKey(),
                                 type: LayerType.text,
                                 object: text,
-                                position: textOffset,
-                                size: size,
+                                position: item.position,
+                                size: item.size,
                               );
                               layerManager.addLayer(newLayer);
                               setState(() {});
@@ -315,13 +316,11 @@ class _PhotoEditorState extends State<PhotoEditor> {
             if (text == null) return;
             Size getSize = textSize(text, context);
             Size size = Size(getSize.width + 4, getSize.height + 4);
-
-            Offset textOffset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
             var layer = LayerItem(
               UniqueKey(),
               type: LayerType.text,
               object: text,
-              position: textOffset,
+              position: Offset.zero,
               size: size,
             );
             layerManager.addLayer(layer);

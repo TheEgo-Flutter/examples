@@ -9,14 +9,15 @@ class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
     required key,
     required this.layerItem,
+    this.onLayerChanged,
     this.onLayerTapped,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.isFocus = false,
   }) : super(key: key);
-
-  final VoidCallback? onLayerTapped;
+  final ValueChanged<LayerItem>? onLayerChanged;
+  final ValueChanged<LayerItem>? onLayerTapped;
   final VoidCallback? onDelete;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
@@ -38,6 +39,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
   void initState() {
     super.initState();
     size = widget.layerItem.size;
+    position = widget.layerItem.position;
+    angle = widget.layerItem.rotation;
   }
 
   // 생략: buildChild 메서드
@@ -118,7 +121,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
       );
     }
     return _DraggablePoint(
-      onLayerTapped: () => widget.onLayerTapped?.call(),
+      onLayerTapped: () => widget.onLayerTapped?.call(
+        widget.layerItem.copyWith(
+          position: position,
+          size: size,
+          rotation: angle,
+        ),
+      ),
       onDragStart: () => widget.onDragStart?.call(),
       onDragEnd: () => widget.onDragEnd?.call(),
       onDrag: widget.isFocus ? (d) => _handleDrag(d, constraints) : null,
@@ -134,6 +143,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
       position = Offset(position.dx + delta.dx, position.dy + delta.dy);
       isCenteredHorizontally = _checkIfCentered(position, size, constraints.maxWidth, Axis.horizontal);
       isCenteredVertically = _checkIfCentered(position, size, constraints.maxHeight, Axis.vertical);
+      widget.onLayerChanged?.call(
+        widget.layerItem.copyWith(
+          position: position,
+          size: size,
+          rotation: angle,
+        ),
+      );
     });
   }
 
