@@ -25,10 +25,6 @@ class _BrushPainterState extends State<BrushPainter> {
     strokeWidth: 15,
   ))
     ..addContents(drawingData);
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -45,6 +41,90 @@ class _BrushPainterState extends State<BrushPainter> {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
     Size? size = _drawingController.drawConfig.value.size; // same as cardSize
     Navigator.pop(context, (data, size));
+  }
+
+  Widget buildAppBar(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        _buildIconButton(context, Icons.format_size, () => _showBrushSizeDialog(context), '브러시 크기'),
+        ColorButton(
+          color: _drawingController.getColor,
+          onTap: (color) => _showColorPicker(context, color),
+        ),
+        _buildIconButton(context, Icons.undo, _drawingController.undo),
+        _buildIconButton(context, Icons.cleaning_services_rounded, _drawingController.clear),
+        _buildIconButton(context, Icons.edit, () => _drawingController.setPaintContent(SimpleLine())),
+        _buildIconButton(context, Icons.brush, () => _drawingController.setPaintContent(SmoothLine())),
+        _buildIconButton(context, Icons.phonelink_erase_rounded,
+            () => _drawingController.setPaintContent(Eraser(color: Colors.white))),
+        _buildIconButton(context, Icons.check, () {
+          drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
+          _getImageData(context);
+        }),
+      ]),
+    );
+  }
+
+  Widget _buildIconButton(BuildContext context, IconData icon, VoidCallback onPressed, [String? tooltip]) {
+    return IconButton(
+      icon: Icon(icon),
+      onPressed: onPressed,
+      tooltip: tooltip,
+    );
+  }
+
+  void _showBrushSizeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('브러시 크기'),
+          content: SizedBox(
+            height: 24,
+            width: 160,
+            child: ExValueBuilder<DrawConfig>(
+              valueListenable: _drawingController.drawConfig,
+              shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
+              builder: (_, DrawConfig dc, ___) {
+                return Slider(
+                  value: dc.strokeWidth,
+                  max: 50,
+                  min: 1,
+                  onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showColorPicker(BuildContext context, Color color) {
+    showModalBottomSheet(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(10),
+          topLeft: Radius.circular(10),
+        ),
+      ),
+      context: context,
+      builder: (context) {
+        return Theme(
+          data: ThemeData.from(colorScheme: ColorScheme.fromSeed(seedColor: Colors.black87)),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.only(top: 16),
+              child: HueRingPicker(
+                pickerColor: _drawingController.getColor,
+                onColorChanged: changeColor,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -70,113 +150,20 @@ class _BrushPainterState extends State<BrushPainter> {
       ]),
     );
   }
-
-  Widget buildAppBar(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(children: [
-        IconButton(
-          icon: const Icon(Icons.format_size),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Brush Size'),
-                  content: SizedBox(
-                    height: 24,
-                    width: 160,
-                    child: ExValueBuilder<DrawConfig>(
-                      valueListenable: _drawingController.drawConfig,
-                      shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
-                      builder: (_, DrawConfig dc, ___) {
-                        return Slider(
-                          value: dc.strokeWidth,
-                          max: 50,
-                          min: 1,
-                          onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        ColorButton(
-          color: _drawingController.getColor,
-          onTap: (color) {
-            showModalBottomSheet(
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(10),
-                  topLeft: Radius.circular(10),
-                ),
-              ),
-              context: context,
-              builder: (context) {
-                return Theme(
-                  data: ThemeData.from(colorScheme: ColorScheme.fromSeed(seedColor: Colors.black87)),
-                  child: SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: HueRingPicker(
-                        pickerColor: _drawingController.getColor,
-                        onColorChanged: changeColor,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.undo),
-          onPressed: () => _drawingController.undo(),
-        ),
-        IconButton(
-          icon: const Icon(Icons.cleaning_services_rounded),
-          onPressed: () => _drawingController.clear(),
-        ),
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () => _drawingController.setPaintContent(SimpleLine()),
-        ),
-        IconButton(
-          icon: const Icon(Icons.brush),
-          onPressed: () => _drawingController.setPaintContent(SmoothLine()),
-        ),
-        IconButton(
-          icon: const Icon(Icons.phonelink_erase_rounded),
-          onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
-        ),
-        //add check Icon _getImageData
-        IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
-              _getImageData(context);
-            }),
-      ]),
-    );
-  }
 }
 
-/// Button used in bottomNavigationBar in ImageEditorDrawing
 class ColorButton extends StatelessWidget {
   final Color color;
   final Function onTap;
   final bool isSelected;
   final EdgeInsetsGeometry? margin;
   const ColorButton({
-    super.key,
+    Key? key,
     required this.color,
     required this.onTap,
     this.margin = const EdgeInsets.symmetric(vertical: 16),
     this.isSelected = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
