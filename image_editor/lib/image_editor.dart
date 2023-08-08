@@ -333,10 +333,25 @@ class _PhotoEditorState extends State<PhotoEditor> {
           onPressed: () async {
             Widget? sticker = await showModalBottomSheet(
               context: context,
-              backgroundColor: Colors.black,
+              backgroundColor: Colors.black87,
               builder: (BuildContext context) {
-                return Stickers(
-                  stickers: widget.stickers,
+                return Container(
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                    color: Colors.black,
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 10.9,
+                        color: Color.fromRGBO(0, 0, 0, 0.1),
+                      ),
+                    ],
+                  ),
+                  child: Stickers(
+                    stickers: widget.stickers,
+                  ),
                 );
               },
             );
