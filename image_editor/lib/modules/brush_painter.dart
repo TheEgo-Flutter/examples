@@ -150,13 +150,13 @@ class _BrushPainterState extends State<BrushPainter> {
         ),
         IconButton(
           icon: const Icon(Icons.phonelink_erase_rounded),
-          onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.transparent)),
+          onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
         ),
         //add check Icon _getImageData
         IconButton(
             icon: const Icon(Icons.check),
             onPressed: () {
-              drawingData = _drawingController.getHistory;
+              drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
               _getImageData(context);
             }),
       ]),
