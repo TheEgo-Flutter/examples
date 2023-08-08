@@ -180,11 +180,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
     return DraggableResizable(
       key: Key('${layer.key}_draggableResizable_asset'),
       isFocus: selectedKey == layer.key ? true : false,
-      onLayerChanged: (LayerItem item) {
-        setState(() {
-          layerManager.updateLayer(item);
-        });
-      },
       onLayerTapped: (LayerItem item) async {
         if (layer.type == LayerType.text) {
           setState(() {

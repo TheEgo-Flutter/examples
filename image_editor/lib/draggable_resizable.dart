@@ -9,14 +9,13 @@ class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
     required key,
     required this.layerItem,
-    this.onLayerChanged,
     this.onLayerTapped,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
     this.isFocus = false,
   }) : super(key: key);
-  final ValueChanged<LayerItem>? onLayerChanged;
+
   final ValueChanged<LayerItem>? onLayerTapped;
   final VoidCallback? onDelete;
   final VoidCallback? onDragStart;
@@ -110,6 +109,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
     ];
   }
 
+  LayerItem get layerItem => widget.layerItem.copyWith(
+        position: position,
+        size: size,
+        rotation: angle,
+      );
   // 드래그 가능한 포인트 생성
   Widget _buildDraggablePoint(BoxConstraints constraints) {
     if (widget.layerItem.isFixed) {
@@ -121,13 +125,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
       );
     }
     return _DraggablePoint(
-      onLayerTapped: () => widget.onLayerTapped?.call(
-        widget.layerItem.copyWith(
-          position: position,
-          size: size,
-          rotation: angle,
-        ),
-      ),
+      onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
       onDragStart: () => widget.onDragStart?.call(),
       onDragEnd: () => widget.onDragEnd?.call(),
       onDrag: widget.isFocus ? (d) => _handleDrag(d, constraints) : null,
@@ -143,13 +141,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
       position = Offset(position.dx + delta.dx, position.dy + delta.dy);
       isCenteredHorizontally = _checkIfCentered(position, size, constraints.maxWidth, Axis.horizontal);
       isCenteredVertically = _checkIfCentered(position, size, constraints.maxHeight, Axis.vertical);
-      widget.onLayerChanged?.call(
-        widget.layerItem.copyWith(
-          position: position,
-          size: size,
-          rotation: angle,
-        ),
-      );
     });
   }
 
