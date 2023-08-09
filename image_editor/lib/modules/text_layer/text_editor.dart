@@ -17,7 +17,6 @@ class TextEditor extends StatefulWidget {
 }
 
 class _TextEditorState extends State<TextEditor> {
-  TextEditingController controller = TextEditingController();
   double slider = 32.0;
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
@@ -34,7 +33,7 @@ class _TextEditorState extends State<TextEditor> {
   void initState() {
     super.initState();
     if (widget.inlineSpan != null) {
-      controller.text = widget.inlineSpan?.toPlainText() ?? '';
+      textNotifier.value = widget.inlineSpan?.toPlainText() ?? '';
 
       if (textSpan.style != null) {
         selectedFontIndex = koreanFonts.indexOf(textSpan.style?.fontFamily ?? '');
@@ -43,8 +42,6 @@ class _TextEditorState extends State<TextEditor> {
         currentColor = textSpan.style?.color ?? Colors.white;
       }
     }
-
-    controller.addListener(() => textNotifier.value = controller.text);
   }
 
   IconData get icon {
@@ -82,7 +79,7 @@ class _TextEditorState extends State<TextEditor> {
   }
 
   TextSpan get textSpan => TextSpan(
-        text: controller.text,
+        text: textNotifier.value,
         style: GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
           color: currentColor,
           fontSize: slider.toDouble(),
@@ -111,7 +108,7 @@ class _TextEditorState extends State<TextEditor> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextField(
-                  controller: controller,
+                  // readOnly: true,
                   textAlign: align,
                   enableSuggestions: false,
                   autocorrect: false,
@@ -120,6 +117,7 @@ class _TextEditorState extends State<TextEditor> {
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.all(spacing),
                   ),
+                  onChanged: (value) => textNotifier.value = value,
                   textAlignVertical: TextAlignVertical.center,
                   keyboardType: TextInputType.multiline,
                   maxLines: null,
@@ -168,7 +166,7 @@ class _TextEditorState extends State<TextEditor> {
         IconButton(
           icon: const Icon(Icons.check),
           onPressed: () {
-            if (controller.text.isEmpty) {
+            if (textNotifier.value.isEmpty) {
               Navigator.pop(context);
             } else {
               Navigator.pop(context, textSpan);
@@ -202,7 +200,6 @@ class _TextEditorState extends State<TextEditor> {
                 setState(() {
                   if (selected) {
                     selectedFontIndex = index;
-                    controller.text = controller.text;
                   }
                 });
               },
