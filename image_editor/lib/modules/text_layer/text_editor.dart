@@ -30,22 +30,46 @@ class _TextEditorState extends State<TextEditor> {
   bool isFontBarVisible = true;
   TextAlign align = TextAlign.center;
   int selectedFontIndex = 0;
-
+  TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
+        color: currentColor,
+        fontSize: slider.toDouble(),
+      );
   static Size addSizes(Size size1, Size size2) {
     return Size(size1.width + size2.width, size1.height + size2.height);
   }
 
-  static Size textFieldSize(Size textSize) => addSizes(textSize, const Size((textFieldSpacing * 4), 10));
+  Size get textFieldSize => addSizes(_textSize, const Size((textFieldSpacing * 4), 10));
+
+  Size get _textSize => textSize(
+      TextSpan(
+        text: textNotifier.value,
+        style: currentTextStyle,
+      ),
+      context);
   @override
   void initState() {
     super.initState();
     if (widget.textEditorStyle != null) {
       textNotifier.value = widget.textEditorStyle!.text;
       align = widget.textEditorStyle!.textAlign;
+      textBackgroundColor = widget.textEditorStyle!.backgroundColor;
+      selectedFontIndex = getFontIndex();
       slider = widget.textEditorStyle!.textStyle.fontSize ?? slider;
       currentColor = widget.textEditorStyle!.textStyle.color ?? currentColor;
-      textBackgroundColor = widget.textEditorStyle!.backgroundColor;
     }
+  }
+
+  /// element => Dongle
+  /// fontFamily => Dongle_regular, Dongle_bold ...
+  /// return element == fontFamily
+  int getFontIndex() {
+    int index = koreanFonts.indexWhere((element) {
+      return widget.textEditorStyle!.textStyle.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
+    });
+    if (index < 0) {
+      index = 0;
+    }
+    return index;
   }
 
   IconData get icon {
@@ -82,19 +106,16 @@ class _TextEditorState extends State<TextEditor> {
     setState(() {});
   }
 
-  TextSpan get textSpan => TextSpan(
-        text: textNotifier.value,
-        style: GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
-          color: currentColor,
-          fontSize: slider.toDouble(),
-        ),
-      );
+  // TextSpan get textSpan => TextSpan(
+  //       text: textNotifier.value,
+  //       style: currentTextStyle,
+  //     );
   TextFormField _textField({bool readOnly = false}) => TextFormField(
         readOnly: readOnly,
         enabled: !readOnly,
         initialValue: textNotifier.value,
         textAlign: align,
-        style: textSpan.style,
+        style: currentTextStyle,
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(textFieldSpacing),
@@ -119,7 +140,7 @@ class _TextEditorState extends State<TextEditor> {
             valueListenable: textNotifier,
             builder: (context, text, child) {
               return Container(
-                width: textFieldSize(textSize(textSpan, context)).width,
+                width: textFieldSize.width,
                 margin: const EdgeInsets.all(textFieldSpacing),
                 decoration: BoxDecoration(
                   color: textBackgroundColor,
@@ -175,9 +196,9 @@ class _TextEditorState extends State<TextEditor> {
               TextEditorStyle result = TextEditorStyle(
                 text: textNotifier.value,
                 textAlign: align,
-                textStyle: textSpan.style!,
+                textStyle: currentTextStyle,
                 backgroundColor: textBackgroundColor,
-                fieldSize: textFieldSize(textSize(textSpan, context)),
+                fieldSize: textFieldSize,
               );
               Navigator.pop(context, result);
             }
