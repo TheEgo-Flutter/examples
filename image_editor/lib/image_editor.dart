@@ -187,14 +187,14 @@ class _PhotoEditorState extends State<PhotoEditor> {
             showAppBar = false;
           });
 
-          InlineSpan? text = await showGeneralDialog(
+          TextEditorStyle? textEditorStyle = await showGeneralDialog(
             context: context,
             pageBuilder: (context, animation, secondaryAnimation) {
               return PositionedWidget(
                 position: cardPosition,
                 size: cardSize,
                 child: TextEditor(
-                  inlineSpan: layer.object,
+                  textEditorStyle: layer.object,
                 ),
               );
             },
@@ -202,14 +202,14 @@ class _PhotoEditorState extends State<PhotoEditor> {
           setState(() {
             showAppBar = true;
           });
-          if (text == null) return;
+          if (textEditorStyle == null) return;
 
           var newLayer = LayerItem(
             UniqueKey(),
             type: LayerType.text,
-            object: text,
+            object: textEditorStyle,
             position: item.position,
-            size: item.size,
+            size: textEditorStyle.fieldSize,
           );
           layerManager.addLayer(newLayer);
           setState(() {});
@@ -295,7 +295,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
             setState(() {
               showAppBar = false;
             });
-            InlineSpan? text = await showGeneralDialog(
+            TextEditorStyle? textEditorStyle = await showGeneralDialog(
               context: context,
               pageBuilder: (context, animation, secondaryAnimation) {
                 return PositionedWidget(
@@ -309,15 +309,13 @@ class _PhotoEditorState extends State<PhotoEditor> {
               showAppBar = true;
             });
 
-            if (text == null) return;
-            Size getSize = textSize(text, context);
-            Size size = Size(getSize.width + 4, getSize.height + 4);
+            if (textEditorStyle == null) return;
             var layer = LayerItem(
               UniqueKey(),
               type: LayerType.text,
-              object: text,
+              object: textEditorStyle,
               position: Offset.zero,
-              size: size,
+              size: textEditorStyle.fieldSize,
             );
             layerManager.addLayer(layer);
             setState(() {});

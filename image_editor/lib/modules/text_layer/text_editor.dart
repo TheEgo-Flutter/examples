@@ -7,10 +7,12 @@ import 'package:image_editor/utils.dart';
 import '../brush_painter.dart';
 import 'constants/constants.dart';
 
-class TextEditor extends StatefulWidget {
-  final InlineSpan? inlineSpan;
+const double textFieldSpacing = 10;
 
-  const TextEditor({Key? key, this.inlineSpan}) : super(key: key);
+class TextEditor extends StatefulWidget {
+  final TextEditorStyle? textEditorStyle;
+
+  const TextEditor({Key? key, this.textEditorStyle}) : super(key: key);
 
   @override
   createState() => _TextEditorState();
@@ -29,18 +31,20 @@ class _TextEditorState extends State<TextEditor> {
   TextAlign align = TextAlign.center;
   int selectedFontIndex = 0;
 
+  static Size addSizes(Size size1, Size size2) {
+    return Size(size1.width + size2.width, size1.height + size2.height);
+  }
+
+  static Size textFieldSize(Size textSize) => addSizes(textSize, const Size((textFieldSpacing * 4), 10));
   @override
   void initState() {
     super.initState();
-    if (widget.inlineSpan != null) {
-      textNotifier.value = widget.inlineSpan?.toPlainText() ?? '';
-
-      if (textSpan.style != null) {
-        selectedFontIndex = koreanFonts.indexOf(textSpan.style?.fontFamily ?? '');
-        selectedFontIndex = selectedFontIndex != -1 ? selectedFontIndex : 0;
-        slider = textSpan.style?.fontSize ?? 32.0;
-        currentColor = textSpan.style?.color ?? Colors.white;
-      }
+    if (widget.textEditorStyle != null) {
+      textNotifier.value = widget.textEditorStyle!.text;
+      align = widget.textEditorStyle!.textAlign;
+      slider = widget.textEditorStyle!.textStyle.fontSize ?? slider;
+      currentColor = widget.textEditorStyle!.textStyle.color ?? currentColor;
+      textBackgroundColor = widget.textEditorStyle!.backgroundColor;
     }
   }
 
@@ -85,7 +89,24 @@ class _TextEditorState extends State<TextEditor> {
           fontSize: slider.toDouble(),
         ),
       );
-
+  TextFormField _textField({bool readOnly = false}) => TextFormField(
+        readOnly: readOnly,
+        enabled: !readOnly,
+        initialValue: textNotifier.value,
+        textAlign: align,
+        style: textSpan.style,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(textFieldSpacing),
+        ),
+        onChanged: (value) => textNotifier.value = value,
+        textAlignVertical: TextAlignVertical.center,
+        keyboardType: TextInputType.multiline,
+        enableSuggestions: false,
+        autocorrect: false,
+        maxLines: null,
+        autofocus: true,
+      );
   Align _buildTextField() {
     return Center(
       child: Align(
@@ -97,32 +118,14 @@ class _TextEditorState extends State<TextEditor> {
         child: ValueListenableBuilder<String>(
             valueListenable: textNotifier,
             builder: (context, text, child) {
-              double textWidth = textSize(textSpan, context).width;
-              const double spacing = 10;
-              textWidth = textWidth + (spacing * 4);
               return Container(
-                width: textWidth,
-                margin: const EdgeInsets.all(spacing),
+                width: textFieldSize(textSize(textSpan, context)).width,
+                margin: const EdgeInsets.all(textFieldSpacing),
                 decoration: BoxDecoration(
                   color: textBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: TextField(
-                  // readOnly: true,
-                  textAlign: align,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  style: textSpan.style,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(spacing),
-                  ),
-                  onChanged: (value) => textNotifier.value = value,
-                  textAlignVertical: TextAlignVertical.center,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: null,
-                  autofocus: true,
-                ),
+                child: _textField(),
               );
             }),
       ),
@@ -169,7 +172,14 @@ class _TextEditorState extends State<TextEditor> {
             if (textNotifier.value.isEmpty) {
               Navigator.pop(context);
             } else {
-              Navigator.pop(context, textSpan);
+              TextEditorStyle result = TextEditorStyle(
+                text: textNotifier.value,
+                textAlign: align,
+                textStyle: textSpan.style!,
+                backgroundColor: textBackgroundColor,
+                fieldSize: textFieldSize(textSize(textSpan, context)),
+              );
+              Navigator.pop(context, result);
             }
           },
           color: Colors.white,
@@ -299,5 +309,50 @@ class _TextEditorState extends State<TextEditor> {
         ),
       ),
     );
+  }
+}
+
+class TextEditorStyle {
+  final String text;
+  final TextAlign textAlign;
+  final TextStyle textStyle;
+  final Color backgroundColor;
+  final Size fieldSize;
+  TextEditorStyle({
+    required this.text,
+    required this.textAlign,
+    required this.textStyle,
+    required this.backgroundColor,
+    required this.fieldSize,
+  });
+
+  TextEditorStyle copyWith({
+    String? text,
+    TextAlign? textAlign,
+    TextStyle? textStyle,
+    Color? backgroundColor,
+    Size? fieldSize,
+  }) {
+    return TextEditorStyle(
+      text: text ?? this.text,
+      textAlign: textAlign ?? this.textAlign,
+      textStyle: textStyle ?? this.textStyle,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      fieldSize: fieldSize ?? this.fieldSize,
+    );
+  }
+}
+
+class TextEditedWidget extends StatefulWidget {
+  const TextEditedWidget({super.key});
+
+  @override
+  State<TextEditedWidget> createState() => _TextEditedWidgetState();
+}
+
+class _TextEditedWidgetState extends State<TextEditedWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

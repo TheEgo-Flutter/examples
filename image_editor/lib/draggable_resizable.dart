@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'layer_manager.dart';
+import 'modules/text_layer/text_editor.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
@@ -249,26 +250,46 @@ class _DraggableResizableState extends State<DraggableResizable> {
           ],
         );
       case LayerType.text:
-        InlineSpan object = widget.layerItem.object as InlineSpan;
-        //InlineSpan font size scale
-        Widget child = Text.rich(
-          object,
-        );
+        TextEditorStyle textEditorStyle = widget.layerItem.object as TextEditorStyle;
 
         return Stack(
           children: [
             Padding(
               padding: const EdgeInsets.all(iconArea / 2),
               child: Container(
-                height: size.height,
-                width: size.width,
                 decoration: BoxDecoration(
                   border: Border.all(
                     width: 2,
                     color: widget.isFocus ? Colors.blue : Colors.transparent,
                   ),
                 ),
-                child: FittedBox(child: child),
+                child: Container(
+                  height: size.height,
+                  width: size.width,
+                  margin: const EdgeInsets.all(textFieldSpacing),
+                  decoration: BoxDecoration(
+                    color: textEditorStyle.backgroundColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TextFormField(
+                    readOnly: true,
+                    enabled: !true,
+                    initialValue: textEditorStyle.text,
+                    textAlign: textEditorStyle.textAlign,
+                    style: textEditorStyle.textStyle.copyWith(
+                        fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.size.width)),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(textFieldSpacing),
+                    ),
+                    textAlignVertical: TextAlignVertical.center,
+                    keyboardType: TextInputType.multiline,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    maxLines: null,
+                    autofocus: true,
+                  ),
+                ),
               ),
             ),
             widget.isFocus
