@@ -18,6 +18,7 @@ import 'modules/text_layer/text_editor.dart';
 Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
 final GlobalKey backgroundKey = GlobalKey();
+final GlobalKey deleteAreaKey = GlobalKey();
 Size get cardSize => _cardSize ?? Size.zero;
 Offset get cardPosition => _cardPosition ?? Offset.zero;
 Size? _cardSize;
@@ -73,6 +74,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
       if (image == null) return;
       await card();
       await loadImage(image);
+
+      setState(() {});
     });
   }
 
@@ -169,7 +172,24 @@ class _PhotoEditorState extends State<PhotoEditor> {
           fit: StackFit.expand,
           children: [
             ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-            Positioned(top: 0, right: 0, child: buildAppBar())
+            Positioned(top: 0, right: 0, child: buildAppBar()),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                key: deleteAreaKey,
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.green[900]!, width: 2),
+                  color: Colors.white,
+                ),
+                child: Icon(
+                  Icons.delete,
+                  color: Colors.green[900],
+                  size: 30,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -222,7 +242,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
           }
         });
       },
-      onDragStart: () {
+      onDragStart: (LayerItem item) {
         setState(() {
           selectedKey = layer.key;
           if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
@@ -230,7 +250,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
           }
         });
       },
-      onDragEnd: () {
+      onDragEnd: (LayerItem item) {
         setState(() {
           selectedKey = null;
         });

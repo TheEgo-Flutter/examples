@@ -2,6 +2,8 @@ import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:image_editor/image_editor.dart';
+import 'package:vibration/vibration.dart';
 
 import 'layer_manager.dart';
 import 'modules/text_layer/text_editor.dart';
@@ -19,8 +21,8 @@ class DraggableResizable extends StatefulWidget {
 
   final ValueChanged<LayerItem>? onLayerTapped;
   final VoidCallback? onDelete;
-  final VoidCallback? onDragStart;
-  final VoidCallback? onDragEnd;
+  final ValueChanged<LayerItem>? onDragStart;
+  final ValueChanged<LayerItem>? onDragEnd;
   final bool isFocus;
   final LayerItem layerItem;
 
@@ -31,15 +33,16 @@ class DraggableResizable extends StatefulWidget {
 class _DraggableResizableState extends State<DraggableResizable> {
   Size size = Size.zero;
   double angle = 0;
-  Offset position = Offset.zero;
+  Offset objectPosition = Offset.zero;
+  Offset _offset = Offset.zero;
   bool isCenteredHorizontally = false;
   bool isCenteredVertically = false;
-
+  Rect deleteAreaRect = Rect.zero;
   @override
   void initState() {
     super.initState();
     size = widget.layerItem.size;
-    position = widget.layerItem.position;
+    objectPosition = widget.layerItem.position;
     angle = widget.layerItem.rotation;
   }
 
@@ -51,13 +54,28 @@ class _DraggableResizableState extends State<DraggableResizable> {
       builder: (context, constraints) {
         _setInitialPositionIfNeeded(constraints);
         _setNormalizedSizeAndPosition(constraints);
-
+        final RenderBox renderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox;
+        final Offset deleteAreaPosition = renderBox.localToGlobal(Offset.zero) - cardPosition;
+        final Size size = renderBox.size;
+        deleteAreaRect = Rect.fromPoints(
+          deleteAreaPosition,
+          deleteAreaPosition + Offset(size.width, size.height),
+        );
         return Stack(
           children: <Widget>[
             if (widget.isFocus) ..._buildCenterLine(constraints, isCenteredHorizontally, isCenteredVertically),
             Positioned(
-              top: position.dy,
-              left: position.dx,
+              top: deleteAreaRect.top,
+              left: deleteAreaRect.left,
+              child: Container(
+                width: deleteAreaRect.width,
+                height: deleteAreaRect.height,
+                color: Colors.red.withOpacity(0.5),
+              ),
+            ),
+            Positioned(
+              top: objectPosition.dy,
+              left: objectPosition.dx,
               child: _buildDraggablePoint(constraints),
             ),
           ],
@@ -67,8 +85,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
   }
 
   void _setInitialPositionIfNeeded(BoxConstraints constraints) {
-    if (position == Offset.zero) {
-      position = Offset(
+    if (objectPosition == Offset.zero) {
+      objectPosition = Offset(
         constraints.maxWidth / 2 - (size.width / 2),
         constraints.maxHeight / 2 - (size.height / 2),
       );
@@ -79,11 +97,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
     final aspectRatio = size.width / size.height;
     final normalizedWidth = size.width;
     final normalizedHeight = normalizedWidth / aspectRatio;
-    final normalizedLeft = position.dx;
-    final normalizedTop = position.dy;
+    final normalizedLeft = objectPosition.dx;
+    final normalizedTop = objectPosition.dy;
 
     size = Size(normalizedWidth, normalizedHeight);
-    position = Offset(normalizedLeft, normalizedTop);
+    objectPosition = Offset(normalizedLeft, normalizedTop);
   }
 
   // 중앙선 생성
@@ -106,43 +124,70 @@ class _DraggableResizableState extends State<DraggableResizable> {
           width: 1,
           color: isCenteredHorizontally ? Colors.red : Colors.transparent,
         ),
-      )
+      ),
+      //DeleteArea
     ];
   }
 
   LayerItem get layerItem => widget.layerItem.copyWith(
-        position: position,
+        position: objectPosition,
         size: size,
         rotation: angle,
       );
+  Offset startingFingerPositionFromObject = Offset.zero;
+  Offset currentFingerPosition = Offset.zero;
   // 드래그 가능한 포인트 생성
   Widget _buildDraggablePoint(BoxConstraints constraints) {
     if (widget.layerItem.isFixed) {
-      return IgnorePointer(
-        ignoring: true,
-        child: _DraggablePoint(
-          child: _buildTransform(constraints),
-        ),
-      );
+      return buildChild(constraints);
     }
     return _DraggablePoint(
       onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
-      onDragStart: () => widget.onDragStart?.call(),
-      onDragEnd: () => widget.onDragEnd?.call(),
-      onDrag: widget.isFocus ? (d) => _handleDrag(d, constraints) : null,
-      onScale: widget.isFocus ? (s) => _handleScale(s, constraints) : null,
-      onRotate: widget.isFocus ? (a) => _handleRotate(a) : null,
-      child: _buildTransform(constraints),
-    );
-  }
+      onDragStart: (d) {
+        widget.onDragStart?.call(layerItem);
+        startingFingerPositionFromObject = d;
+      },
+      onDragEnd: () {
+        widget.onDragEnd?.call(layerItem);
+        if (deleteAreaRect.contains(currentFingerPosition)) {
+          widget.onDelete?.call();
+        }
+      },
+      onDrag: widget.isFocus
+          ? (d, focalPoint) async {
+              setState(() {
+                objectPosition = Offset(objectPosition.dx + d.dx, objectPosition.dy + d.dy);
+                isCenteredHorizontally = _checkIfCentered(objectPosition, size, constraints.maxWidth, Axis.horizontal);
+                isCenteredVertically = _checkIfCentered(objectPosition, size, constraints.maxHeight, Axis.vertical);
+                // deleteArea에 닿았는지 확인
+              });
 
-  // 드래그 핸들러
-  void _handleDrag(Offset delta, BoxConstraints constraints) {
-    setState(() {
-      position = Offset(position.dx + delta.dx, position.dy + delta.dy);
-      isCenteredHorizontally = _checkIfCentered(position, size, constraints.maxWidth, Axis.horizontal);
-      isCenteredVertically = _checkIfCentered(position, size, constraints.maxHeight, Axis.vertical);
-    });
+              currentFingerPosition = startingFingerPositionFromObject + objectPosition;
+
+              if (deleteAreaRect.contains(currentFingerPosition)) {
+                if (await Vibration.hasVibrator() ?? false) {
+                  Vibration.vibrate(duration: 100);
+                }
+              }
+            }
+          : null,
+      onScale: widget.isFocus ? (s) => _handleScale(s, constraints) : null,
+      onRotate: widget.isFocus
+          ? (a) => setState(() {
+                angle = a;
+              })
+          : null,
+      child: Transform.translate(
+        offset: _offset,
+        child: Transform.rotate(
+          angle: angle,
+          child: Transform.scale(
+            scale: 1.0,
+            child: buildChild(constraints),
+          ),
+        ),
+      ),
+    );
   }
 
   // 스케일 핸들러
@@ -153,12 +198,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
       widget.layerItem.size.height * scale,
     );
 
-    if (_isSizeTooSmall(updatedSize) || _isSizeTooLarge(updatedSize, constraints)) {
-      return;
-    }
-
-    final midX = position.dx + (size.width / 2);
-    final midY = position.dy + (size.height / 2);
+    final midX = objectPosition.dx + (size.width / 2);
+    final midY = objectPosition.dy + (size.height / 2);
     final updatedPosition = Offset(
       midX - (updatedSize.width / 2),
       midY - (updatedSize.height / 2),
@@ -166,15 +207,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
     setState(() {
       size = updatedSize;
-      position = updatedPosition;
-    });
-  }
-
-  // 로테이션 핸들러
-  void _handleRotate(double rotation) {
-    log('onRotate');
-    setState(() {
-      angle = rotation;
+      objectPosition = updatedPosition;
     });
   }
 
@@ -185,135 +218,57 @@ class _DraggableResizableState extends State<DraggableResizable> {
     return (center - widgetCenter).abs() < 5;
   }
 
-  // 사이즈가 너무 작은지 검사
-  bool _isSizeTooSmall(Size size) {
-    return size.width < 64 || size.height < 64;
-  }
-
-  // 사이즈가 너무 큰지 검사
-  bool _isSizeTooLarge(Size size, BoxConstraints constraints) {
-    return size.width > constraints.maxWidth || size.height > constraints.maxHeight;
-  }
-
-  // Transform 위젯 빌드
-  Widget _buildTransform(BoxConstraints constraints) {
-    return Transform.rotate(
-      angle: angle,
-      child: Transform.scale(
-        scale: 1.0,
-        child: buildChild(constraints),
-      ),
-    );
-  }
-
   Widget buildChild(BoxConstraints constraints) {
-    const double iconArea = 16;
     switch (widget.layerItem.type) {
       case LayerType.sticker:
-        return Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(iconArea / 2),
-              child: Container(
-                height: size.height,
-                width: size.width,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    width: 2,
-                    color: widget.isFocus ? Colors.blue : Colors.transparent,
-                  ),
-                ),
-                child: widget.layerItem.object,
-              ),
+        return Container(
+          height: size.height,
+          width: size.width,
+          decoration: BoxDecoration(
+            border: Border.all(
+              width: 2,
+              color: widget.isFocus ? Colors.blue : Colors.transparent,
             ),
-            widget.isFocus
-                ? Positioned(
-                    top: 2,
-                    right: 2,
-                    child: GestureDetector(
-                      onTap: widget.onDelete,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: iconArea,
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink()
-          ],
+          ),
+          child: widget.layerItem.object,
         );
       case LayerType.text:
         TextEditorStyle textEditorStyle = widget.layerItem.object as TextEditorStyle;
 
-        return Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(iconArea / 2),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    width: 2,
-                    color: widget.isFocus ? Colors.blue : Colors.transparent,
-                  ),
-                ),
-                child: Container(
-                  height: size.height,
-                  width: size.width,
-                  margin: const EdgeInsets.all(textFieldSpacing),
-                  decoration: BoxDecoration(
-                    color: textEditorStyle.backgroundColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: TextFormField(
-                    readOnly: true,
-                    enabled: !true,
-                    initialValue: textEditorStyle.text,
-                    textAlign: textEditorStyle.textAlign,
-                    style: textEditorStyle.textStyle.copyWith(
-                        fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.size.width)),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(textFieldSpacing),
-                    ),
-                    textAlignVertical: TextAlignVertical.center,
-                    keyboardType: TextInputType.multiline,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    maxLines: null,
-                    autofocus: true,
-                  ),
-                ),
-              ),
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              width: 2,
+              color: widget.isFocus ? Colors.blue : Colors.transparent,
             ),
-            widget.isFocus
-                ? Positioned(
-                    top: 2,
-                    right: 2,
-                    child: GestureDetector(
-                      onTap: widget.onDelete,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: iconArea,
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink()
-          ],
+          ),
+          child: Container(
+            height: size.height,
+            width: size.width,
+            margin: const EdgeInsets.all(textFieldSpacing),
+            decoration: BoxDecoration(
+              color: textEditorStyle.backgroundColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: TextFormField(
+              readOnly: true,
+              enabled: !true,
+              initialValue: textEditorStyle.text,
+              textAlign: textEditorStyle.textAlign,
+              style: textEditorStyle.textStyle
+                  .copyWith(fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.size.width)),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(textFieldSpacing),
+              ),
+              textAlignVertical: TextAlignVertical.center,
+              keyboardType: TextInputType.multiline,
+              enableSuggestions: false,
+              autocorrect: false,
+              maxLines: null,
+              autofocus: true,
+            ),
+          ),
         );
       case LayerType.drawing:
       case LayerType.frame:
@@ -341,9 +296,9 @@ class _DraggablePoint extends StatefulWidget {
   }) : super(key: key);
 
   final Widget child;
-  final ValueSetter<Offset>? onDrag;
+  final void Function(Offset p1, Offset p2)? onDrag;
   final VoidCallback? onLayerTapped;
-  final VoidCallback? onDragStart;
+  final ValueSetter<Offset>? onDragStart;
   final VoidCallback? onDragEnd;
   final ValueSetter<double>? onScale;
   final ValueSetter<double>? onRotate;
@@ -361,11 +316,9 @@ class _DraggablePointState extends State<_DraggablePoint> {
       onTap: () => widget.onLayerTapped?.call(),
       onScaleStart: (details) {
         initPoint = details.localFocalPoint;
-        widget.onDragStart?.call();
+        widget.onDragStart?.call(details.localFocalPoint);
       },
-      onScaleEnd: (details) {
-        widget.onDragEnd?.call();
-      },
+      onScaleEnd: (details) => widget.onDragEnd?.call(),
       onScaleUpdate: (details) {
         final dx = details.localFocalPoint.dx - initPoint.dx;
         final dy = details.localFocalPoint.dy - initPoint.dy;
@@ -375,7 +328,7 @@ class _DraggablePointState extends State<_DraggablePoint> {
         final rotatedDy = dx * math.sin(angleInRadians) + dy * math.cos(angleInRadians);
 
         initPoint = details.localFocalPoint;
-        widget.onDrag?.call(Offset(rotatedDx, rotatedDy));
+        widget.onDrag?.call(Offset(rotatedDx, rotatedDy), initPoint);
 
         if (details.pointerCount > 1) {
           widget.onScale?.call(details.scale);
@@ -386,3 +339,7 @@ class _DraggablePointState extends State<_DraggablePoint> {
     );
   }
 }
+/*
+FractionalTranslation(
+                  translation: const Offset(0, 0),
+ */
