@@ -21,7 +21,7 @@ class LayerItem {
     required this.size,
     Offset? position,
     this.rotation = 0,
-  }) : position = position ?? cardPosition;
+  }) : position = position ?? cardRect.topLeft;
 
   LayerItem copyWith({
     Offset? position,

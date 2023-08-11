@@ -212,7 +212,7 @@ class _TextEditorState extends State<TextEditor> {
 
   Widget _fontBar(BuildContext context) {
     return SizedBox(
-      width: cardSize.width,
+      width: cardRect.size.width,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(

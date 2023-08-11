@@ -18,13 +18,11 @@ import 'modules/text_layer/text_editor.dart';
 
 Key? selectedKey;
 final GlobalKey cardKey = GlobalKey();
+final GlobalKey objectAreaKey = GlobalKey();
+Rect cardRect = Rect.zero;
 final GlobalKey backgroundKey = GlobalKey();
 final GlobalKey frameKey = GlobalKey();
 final GlobalKey deleteAreaKey = GlobalKey();
-Size get cardSize => _cardSize ?? Size.zero;
-Offset get cardPosition => _cardPosition ?? Offset.zero;
-Size? _cardSize;
-Offset? _cardPosition;
 
 class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
@@ -55,7 +53,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
   ScreenshotController screenshotController = ScreenshotController();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
-
+  final mainClipper = CardClip();
   final picker = ImagePicker();
 
   @override
@@ -69,15 +67,22 @@ class _PhotoEditorState extends State<PhotoEditor> {
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await card();
+      _getRect();
       setState(() {});
     });
   }
 
-  Future<void> card() async {
-    final RenderBox renderBox = cardKey.currentContext?.findRenderObject() as RenderBox;
-    _cardSize = renderBox.size; // The size of the card
-    _cardPosition = renderBox.localToGlobal(Offset.zero); // The position of the card
+  Future<void> _getRect() async {
+    final RenderBox? cardRenderBox = cardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (cardRenderBox != null) {
+      Offset offset = cardRenderBox.localToGlobal(Offset.zero);
+      cardRect = Rect.fromLTWH(offset.dx, offset.dy, cardRenderBox.size.width, cardRenderBox.size.height);
+    }
+    final RenderBox? objectRenderBox = objectAreaKey.currentContext?.findRenderObject() as RenderBox?;
+    if (objectRenderBox != null) {
+      Offset offset = objectRenderBox.localToGlobal(Offset.zero);
+      cardRect = Rect.fromLTWH(offset.dx, offset.dy, objectRenderBox.size.width, objectRenderBox.size.height);
+    }
   }
 
   Future<void> _loadImageColor(Uint8List imageFile) async {
@@ -106,48 +111,51 @@ class _PhotoEditorState extends State<PhotoEditor> {
       data: theme,
       child: WillPopScope(
         onWillPop: () async => false,
-        child: GestureDetector(
-          key: const Key('background_gestureDetector'),
-          onTap: () {
-            setState(() {
-              selectedKey = null;
-            });
-          },
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            key: scaffoldGlobalKey,
-            backgroundColor: Colors.grey,
-            appBar: AppBar(
-              // backgroundColor: Colors.amber[100],
-              elevation: 0,
-              leading: const BackButton(),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: () async {
-                    selectedKey = null;
+        child: ClipPath(
+          clipper: CardClip(),
+          child: GestureDetector(
+            key: const Key('background_gestureDetector'),
+            onTap: () {
+              setState(() {
+                selectedKey = null;
+              });
+            },
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              key: scaffoldGlobalKey,
+              backgroundColor: Colors.grey,
+              appBar: AppBar(
+                // backgroundColor: Colors.amber[100],
+                elevation: 0,
+                leading: const BackButton(),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.check),
+                    onPressed: () async {
+                      selectedKey = null;
 
-                    setState(() {});
+                      setState(() {});
 
-                    LoadingScreen(scaffoldGlobalKey).show();
+                      LoadingScreen(scaffoldGlobalKey).show();
 
-                    var binaryIntList = await screenshotController.capture();
+                      var binaryIntList = await screenshotController.capture();
 
-                    LoadingScreen(scaffoldGlobalKey).hide();
+                      LoadingScreen(scaffoldGlobalKey).hide();
 
-                    if (mounted) Navigator.pop(context, binaryIntList);
-                  },
-                ),
-              ],
-            ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(flex: 3, child: buildScreenshotWidget(context)),
-                  Expanded(flex: 1, child: buildObjectSelector()),
+                      if (mounted) Navigator.pop(context, binaryIntList);
+                    },
+                  ),
                 ],
+              ),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(flex: 3, child: buildScreenshotWidget(context)),
+                    Expanded(flex: 1, child: buildObjectSelector()),
+                  ],
+                ),
               ),
             ),
           ),
@@ -162,7 +170,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         child: Container(
-          width: cardSize.width,
+          width: cardRect.width,
           color: Colors.grey[200],
           padding: const EdgeInsets.all(2),
           child: Column(
@@ -181,9 +189,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
     return RepaintBoundary(
       child: Screenshot(
         controller: screenshotController,
-        child: ClipRRect(
+        child: ClipPath(
+          clipper: mainClipper,
           key: cardKey,
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          // borderRadius: const BorderRadius.all(Radius.circular(8)),
           child: buildImageLayer(context),
         ),
       ),
@@ -242,8 +251,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
             context: context,
             pageBuilder: (context, animation, secondaryAnimation) {
               return PositionedWidget(
-                position: cardPosition,
-                size: cardSize,
+                position: cardRect.topLeft,
+                size: cardRect.size,
                 child: TextEditor(
                   textEditorStyle: layer.object,
                 ),
@@ -303,7 +312,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
             if (child == null) return;
             // size dynamic change for device (default is 150X150)
             Size size = const Size(150, 150);
-            Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+            Offset offset =
+                Offset(cardRect.size.width / 2 - size.width / 2, cardRect.size.height / 2 - size.height / 2);
             LayerItem layer = LayerItem(
               UniqueKey(),
               type: _selectedType,
@@ -326,7 +336,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 type: _selectedType,
                 object: null,
                 position: Offset.zero,
-                size: cardSize,
+                size: cardRect.size,
               );
             } else {
               layer = LayerItem(
@@ -334,7 +344,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 type: _selectedType,
                 object: child,
                 position: Offset.zero,
-                size: cardSize,
+                size: cardRect.size,
               );
             }
             layerManager.addLayer(layer);
@@ -350,8 +360,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 decoration: BoxDecoration(
                   gradient: gradients[index],
                 ),
-                width: cardSize.width,
-                height: cardSize.height,
+                width: cardRect.size.width,
+                height: cardRect.size.height,
               ),
             ),
             ...widget.backgrounds
@@ -367,7 +377,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 type: _selectedType,
                 object: Image.memory(loadImage),
                 position: Offset.zero,
-                size: cardSize,
+                size: cardRect.size,
               );
               layerManager.addLayer(background);
             } else {
@@ -376,7 +386,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 type: _selectedType,
                 object: child,
                 position: Offset.zero,
-                size: cardSize,
+                size: cardRect.size,
               );
               layerManager.addLayer(layer);
             }
@@ -440,8 +450,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
                     return PositionedWidget(
-                      position: cardPosition,
-                      size: cardSize,
+                      position: cardRect.topLeft,
+                      size: cardRect.size,
                       child: const TextEditor(),
                     );
                   },
@@ -471,8 +481,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
                     return PositionedWidget(
-                      position: cardPosition,
-                      size: cardSize,
+                      position: cardRect.topLeft,
+                      size: cardRect.size,
                       child: const BrushPainter(),
                     );
                   },
@@ -482,7 +492,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   var image = Image.memory(data.$1!);
                   var size = data.$2!;
                   setState(() {
-                    Offset offset = Offset(cardSize.width / 2 - size.width / 2, cardSize.height / 2 - size.height / 2);
+                    Offset offset =
+                        Offset(cardRect.size.width / 2 - size.width / 2, cardRect.size.height / 2 - size.height / 2);
                     var layer = LayerItem(
                       UniqueKey(),
                       type: LayerType.drawing,
@@ -555,4 +566,67 @@ class RandomGradientContainers {
       (index) => _getRandomGradient(),
     );
   }
+}
+
+class CardClip extends CustomClipper<Path> {
+  double? calcWidth;
+  late Rect rect; // Rect를 저장할 멤버 변수
+
+  @override
+  Path getClip(Size size) {
+    double height = size.height;
+    double width = height * 9 / 16;
+
+    if (height > size.height) {
+      height = size.height;
+      width = height * 16 / 9;
+    }
+    calcWidth = width;
+
+    rect = Rect.fromLTWH(
+        // 여기서 Rect 값을 저장합니다.
+        (size.width - width) / 2,
+        (size.height - height) / 2,
+        width,
+        height);
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(8)))
+      ..close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class ObjectBoxClip extends CustomClipper<Path> {
+  double width;
+  late Rect rect; // Rect를 저장할 멤버 변수
+
+  ObjectBoxClip({required this.width});
+
+  @override
+  Path getClip(Size size) {
+    if (width == 0) {
+      width = size.width * 0.8;
+    }
+
+    rect = Rect.fromLTWH(
+        // 여기서 Rect 값을 저장합니다.
+        (size.width - width) / 2,
+        (size.height - size.height) / 2,
+        width,
+        size.height);
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(8)))
+      ..close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

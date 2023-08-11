@@ -39,7 +39,7 @@ class _BrushPainterState extends State<BrushPainter> {
 
   Future<void> _getImageData(BuildContext context) async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    Size? size = _drawingController.drawConfig.value.size; // same as cardSize
+    Size? size = _drawingController.drawConfig.value.size; // same as cardRect.size
     Navigator.pop(context, (data, size));
   }
 
@@ -134,8 +134,8 @@ class _BrushPainterState extends State<BrushPainter> {
         DrawingBoard(
           controller: _drawingController,
           background: Container(
-            width: cardSize.width,
-            height: cardSize.height,
+            width: cardRect.size.width,
+            height: cardRect.size.height,
             color: Colors.transparent,
           ),
           boardPanEnabled: false,
