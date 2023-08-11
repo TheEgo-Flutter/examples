@@ -308,8 +308,6 @@ class _TextEditorState extends State<TextEditor> {
       onWillPop: () async => false,
       child: Center(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
           child: Stack(
             children: <Widget>[
               _buildTextField(),
@@ -317,13 +315,10 @@ class _TextEditorState extends State<TextEditor> {
                 offset: const Offset(0, 0),
                 child: _buildAppBar(),
               ),
-              Visibility(
-                visible: MediaQuery.of(context).viewInsets.bottom == 0,
-                child: Positioned(
-                  bottom: 25,
-                  left: 0,
-                  child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
-                ),
+              Positioned(
+                bottom: 25,
+                left: 0,
+                child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
               ),
             ],
           ),

@@ -47,7 +47,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   ScreenshotController screenshotController = ScreenshotController();
   Uint8List? currentImage;
-  Size viewportSize = const Size(0, 0);
   bool showAppBar = true;
   LinearGradient cardColor = const LinearGradient(
     begin: Alignment.topLeft,
@@ -119,7 +118,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
 
   @override
   Widget build(BuildContext context) {
-    viewportSize = MediaQuery.of(context).size;
     return Theme(
       data: theme,
       child: WillPopScope(
@@ -135,10 +133,22 @@ class _PhotoEditorState extends State<PhotoEditor> {
             resizeToAvoidBottomInset: false,
             key: scaffoldGlobalKey,
             backgroundColor: Colors.grey,
-            body: buildScreenshotWidget(context),
+            body: Column(
+              children: [
+                Expanded(flex: 3, child: buildScreenshotWidget(context)),
+                Expanded(flex: 1, child: buildItemArea()),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Container buildItemArea() {
+    return Container(
+      width: cardSize.width,
+      color: Colors.amber[100],
     );
   }
 
