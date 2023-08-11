@@ -56,10 +56,10 @@ class LayerManager {
     if (_frameLayer != null) {
       layers.add(_frameLayer!);
     }
+    layers.addAll(_otherLayers);
     if (_drawingLayer != null) {
       layers.add(_drawingLayer!);
     }
-    layers.addAll(_otherLayers);
     return layers;
   }
 
