@@ -26,9 +26,13 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   Future<List<Uint8List>> loadStickers(List<String> assetPaths) async {
     List<Uint8List> stickers = [];
     for (String path in assetPaths) {
-      final ByteData data = await rootBundle.load('assets/$path');
-      final List<int> bytes = data.buffer.asUint8List();
-      stickers.add(Uint8List.fromList(bytes));
+      try {
+        final ByteData data = await rootBundle.load('assets/$path');
+        final List<int> bytes = data.buffer.asUint8List();
+        stickers.add(Uint8List.fromList(bytes));
+      } catch (e) {
+        print("스티커를 불러오는 도중 오류가 발생했습니다: $e");
+      }
     }
     return stickers;
   }
@@ -53,11 +57,15 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
             child: const Text("Single image editor"),
             onPressed: () async {
               List<Uint8List> stickerList = await loadStickers(stickers);
+              List<Uint8List> frameList = await loadStickers(frames);
+              List<Uint8List> backgroundList = await loadStickers(backgrounds);
               var editedImage = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PhotoEditor(
                     stickers: stickerList,
+                    backgrounds: backgroundList,
+                    frames: frameList,
                   ),
                 ),
               );
