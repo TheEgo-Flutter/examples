@@ -271,14 +271,22 @@ class _DraggableResizableState extends State<DraggableResizable> {
             ),
           ),
         );
-      case LayerType.drawing:
-      case LayerType.frame:
       case LayerType.background:
-      default:
         return SizedBox(
           height: size.height,
           width: size.width,
           child: widget.layerItem.object,
+        );
+      case LayerType.drawing:
+      case LayerType.frame:
+      default:
+        return IgnorePointer(
+          ignoring: true,
+          child: SizedBox(
+            height: size.height,
+            width: size.width,
+            child: widget.layerItem.object,
+          ),
         );
     }
   }
