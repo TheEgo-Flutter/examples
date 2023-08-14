@@ -55,8 +55,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
         _setInitialPositionIfNeeded(constraints);
         _setNormalizedSizeAndPosition(constraints);
         final RenderBox renderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox;
-        final Offset deleteAreaPosition = renderBox.localToGlobal(Offset.zero) - cardRect.topLeft;
-        ;
+        final Offset deleteAreaPosition = renderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
+
         final Size size = renderBox.size;
         deleteAreaRect = Rect.fromPoints(
           deleteAreaPosition,
