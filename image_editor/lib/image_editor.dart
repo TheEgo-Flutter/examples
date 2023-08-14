@@ -1,29 +1,32 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor/draggable_resizable.dart';
 import 'package:image_editor/modules/item_selector.dart';
 import 'package:image_editor/theme.dart';
+import 'package:image_editor/ui/rect.dart';
 import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:vibration/vibration.dart';
 
 import 'layer_manager.dart';
 import 'loading_screen.dart';
 import 'modules/brush_painter.dart';
+import 'modules/random_gradients.dart';
 import 'modules/text_layer/text_editor.dart';
+import 'ui/overlay_position.dart';
 
-Key? selectedKey;
-final GlobalKey cardKey = GlobalKey();
-final GlobalKey objectAreaKey = GlobalKey();
+LayerItem? selectedLayerItem;
+
 Rect cardBoxRect = Rect.zero;
+final GlobalKey cardKey = GlobalKey();
 Rect objectBoxRect = Rect.zero;
-final GlobalKey backgroundKey = GlobalKey();
-final GlobalKey frameKey = GlobalKey();
+final GlobalKey objectAreaKey = GlobalKey();
+Rect deleteAreaRect = Rect.zero;
 final GlobalKey deleteAreaKey = GlobalKey();
 
 class PhotoEditor extends StatefulWidget {
@@ -55,9 +58,9 @@ class _PhotoEditorState extends State<PhotoEditor> {
   ScreenshotController screenshotController = ScreenshotController();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
+  bool get enableDelete => selectedLayerItem?.type == LayerType.sticker || selectedLayerItem?.type == LayerType.text;
   final cardBoxClipper = CardBoxClip();
   final picker = ImagePicker();
-
   @override
   void dispose() {
     layerManager.layers.clear();
@@ -75,16 +78,30 @@ class _PhotoEditorState extends State<PhotoEditor> {
   }
 
   Future<void> _getRect() async {
+    //* get card box rect
     final RenderBox? cardRenderBox = cardKey.currentContext?.findRenderObject() as RenderBox?;
     if (cardRenderBox != null) {
       Offset offset = cardRenderBox.localToGlobal(Offset.zero);
       cardBoxRect = Rect.fromLTWH(offset.dx, offset.dy, cardRenderBox.size.width, cardRenderBox.size.height);
     }
+    //* get object box rect
     final RenderBox? objectRenderBox = objectAreaKey.currentContext?.findRenderObject() as RenderBox?;
     if (objectRenderBox != null) {
       Offset offset = objectRenderBox.localToGlobal(Offset.zero);
       objectBoxRect = Rect.fromLTWH(offset.dx, offset.dy, objectRenderBox.size.width, objectRenderBox.size.height);
     }
+    //* get delete area rect
+    final RenderBox deleteAreaRenderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox;
+    if (cardRenderBox != null) {
+      final Offset offset = deleteAreaRenderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
+      deleteAreaRect = Rect.fromLTWH(
+        offset.dx,
+        offset.dy,
+        deleteAreaRenderBox.size.width,
+        deleteAreaRenderBox.size.height,
+      );
+    }
+
     log('_getRect card Box Rect : $cardBoxRect\nobject Box Rect : $objectBoxRect');
   }
 
@@ -108,6 +125,26 @@ class _PhotoEditorState extends State<PhotoEditor> {
     return image;
   }
 
+  void _handleDeleteAction(
+    Offset currentFingerPosition,
+    LayerItem layerItem,
+    LayerItemStatus status,
+  ) async {
+    bool deletable = deleteAreaRect.contains(currentFingerPosition);
+    log(deletable.toString());
+    if (!enableDelete) return;
+    if (!deletable) return;
+    if (status == LayerItemStatus.dragging) {
+      if (await Vibration.hasVibrator() ?? false) {
+        Vibration.vibrate(amplitude: 100);
+      }
+    } else if (status == LayerItemStatus.completed) {
+      layerManager.removeLayerByKey(layerItem.key);
+    } else {
+      return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -126,7 +163,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
               IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: () async {
-                  selectedKey = null;
+                  selectedLayerItem = null;
 
                   setState(() {});
 
@@ -156,6 +193,105 @@ class _PhotoEditorState extends State<PhotoEditor> {
     );
   }
 
+  Widget buildScreenshotWidget(BuildContext context) {
+    return RepaintBoundary(
+      child: Screenshot(
+        controller: screenshotController,
+        child: ClipPath(
+          clipper: cardBoxClipper,
+          key: cardKey,
+          child: buildImageLayer(context),
+        ),
+      ),
+    );
+  }
+
+  Widget buildImageLayer(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Container(
+        decoration: cardColor != null
+            ? BoxDecoration(
+                gradient: cardColor,
+              )
+            : const BoxDecoration(color: Colors.white),
+        child: AspectRatio(
+          aspectRatio: widget.aspectRatio.ratio ?? 1,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+              DeleteIconButton(
+                visible: enableDelete,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget buildLayerWidgets(LayerItem layer) {
+    return DraggableResizable(
+      key: Key('${layer.key}_draggableResizable_asset'),
+      isFocus: selectedLayerItem?.key == layer.key ? true : false,
+      onLayerTapped: (LayerItem item) async {
+        if (layer.type == LayerType.text) {
+          setState(() {
+            layerManager.removeLayerByKey(layer.key);
+          });
+
+          TextEditorStyle? textEditorStyle = await showGeneralDialog(
+            context: context,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return PositionedWidget(
+                offset: cardBoxRect.topLeft,
+                size: cardBoxRect.size,
+                child: TextEditor(
+                  textEditorStyle: layer.object,
+                ),
+              );
+            },
+          );
+          setState(() {});
+          if (textEditorStyle == null) return;
+
+          var newLayer = LayerItem(
+            UniqueKey(),
+            type: LayerType.text,
+            object: textEditorStyle,
+            offset: item.offset,
+            size: textEditorStyle.fieldSize,
+          );
+          layerManager.addLayer(newLayer);
+          setState(() {});
+        }
+        setState(() {
+          selectedLayerItem = layer;
+
+          if (layer.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(layer);
+          }
+        });
+      },
+      onDragStart: (LayerItem item) {
+        setState(() {
+          selectedLayerItem = layer;
+          if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(layer);
+          }
+        });
+      },
+      onDragEnd: (LayerItem item) {
+        setState(() {
+          selectedLayerItem = null;
+        });
+      },
+      onDelete: _handleDeleteAction,
+      layerItem: layer,
+    );
+  }
+
+  //---------------------------------//
   Widget buildObjectSelector() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -177,124 +313,6 @@ class _PhotoEditorState extends State<PhotoEditor> {
     );
   }
 
-  Widget buildScreenshotWidget(BuildContext context) {
-    return RepaintBoundary(
-      child: Screenshot(
-        controller: screenshotController,
-        child: ClipPath(
-          clipper: cardBoxClipper,
-          key: cardKey,
-          // borderRadius: const BorderRadius.all(Radius.circular(8)),
-          child: buildImageLayer(context),
-        ),
-      ),
-    );
-  }
-
-  Widget buildImageLayer(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return Container(
-        decoration: cardColor != null
-            ? BoxDecoration(
-                gradient: cardColor,
-              )
-            : const BoxDecoration(color: Colors.white),
-        child: AspectRatio(
-          aspectRatio: widget.aspectRatio.ratio ?? 1,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  key: deleteAreaKey,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.green[900]!, width: 2),
-                    color: Colors.white,
-                  ),
-                  child: Icon(
-                    Icons.delete,
-                    color: Colors.green[900],
-                    size: 30,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget buildLayerWidgets(LayerItem layer) {
-    return DraggableResizable(
-      key: Key('${layer.key}_draggableResizable_asset'),
-      isFocus: selectedKey == layer.key ? true : false,
-      onLayerTapped: (LayerItem item) async {
-        if (layer.type == LayerType.text) {
-          setState(() {
-            layerManager.removeLayerByKey(layer.key);
-          });
-
-          TextEditorStyle? textEditorStyle = await showGeneralDialog(
-            context: context,
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return PositionedWidget(
-                position: cardBoxRect.topLeft,
-                size: cardBoxRect.size,
-                child: TextEditor(
-                  textEditorStyle: layer.object,
-                ),
-              );
-            },
-          );
-          setState(() {});
-          if (textEditorStyle == null) return;
-
-          var newLayer = LayerItem(
-            UniqueKey(),
-            type: LayerType.text,
-            object: textEditorStyle,
-            position: item.position,
-            size: textEditorStyle.fieldSize,
-          );
-          layerManager.addLayer(newLayer);
-          setState(() {});
-        }
-        setState(() {
-          selectedKey = layer.key;
-
-          if (layer.type == LayerType.sticker) {
-            layerManager.moveLayerToFront(layer);
-          }
-        });
-      },
-      onDragStart: (LayerItem item) {
-        setState(() {
-          selectedKey = layer.key;
-          if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
-            layerManager.moveLayerToFront(layer);
-          }
-        });
-      },
-      onDragEnd: (LayerItem item) {
-        setState(() {
-          selectedKey = null;
-        });
-      },
-      onDelete: () {
-        setState(() {
-          layerManager.removeLayerByKey(layer.key);
-        });
-      },
-      layerItem: layer,
-    );
-  }
-  //---------------------------------//
-
   Widget buildItemArea() {
     switch (_selectedType) {
       case LayerType.sticker:
@@ -310,7 +328,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
               UniqueKey(),
               type: _selectedType,
               object: child,
-              position: offset,
+              offset: offset,
               size: size,
             );
             layerManager.addLayer(layer);
@@ -324,18 +342,18 @@ class _PhotoEditorState extends State<PhotoEditor> {
             late LayerItem layer;
             if (child == null) {
               layer = LayerItem(
-                frameKey,
+                UniqueKey(),
                 type: _selectedType,
                 object: null,
-                position: Offset.zero,
+                offset: Offset.zero,
                 size: cardBoxRect.size,
               );
             } else {
               layer = LayerItem(
-                frameKey,
+                UniqueKey(),
                 type: _selectedType,
                 object: child,
-                position: Offset.zero,
+                offset: Offset.zero,
                 size: cardBoxRect.size,
               );
             }
@@ -365,19 +383,19 @@ class _PhotoEditorState extends State<PhotoEditor> {
               Uint8List? loadImage = await _loadImage(image);
               await _loadImageColor(loadImage);
               LayerItem background = LayerItem(
-                backgroundKey,
+                UniqueKey(),
                 type: _selectedType,
                 object: Image.memory(loadImage),
-                position: Offset.zero,
+                offset: Offset.zero,
                 size: cardBoxRect.size,
               );
               layerManager.addLayer(background);
             } else {
               LayerItem layer = LayerItem(
-                backgroundKey,
+                UniqueKey(),
                 type: _selectedType,
                 object: child,
-                position: Offset.zero,
+                offset: Offset.zero,
                 size: cardBoxRect.size,
               );
               layerManager.addLayer(layer);
@@ -442,7 +460,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
                     return PositionedWidget(
-                      position: cardBoxRect.topLeft,
+                      offset: cardBoxRect.topLeft,
                       size: cardBoxRect.size,
                       child: const TextEditor(),
                     );
@@ -455,7 +473,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   UniqueKey(),
                   type: LayerType.text,
                   object: textEditorStyle,
-                  position: Offset.zero,
+                  offset: Offset.zero,
                   size: textEditorStyle.fieldSize,
                 );
                 layerManager.addLayer(layer);
@@ -473,7 +491,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
                     return PositionedWidget(
-                      position: cardBoxRect.topLeft,
+                      offset: cardBoxRect.topLeft,
                       size: cardBoxRect.size,
                       child: const BrushPainter(),
                     );
@@ -490,7 +508,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
                       UniqueKey(),
                       type: LayerType.drawing,
                       object: image,
-                      position: offset,
+                      offset: offset,
                       size: size,
                     );
                     layerManager.addLayer(layer);
@@ -505,119 +523,32 @@ class _PhotoEditorState extends State<PhotoEditor> {
   }
 }
 
-class PositionedWidget extends StatelessWidget {
-  final Widget child;
-  final Size size;
-  final Offset position;
-
-  const PositionedWidget({super.key, required this.child, required this.size, required this.position});
-
+class DeleteIconButton extends StatelessWidget {
+  const DeleteIconButton({
+    super.key,
+    required this.visible,
+  });
+  final bool visible;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Transform.translate(
-        offset: Offset(position.dx, position.dy),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(16)),
-          child: SizedBox(
-            width: size.width,
-            height: size.height,
-            child: child,
+    return Opacity(
+      opacity: visible ? 1.0 : 0.0,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          key: deleteAreaKey,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.green[900]!, width: 2),
+            color: Colors.white,
+          ),
+          child: Icon(
+            Icons.delete,
+            color: Colors.green[900],
           ),
         ),
       ),
     );
   }
-}
-
-class RandomGradientContainers {
-  final random = math.Random();
-
-  Color _getRandomColor() {
-    return Color.fromRGBO(
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
-      1,
-    );
-  }
-
-  LinearGradient _getRandomGradient() {
-    return LinearGradient(
-      colors: [_getRandomColor(), _getRandomColor()],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
-  //return RandomGradientContainer with random gradient need index
-  List<LinearGradient> buildRandomGradientContainer(int length) {
-    return List.generate(
-      length,
-      (index) => _getRandomGradient(),
-    );
-  }
-}
-
-class CardBoxClip extends CustomClipper<Path> {
-  double? calcWidth;
-
-  @override
-  Path getClip(Size size) {
-    double height = size.height;
-    double width = height * 9 / 16;
-
-    if (height > size.height) {
-      height = size.height;
-      width = height * 16 / 9;
-    }
-    calcWidth = width;
-
-    Rect rect = Rect.fromLTWH(
-        // 여기서 Rect 값을 저장합니다.
-        (size.width - width) / 2,
-        (size.height - height) / 2,
-        width,
-        height);
-    log('rect : $rect');
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)))
-      ..close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-class ObjectBoxClip extends CustomClipper<Path> {
-  double width;
-
-  ObjectBoxClip({required this.width});
-
-  @override
-  Path getClip(Size size) {
-    if (width == 0) {
-      width = size.width * 0.8;
-    }
-
-    Rect rect = Rect.fromLTWH(
-        // 여기서 Rect 값을 저장합니다.
-        (size.width - width) / 2,
-        (size.height - size.height) / 2,
-        width,
-        size.height);
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)))
-      ..close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

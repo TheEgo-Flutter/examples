@@ -2,11 +2,17 @@ import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:image_editor/image_editor.dart';
-import 'package:vibration/vibration.dart';
 
 import 'layer_manager.dart';
 import 'modules/text_layer/text_editor.dart';
+
+enum LayerItemStatus {
+  touched, // 사용자가 아이템을 처음으로 터치했을 때
+  dragging, // 아이템이 드래그 중일 때
+  resizing, // 아이템 크기 조정 중일 때
+  rotating, // 아이템을 회전 중일 때
+  completed, // 모든 동작이 완료되었을 때
+}
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
@@ -20,7 +26,7 @@ class DraggableResizable extends StatefulWidget {
   }) : super(key: key);
 
   final ValueChanged<LayerItem>? onLayerTapped;
-  final VoidCallback? onDelete;
+  final void Function(Offset offset, LayerItem layerItem, LayerItemStatus status)? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
   final bool isFocus;
@@ -31,19 +37,23 @@ class DraggableResizable extends StatefulWidget {
 }
 
 class _DraggableResizableState extends State<DraggableResizable> {
-  Size size = Size.zero;
-  double angle = 0;
-  Offset objectPosition = Offset.zero;
+  // 기본값
   Offset _offset = Offset.zero;
+  double _angle = 0;
+  double _scale = 1.0;
+  // LayerItem값
+  Size size = Size.zero;
+  Offset offset = Offset.zero;
+  // 센터링 검사
   bool isCenteredHorizontally = false;
   bool isCenteredVertically = false;
-  Rect deleteAreaRect = Rect.zero;
+
   @override
   void initState() {
     super.initState();
     size = widget.layerItem.size;
-    objectPosition = widget.layerItem.position;
-    angle = widget.layerItem.rotation;
+    offset = widget.layerItem.offset;
+    _angle = widget.layerItem.angle;
   }
 
   // 생략: buildChild 메서드
@@ -54,29 +64,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
       builder: (context, constraints) {
         _setInitialPositionIfNeeded(constraints);
         _setNormalizedSizeAndPosition(constraints);
-        final RenderBox renderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox;
-        final Offset deleteAreaPosition = renderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
 
-        final Size size = renderBox.size;
-        deleteAreaRect = Rect.fromPoints(
-          deleteAreaPosition,
-          deleteAreaPosition + Offset(size.width, size.height),
-        );
         return Stack(
           children: <Widget>[
             if (widget.isFocus) ..._buildCenterLine(constraints, isCenteredHorizontally, isCenteredVertically),
             Positioned(
-              top: deleteAreaRect.top,
-              left: deleteAreaRect.left,
-              child: Container(
-                width: deleteAreaRect.width,
-                height: deleteAreaRect.height,
-                color: Colors.red.withOpacity(0.5),
-              ),
-            ),
-            Positioned(
-              top: objectPosition.dy,
-              left: objectPosition.dx,
+              top: offset.dy,
+              left: offset.dx,
               child: _buildDraggablePoint(constraints),
             ),
           ],
@@ -86,8 +80,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
   }
 
   void _setInitialPositionIfNeeded(BoxConstraints constraints) {
-    if (objectPosition == Offset.zero) {
-      objectPosition = Offset(
+    if (offset == Offset.zero) {
+      offset = Offset(
         constraints.maxWidth / 2 - (size.width / 2),
         constraints.maxHeight / 2 - (size.height / 2),
       );
@@ -98,11 +92,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
     final aspectRatio = size.width / size.height;
     final normalizedWidth = size.width;
     final normalizedHeight = normalizedWidth / aspectRatio;
-    final normalizedLeft = objectPosition.dx;
-    final normalizedTop = objectPosition.dy;
+    final normalizedLeft = offset.dx;
+    final normalizedTop = offset.dy;
 
     size = Size(normalizedWidth, normalizedHeight);
-    objectPosition = Offset(normalizedLeft, normalizedTop);
+    offset = Offset(normalizedLeft, normalizedTop);
   }
 
   // 중앙선 생성
@@ -131,9 +125,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
   }
 
   LayerItem get layerItem => widget.layerItem.copyWith(
-        position: objectPosition,
+        offset: offset,
         size: size,
-        rotation: angle,
+        rotation: _angle,
       );
   Offset startingFingerPositionFromObject = Offset.zero;
   Offset currentFingerPosition = Offset.zero;
@@ -142,6 +136,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
     if (widget.layerItem.isFixed) {
       return buildChild(constraints);
     }
+
     return _DraggablePoint(
       onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
       onDragStart: (d) {
@@ -149,41 +144,33 @@ class _DraggableResizableState extends State<DraggableResizable> {
         startingFingerPositionFromObject = d;
       },
       onDragEnd: () {
+        widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.completed);
         widget.onDragEnd?.call(layerItem);
-        if (deleteAreaRect.contains(currentFingerPosition)) {
-          widget.onDelete?.call();
-        }
       },
       onDrag: widget.isFocus
           ? (d, focalPoint) async {
               setState(() {
-                objectPosition = Offset(objectPosition.dx + d.dx, objectPosition.dy + d.dy);
-                isCenteredHorizontally = _checkIfCentered(objectPosition, size, constraints.maxWidth, Axis.horizontal);
-                isCenteredVertically = _checkIfCentered(objectPosition, size, constraints.maxHeight, Axis.vertical);
-                // deleteArea에 닿았는지 확인
+                offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
+                isCenteredHorizontally = _checkIfCentered(offset, size, constraints.maxWidth, Axis.horizontal);
+                isCenteredVertically = _checkIfCentered(offset, size, constraints.maxHeight, Axis.vertical);
               });
 
-              currentFingerPosition = startingFingerPositionFromObject + objectPosition;
-
-              if (deleteAreaRect.contains(currentFingerPosition)) {
-                if (await Vibration.hasVibrator() ?? false) {
-                  Vibration.vibrate(duration: 100);
-                }
-              }
+              currentFingerPosition = startingFingerPositionFromObject + offset;
+              widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.dragging);
             }
           : null,
       onScale: widget.isFocus ? (s) => _handleScale(s, constraints) : null,
       onRotate: widget.isFocus
           ? (a) => setState(() {
-                angle = a;
+                _angle = a;
               })
           : null,
       child: Transform.translate(
         offset: _offset,
         child: Transform.rotate(
-          angle: angle,
+          angle: _angle,
           child: Transform.scale(
-            scale: 1.0,
+            scale: _scale,
             child: buildChild(constraints),
           ),
         ),
@@ -199,8 +186,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
       widget.layerItem.size.height * scale,
     );
 
-    final midX = objectPosition.dx + (size.width / 2);
-    final midY = objectPosition.dy + (size.height / 2);
+    final midX = offset.dx + (size.width / 2);
+    final midY = offset.dy + (size.height / 2);
     final updatedPosition = Offset(
       midX - (updatedSize.width / 2),
       midY - (updatedSize.height / 2),
@@ -208,7 +195,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
     setState(() {
       size = updatedSize;
-      objectPosition = updatedPosition;
+      offset = updatedPosition;
     });
   }
 
@@ -348,7 +335,3 @@ class _DraggablePointState extends State<_DraggablePoint> {
     );
   }
 }
-/*
-FractionalTranslation(
-                  translation: const Offset(0, 0),
- */
