@@ -243,9 +243,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
           TextEditorStyle? textEditorStyle = await showGeneralDialog(
             context: context,
             pageBuilder: (context, animation, secondaryAnimation) {
-              return PositionedWidget(
-                offset: cardBoxRect.topLeft,
-                size: cardBoxRect.size,
+              return RectPositioned(
+                rect: cardBoxRect,
                 child: TextEditor(
                   textEditorStyle: layer.object,
                 ),
@@ -459,9 +458,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 TextEditorStyle? textEditorStyle = await showGeneralDialog(
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
-                    return PositionedWidget(
-                      offset: cardBoxRect.topLeft,
-                      size: cardBoxRect.size,
+                    return RectPositioned(
+                      rect: cardBoxRect,
                       child: const TextEditor(),
                     );
                   },
@@ -490,9 +488,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 (Uint8List?, Size?)? data = await showGeneralDialog(
                   context: context,
                   pageBuilder: (context, animation, secondaryAnimation) {
-                    return PositionedWidget(
-                      offset: cardBoxRect.topLeft,
-                      size: cardBoxRect.size,
+                    return RectPositioned(
+                      rect: cardBoxRect,
                       child: const BrushPainter(),
                     );
                   },

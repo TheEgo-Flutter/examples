@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 
-class PositionedWidget extends StatelessWidget {
+class RectPositioned extends StatelessWidget {
   final Widget child;
-  final Size size;
-  final Offset offset;
+  final Rect rect;
 
-  const PositionedWidget({super.key, required this.child, required this.size, required this.offset});
+  const RectPositioned({super.key, required this.child, required this.rect});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: false,
       body: Transform.translate(
-        offset: Offset(offset.dx, offset.dy),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(16)),
-          child: SizedBox(
-            width: size.width,
-            height: size.height,
-            child: child,
-          ),
+        offset: Offset(rect.left, rect.top),
+        child: SizedBox(
+          width: rect.width,
+          height: rect.height,
+          child: child,
         ),
       ),
     );

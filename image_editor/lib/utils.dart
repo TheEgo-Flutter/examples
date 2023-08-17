@@ -4,6 +4,10 @@ Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.i
     (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
           ..layout(maxWidth: maxWidth))
         .size;
+Offset getCenterOffset(Rect standardRect, Size size) => Offset(
+      standardRect.size.width / 2 - size.width / 2,
+      standardRect.size.height / 2 - size.height / 2,
+    );
 
 enum AspectRatioOption {
   rFree('Free', null),
