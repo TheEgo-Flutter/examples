@@ -10,7 +10,7 @@ import 'package:image_editor/theme.dart';
 import 'package:image_editor/ui/rect.dart';
 import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:render/render.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:vibration/vibration.dart';
 
 import 'layer_manager.dart';
@@ -57,7 +57,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
   LayerType _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
-  RenderController renderController = RenderController();
+  ScreenshotController screenshotController = ScreenshotController();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
   bool get enableDelete => selectedLayerItem?.type == LayerType.sticker || selectedLayerItem?.type == LayerType.text;
@@ -181,12 +181,11 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
 
                   LoadingScreen(scaffoldGlobalKey).show();
 
-                  RenderResult renderResult = await renderController.captureImage();
-                  File result = renderResult.output;
-                  Uint8List? imageBytes = await result.readAsBytes();
+                  var binaryIntList = await screenshotController.capture();
+
                   LoadingScreen(scaffoldGlobalKey).hide();
 
-                  if (mounted) Navigator.pop(context, imageBytes);
+                  if (mounted) Navigator.pop(context, binaryIntList);
                 },
               ),
             ],
@@ -209,8 +208,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
 
   Widget buildScreenshotWidget(BuildContext context) {
     return RepaintBoundary(
-      child: Render(
-        controller: renderController,
+      child: Screenshot(
+        controller: screenshotController,
         child: ClipPath(
           key: cardKey,
           clipper: cardBoxClipper,
