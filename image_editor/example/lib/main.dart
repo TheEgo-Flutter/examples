@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor/image_editor.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(
@@ -21,8 +24,11 @@ class ImageEditorExample extends StatefulWidget {
 }
 
 class _ImageEditorExampleState extends State<ImageEditorExample> {
-  Uint8List? imageData;
-
+  File? _file;
+  VideoPlayerController? controller;
+  List<Uint8List> stickerList = [];
+  List<Uint8List> frameList = [];
+  List<Uint8List> backgroundList = [];
   Future<List<Uint8List>> loadStickers(List<String> assetPaths) async {
     List<Uint8List> stickers = [];
     for (String path in assetPaths) {
@@ -40,6 +46,13 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   @override
   void initState() {
     super.initState();
+    callAssets();
+  }
+
+  Future<void> callAssets() async {
+    stickerList = await loadStickers(stickers);
+    frameList = await loadStickers(frames);
+    backgroundList = await loadStickers(backgrounds);
   }
 
   @override
@@ -51,15 +64,58 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
       ),
       body: Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          if (imageData != null) SizedBox(height: 400, child: Image.memory(imageData!)),
+          if (_file != null)
+            Expanded(
+              child: FutureBuilder(future: () async {
+                controller = VideoPlayerController.file(_file!);
+                await controller!.initialize();
+                await controller!.setLooping(true);
+                controller!.play();
+                return controller;
+              }(), builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(
+                            width: snapshot.data?.value.size.width ?? 0,
+                            height: snapshot.data?.value.size.height ?? 0,
+                            child: VideoPlayer(snapshot.data!),
+                          ),
+                        ),
+                      ),
+                      VideoProgressIndicator(
+                        snapshot.data!,
+                        allowScrubbing: true,
+                        colors: const VideoProgressColors(
+                          backgroundColor: Colors.transparent,
+                          bufferedColor: Colors.transparent,
+                          playedColor: Colors.transparent,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Center(
+                    child: Text(
+                      "Error loading file: ${snapshot.error}",
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  );
+                }
+              }),
+            ),
           const SizedBox(height: 16),
           ElevatedButton(
             child: const Text("Single image editor"),
             onPressed: () async {
-              List<Uint8List> stickerList = await loadStickers(stickers);
-              List<Uint8List> frameList = await loadStickers(frames);
-              List<Uint8List> backgroundList = await loadStickers(backgrounds);
-              var editedImage = await Navigator.push(
+              var file = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => PhotoEditor(
@@ -70,9 +126,8 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                 ),
               );
 
-              // replace with edited image
-              if (editedImage != null) {
-                imageData = editedImage;
+              if (file != null) {
+                _file = file;
                 setState(() {});
               }
             },

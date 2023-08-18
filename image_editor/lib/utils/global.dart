@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-ThemeData theme = ThemeData(
+Rect cardBoxRect = Rect.zero;
+final GlobalKey cardKey = GlobalKey();
+Rect objectBoxRect = Rect.zero;
+final GlobalKey objectAreaKey = GlobalKey();
+Rect deleteAreaRect = Rect.zero;
+final GlobalKey deleteAreaKey = GlobalKey();
+
+ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
+
+ThemeData theme = ThemeData().copyWith(
   scaffoldBackgroundColor: Colors.white,
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.transparent,

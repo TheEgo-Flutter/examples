@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_editor/image_editor.dart';
-import 'package:image_editor/utils.dart';
+import 'package:image_editor/utils/util.dart';
 
+import '../../utils/global.dart';
 import '../brush_painter.dart';
 import 'constants/constants.dart';
 

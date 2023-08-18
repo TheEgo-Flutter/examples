@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'layer_manager.dart';
-import 'modules/text_layer/text_editor.dart';
+import '../utils/layer_manager.dart';
+import '../modules/text_layer/text_editor.dart';
 
 enum LayerItemStatus {
   touched, // 사용자가 아이템을 처음으로 터치했을 때

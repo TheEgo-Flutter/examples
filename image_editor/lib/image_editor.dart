@@ -4,32 +4,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_editor/draggable_resizable.dart';
-import 'package:image_editor/modules/item_selector.dart';
-import 'package:image_editor/theme.dart';
-import 'package:image_editor/ui/rect.dart';
-import 'package:image_editor/utils.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:screenshot/screenshot.dart';
+import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
 
-import 'layer_manager.dart';
-import 'loading_screen.dart';
-import 'modules/brush_painter.dart';
-import 'modules/random_gradients.dart';
-import 'modules/text_layer/text_editor.dart';
-import 'ui/overlay_position.dart';
-
-LayerItem? selectedLayerItem;
-
-Rect cardBoxRect = Rect.zero;
-final GlobalKey cardKey = GlobalKey();
-Rect objectBoxRect = Rect.zero;
-final GlobalKey objectAreaKey = GlobalKey();
-Rect deleteAreaRect = Rect.zero;
-final GlobalKey deleteAreaKey = GlobalKey();
-
-ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
+import 'photo_editor.dart';
 
 class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
@@ -53,11 +32,10 @@ class PhotoEditor extends StatefulWidget {
   State<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
+class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   LayerType _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
-  ScreenshotController screenshotController = ScreenshotController();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
   bool get enableDelete => selectedLayerItem?.type == LayerType.sticker || selectedLayerItem?.type == LayerType.text;
@@ -66,6 +44,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
   @override
   void didChangeMetrics() {
     bottomInsetNotifier.value = MediaQuery.of(context).viewInsets.bottom;
+    _getRect();
   }
 
   @override
@@ -82,7 +61,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _getRect();
-      setState(() {});
     });
     bottomInsetNotifier.addListener(() {
       log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
@@ -103,9 +81,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
       objectBoxRect = Rect.fromLTWH(offset.dx, offset.dy, objectRenderBox.size.width, objectRenderBox.size.height);
     }
     //* get delete area rect
-    final RenderBox deleteAreaRenderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox;
+    final RenderBox? deleteAreaRenderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox?;
     if (cardRenderBox != null) {
-      final Offset offset = deleteAreaRenderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
+      final Offset offset = deleteAreaRenderBox!.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
       deleteAreaRect = Rect.fromLTWH(
         offset.dx,
         offset.dy,
@@ -157,6 +135,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
     }
   }
 
+  Stream<RenderNotifier>? renderStream;
+  final RenderController renderController = RenderController(logLevel: LogLevel.debug);
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -168,32 +149,34 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
           key: scaffoldGlobalKey,
           backgroundColor: Colors.grey,
           appBar: AppBar(
-            // backgroundColor: Colors.amber[100],
             elevation: 0,
             leading: const BackButton(),
             actions: [
               IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: () async {
-                  selectedLayerItem = null;
+                  final stream = renderController.captureMotionWithStream(
+                    const Duration(seconds: 5),
+                    settings: const MotionSettings(
+                      pixelRatio: 5,
+                      frameRate: 80,
+                      simultaneousCaptureHandlers: 10,
+                    ),
+                    logInConsole: true,
+                  );
+                  setState(() {
+                    renderStream = stream;
+                  });
+                  final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
+                  if (result.isFatalError) return;
 
-                  setState(() {});
-
-                  LoadingScreen(scaffoldGlobalKey).show();
-
-                  var binaryIntList = await screenshotController.capture();
-
-                  LoadingScreen(scaffoldGlobalKey).hide();
-
-                  if (mounted) Navigator.pop(context, binaryIntList);
+                  if (mounted) Navigator.pop(context, (result as RenderResult).output);
                 },
               ),
             ],
           ),
           body: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(flex: 3, child: buildScreenshotWidget(context)),
                 const SizedBox(height: 8),
@@ -207,14 +190,12 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
   }
 
   Widget buildScreenshotWidget(BuildContext context) {
-    return RepaintBoundary(
-      child: Screenshot(
-        controller: screenshotController,
-        child: ClipPath(
-          key: cardKey,
-          clipper: cardBoxClipper,
-          child: buildImageLayer(context),
-        ),
+    return Render(
+      controller: renderController,
+      child: ClipPath(
+        key: cardKey,
+        clipper: cardBoxClipper,
+        child: buildImageLayer(context),
       ),
     );
   }
@@ -309,9 +290,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
       padding: const EdgeInsets.only(bottom: 8),
       child: ClipPath(
         key: objectAreaKey,
-        clipper: ObjectBoxClip(width: cardBoxRect.width),
+        clipper: ObjectBoxClip(),
         child: Container(
-          width: cardBoxRect.width,
+          width: cardBoxClipper.width < 1 ? 100 : cardBoxClipper.width,
           color: Colors.grey[200],
           padding: const EdgeInsets.all(2),
           child: Column(
@@ -523,36 +504,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
               },
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class DeleteIconButton extends StatelessWidget {
-  const DeleteIconButton({
-    super.key,
-    required this.visible,
-  });
-  final bool visible;
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: visible ? 1.0 : 0.0,
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          key: deleteAreaKey,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.green[900]!, width: 2),
-            color: Colors.white,
-          ),
-          child: Icon(
-            Icons.delete,
-            color: Colors.green[900],
-          ),
         ),
       ),
     );

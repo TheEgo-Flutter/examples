@@ -1,7 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:image_editor/image_editor.dart';
+
+import 'global.dart';
 
 enum LayerType { sticker, text, drawing, background, frame }
+
+LayerItem? selectedLayerItem;
 
 class LayerItem {
   final Key key;
@@ -21,7 +24,7 @@ class LayerItem {
     required this.size,
     Offset? offset,
     this.angle = 0,
-  }) : offset = offset ?? cardBoxRect.topLeft;
+  }) : offset = offset ?? cardBoxRect.center;
 
   LayerItem copyWith({
     Offset? offset,

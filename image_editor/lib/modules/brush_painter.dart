@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -10,7 +9,7 @@ import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:image_editor/ui/rect.dart';
 
-import '../image_editor.dart';
+import '../utils/global.dart';
 
 List<PaintContent> drawingData = [];
 
@@ -149,7 +148,6 @@ class _BrushPainterState extends State<BrushPainter> {
 
   @override
   Widget build(BuildContext context) {
-    log(cardBoxRect.toString());
     return Center(
       child: Stack(children: [
         buildTop(),
@@ -179,7 +177,7 @@ class _BrushPainterState extends State<BrushPainter> {
       child: SizedBox(
         height: objectBoxRect.height,
         child: ClipPath(
-          clipper: ObjectBoxClip(width: cardBoxRect.width),
+          clipper: ObjectBoxClip(),
           child: Container(
             color: Colors.white,
             child: buildAppBar(context),
