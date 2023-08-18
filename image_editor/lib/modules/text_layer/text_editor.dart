@@ -19,7 +19,8 @@ class TextEditor extends StatefulWidget {
 }
 
 class _TextEditorState extends State<TextEditor> {
-  double slider = 32.0;
+  bool isInitialBuild = true;
+  double fontSize = 32.0;
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
   List<String> koreanFonts = googleFontsDetails.entries
@@ -32,11 +33,8 @@ class _TextEditorState extends State<TextEditor> {
   int selectedFontIndex = 0;
   TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
         color: currentColor,
-        fontSize: slider.toDouble(),
+        fontSize: fontSize.toDouble(),
       );
-  static Size addSizes(Size size1, Size size2) {
-    return Size(size1.width + size2.width, size1.height + size2.height);
-  }
 
   Size get textFieldSize => addSizes(_textSize, const Size((textFieldSpacing * 4), 10));
 
@@ -54,22 +52,9 @@ class _TextEditorState extends State<TextEditor> {
       align = widget.textEditorStyle!.textAlign;
       textBackgroundColor = widget.textEditorStyle!.backgroundColor;
       selectedFontIndex = getFontIndex();
-      slider = widget.textEditorStyle!.textStyle.fontSize ?? slider;
+      fontSize = widget.textEditorStyle!.textStyle.fontSize ?? fontSize;
       currentColor = widget.textEditorStyle!.textStyle.color ?? currentColor;
     }
-  }
-
-  /// element => Dongle
-  /// fontFamily => Dongle_regular, Dongle_bold ...
-  /// return element == fontFamily
-  int getFontIndex() {
-    int index = koreanFonts.indexWhere((element) {
-      return widget.textEditorStyle!.textStyle.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
-    });
-    if (index < 0) {
-      index = 0;
-    }
-    return index;
   }
 
   IconData get icon {
@@ -84,32 +69,6 @@ class _TextEditorState extends State<TextEditor> {
     }
   }
 
-  void _toggleAlign() {
-    setState(() {
-      switch (align) {
-        case TextAlign.left:
-          align = TextAlign.center;
-          break;
-        case TextAlign.right:
-          align = TextAlign.left;
-          break;
-        case TextAlign.center:
-        default:
-          align = TextAlign.right;
-          break;
-      }
-    });
-  }
-
-  void changeColor(Color color) {
-    currentColor = color;
-    setState(() {});
-  }
-
-  // TextSpan get textSpan => TextSpan(
-  //       text: textNotifier.value,
-  //       style: currentTextStyle,
-  //     );
   TextFormField _textField({bool readOnly = false}) => TextFormField(
         readOnly: readOnly,
         enabled: !readOnly,
@@ -128,6 +87,103 @@ class _TextEditorState extends State<TextEditor> {
         maxLines: null,
         autofocus: true,
       );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: true,
+      body: ValueListenableBuilder(
+          valueListenable: bottomInsetNotifier,
+          builder: (context, bottomInset, child) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!isInitialBuild && bottomInset == 0.0) {
+                Navigator.pop(context);
+              } else {
+                isInitialBuild = false;
+              }
+            });
+
+            return Stack(
+              children: <Widget>[
+                Transform.translate(
+                    offset: Offset.zero,
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      return _buildTextField();
+                    })),
+                Transform.translate(
+                  offset: Offset(0, objectBoxRect.top - cardBoxRect.top - (bottomInset)),
+                  child: SizedBox(
+                    height: objectBoxRect.height,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(icon),
+                              onPressed: _toggleAlign,
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(15),
+                            ),
+                            IconButton(
+                              icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
+                              onPressed: () {
+                                setState(() {
+                                  isFontBarVisible = !isFontBarVisible;
+                                });
+                              },
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(15),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.format_color_text_sharp),
+                              onPressed: () {
+                                setState(() {
+                                  textBackgroundColor = textBackgroundColor == Colors.transparent
+                                      ? Colors.black45
+                                      : textBackgroundColor == Colors.black45
+                                          ? Colors.white54
+                                          : Colors.transparent;
+                                });
+                              },
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(15),
+                            ),
+                            const Spacer(),
+                          ],
+                        ),
+                        isFontBarVisible ? _fontBar(context) : _colorBar(context),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (textNotifier.value.isEmpty) {
+                                Navigator.pop(context);
+                              } else {
+                                TextEditorStyle result = TextEditorStyle(
+                                  text: textNotifier.value,
+                                  textAlign: align,
+                                  textStyle: currentTextStyle,
+                                  backgroundColor: textBackgroundColor,
+                                  fieldSize: textFieldSize,
+                                );
+                                Navigator.pop(context, result);
+                              }
+                            },
+                            child: const Text("완료"),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+    );
+  }
+
   Align _buildTextField() {
     return Center(
       child: Align(
@@ -150,63 +206,6 @@ class _TextEditorState extends State<TextEditor> {
               );
             }),
       ),
-    );
-  }
-
-  Row _buildAppBar() {
-    return Row(
-      children: [
-        IconButton(
-          icon: Icon(icon),
-          onPressed: _toggleAlign,
-          color: Colors.white,
-          padding: const EdgeInsets.all(15),
-        ),
-        IconButton(
-          icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
-          onPressed: () {
-            setState(() {
-              isFontBarVisible = !isFontBarVisible;
-            });
-          },
-          color: Colors.white,
-          padding: const EdgeInsets.all(15),
-        ),
-        IconButton(
-          icon: const Icon(Icons.format_color_text_sharp),
-          onPressed: () {
-            setState(() {
-              textBackgroundColor = textBackgroundColor == Colors.transparent
-                  ? Colors.black45
-                  : textBackgroundColor == Colors.black45
-                      ? Colors.white54
-                      : Colors.transparent;
-            });
-          },
-          color: Colors.white,
-          padding: const EdgeInsets.all(15),
-        ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(Icons.check),
-          onPressed: () {
-            if (textNotifier.value.isEmpty) {
-              Navigator.pop(context);
-            } else {
-              TextEditorStyle result = TextEditorStyle(
-                text: textNotifier.value,
-                textAlign: align,
-                textStyle: currentTextStyle,
-                backgroundColor: textBackgroundColor,
-                fieldSize: textFieldSize,
-              );
-              Navigator.pop(context, result);
-            }
-          },
-          color: Colors.white,
-          padding: const EdgeInsets.all(15),
-        )
-      ],
     );
   }
 
@@ -288,43 +287,47 @@ class _TextEditorState extends State<TextEditor> {
             },
           ),
         ),
-        Slider(
-          min: 8.0,
-          max: 72.0,
-          value: slider,
-          onChanged: (value) {
-            setState(() {
-              slider = value;
-            });
-          },
-        )
       ],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Center(
-        child: SizedBox(
-          child: Stack(
-            children: <Widget>[
-              _buildTextField(),
-              Transform.translate(
-                offset: const Offset(0, 0),
-                child: _buildAppBar(),
-              ),
-              Positioned(
-                bottom: 25,
-                left: 0,
-                child: isFontBarVisible ? _fontBar(context) : _colorBar(context),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  Size addSizes(Size size1, Size size2) {
+    return Size(size1.width + size2.width, size1.height + size2.height);
+  }
+
+  /// element => Dongle
+  /// fontFamily => Dongle_regular, Dongle_bold ...
+  /// return element == fontFamily
+  int getFontIndex() {
+    int index = koreanFonts.indexWhere((element) {
+      return widget.textEditorStyle!.textStyle.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
+    });
+    if (index < 0) {
+      index = 0;
+    }
+    return index;
+  }
+
+  void _toggleAlign() {
+    setState(() {
+      switch (align) {
+        case TextAlign.left:
+          align = TextAlign.center;
+          break;
+        case TextAlign.right:
+          align = TextAlign.left;
+          break;
+        case TextAlign.center:
+        default:
+          align = TextAlign.right;
+          break;
+      }
+    });
+  }
+
+  void changeColor(Color color) {
+    currentColor = color;
+    setState(() {});
   }
 }
 

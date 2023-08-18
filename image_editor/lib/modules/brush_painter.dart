@@ -1,3 +1,6 @@
+import 'dart:developer';
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +8,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
+import 'package:image_editor/ui/rect.dart';
 
 import '../image_editor.dart';
 
@@ -44,61 +48,77 @@ class _BrushPainterState extends State<BrushPainter> {
   }
 
   Widget buildAppBar(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(children: [
-        _buildIconButton(context, Icons.format_size, () => _showBrushSizeDialog(context), '브러시 크기'),
-        ColorButton(
-          color: _drawingController.getColor,
-          onTap: (color) => _showColorPicker(context, color),
-        ),
-        _buildIconButton(context, Icons.undo, _drawingController.undo),
-        _buildIconButton(context, Icons.cleaning_services_rounded, _drawingController.clear),
-        _buildIconButton(context, Icons.edit, () => _drawingController.setPaintContent(SimpleLine())),
-        _buildIconButton(context, Icons.brush, () => _drawingController.setPaintContent(SmoothLine())),
-        _buildIconButton(context, Icons.phonelink_erase_rounded,
-            () => _drawingController.setPaintContent(Eraser(color: Colors.white))),
-        _buildIconButton(context, Icons.check, () {
-          drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
-          _getImageData(context);
-        }),
-      ]),
-    );
-  }
-
-  Widget _buildIconButton(BuildContext context, IconData icon, VoidCallback onPressed, [String? tooltip]) {
-    return IconButton(
-      icon: Icon(icon),
-      onPressed: onPressed,
-      tooltip: tooltip,
-    );
-  }
-
-  void _showBrushSizeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('브러시 크기'),
-          content: SizedBox(
-            height: 24,
-            width: 160,
-            child: ExValueBuilder<DrawConfig>(
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ExValueBuilder<DrawConfig>(
               valueListenable: _drawingController.drawConfig,
               shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
               builder: (_, DrawConfig dc, ___) {
-                return Slider(
-                  value: dc.strokeWidth,
-                  max: 50,
-                  min: 1,
-                  onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+                return SizedBox(
+                  width: 120,
+                  child: Slider(
+                    value: dc.strokeWidth,
+                    max: 30,
+                    min: 1,
+                    onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+                  ),
                 );
               },
             ),
-          ),
-        );
-      },
+            TextButton(onPressed: _drawingController.undo, child: const Text('undo')),
+            TextButton(onPressed: _drawingController.clear, child: const Text('clear')),
+          ],
+        ),
+        Row(
+          children: [
+            ColorButton(
+              color: _drawingController.getColor,
+              onTap: (color) => _showColorPicker(context, color),
+            ),
+            //Random generate ColorButton 10
+            ...List.generate(
+              3,
+              (index) => ColorButton(
+                color: Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0),
+                onTap: changeColor,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+            _buildIconButton(context, Icons.edit, () => _drawingController.setPaintContent(SimpleLine())),
+            _buildIconButton(context, Icons.brush, () => _drawingController.setPaintContent(SmoothLine())),
+            _buildIconButton(context, Icons.phonelink_erase_rounded,
+                () => _drawingController.setPaintContent(Eraser(color: Colors.white))),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('취소')),
+            ),
+            Expanded(
+              child: ElevatedButton(
+                  onPressed: () {
+                    drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
+                    _getImageData(context);
+                  },
+                  child: Text('완료')),
+            )
+          ],
+        ),
+      ],
     );
+  }
+
+  Widget _buildIconButton(BuildContext context, IconData icon, VoidCallback onPressed) {
+    return InkWell(onTap: onPressed, child: Padding(padding: const EdgeInsets.all(8), child: Icon(icon)));
   }
 
   void _showColorPicker(BuildContext context, Color color) {
@@ -129,25 +149,43 @@ class _BrushPainterState extends State<BrushPainter> {
 
   @override
   Widget build(BuildContext context) {
+    log(cardBoxRect.toString());
     return Center(
       child: Stack(children: [
-        DrawingBoard(
-          controller: _drawingController,
-          background: Container(
-            width: cardBoxRect.size.width,
-            height: cardBoxRect.size.height,
-            color: Colors.transparent,
-          ),
-          boardPanEnabled: false,
-          boardScaleEnabled: false,
-          showDefaultActions: false,
-          showDefaultTools: false,
-        ),
-        Transform.translate(
-          offset: const Offset(0, 0),
-          child: buildAppBar(context),
-        ),
+        buildTop(),
+        buildBottom(context),
       ]),
+    );
+  }
+
+  DrawingBoard buildTop() {
+    return DrawingBoard(
+      controller: _drawingController,
+      background: Container(
+        width: cardBoxRect.size.width,
+        height: cardBoxRect.size.height,
+        color: Colors.transparent,
+      ),
+      boardPanEnabled: false,
+      boardScaleEnabled: false,
+      showDefaultActions: false,
+      showDefaultTools: false,
+    );
+  }
+
+  Transform buildBottom(BuildContext context) {
+    return Transform.translate(
+      offset: Offset(0, objectBoxRect.top - cardBoxRect.top),
+      child: SizedBox(
+        height: objectBoxRect.height,
+        child: ClipPath(
+          clipper: ObjectBoxClip(width: cardBoxRect.width),
+          child: Container(
+            color: Colors.white,
+            child: buildAppBar(context),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -161,7 +199,7 @@ class ColorButton extends StatelessWidget {
     Key? key,
     required this.color,
     required this.onTap,
-    this.margin = const EdgeInsets.symmetric(vertical: 16),
+    this.margin = const EdgeInsets.symmetric(vertical: 0),
     this.isSelected = false,
   }) : super(key: key);
 
@@ -172,8 +210,8 @@ class ColorButton extends StatelessWidget {
         onTap(color == Colors.transparent ? Colors.black : color);
       },
       child: Container(
-        height: 24,
-        width: 24,
+        height: 20,
+        width: 20,
         margin: margin,
         decoration: BoxDecoration(
           color: color,

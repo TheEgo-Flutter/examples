@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class RectPositioned extends StatelessWidget {
+class RectClipper extends StatelessWidget {
   final Widget child;
   final Rect rect;
 
-  const RectPositioned({super.key, required this.child, required this.rect});
+  const RectClipper({super.key, required this.child, required this.rect});
 
   @override
   Widget build(BuildContext context) {

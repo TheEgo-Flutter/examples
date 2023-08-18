@@ -29,6 +29,8 @@ final GlobalKey objectAreaKey = GlobalKey();
 Rect deleteAreaRect = Rect.zero;
 final GlobalKey deleteAreaKey = GlobalKey();
 
+ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
+
 class PhotoEditor extends StatefulWidget {
   final Directory? savePath;
   final Uint8List? image;
@@ -51,7 +53,7 @@ class PhotoEditor extends StatefulWidget {
   State<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _PhotoEditorState extends State<PhotoEditor> {
+class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver {
   LayerType _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
@@ -62,8 +64,14 @@ class _PhotoEditorState extends State<PhotoEditor> {
   final cardBoxClipper = CardBoxClip();
   final picker = ImagePicker();
   @override
+  void didChangeMetrics() {
+    bottomInsetNotifier.value = MediaQuery.of(context).viewInsets.bottom;
+  }
+
+  @override
   void dispose() {
     layerManager.layers.clear();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -71,9 +79,13 @@ class _PhotoEditorState extends State<PhotoEditor> {
   void initState() {
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _getRect();
       setState(() {});
+    });
+    bottomInsetNotifier.addListener(() {
+      log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
     });
   }
 
@@ -185,6 +197,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(flex: 3, child: buildScreenshotWidget(context)),
+                const SizedBox(height: 8),
                 Expanded(flex: 1, child: buildObjectSelector()),
               ],
             ),
@@ -199,8 +212,8 @@ class _PhotoEditorState extends State<PhotoEditor> {
       child: Render(
         controller: renderController,
         child: ClipPath(
-          clipper: cardBoxClipper,
           key: cardKey,
+          clipper: cardBoxClipper,
           child: buildImageLayer(context),
         ),
       ),
@@ -244,10 +257,10 @@ class _PhotoEditorState extends State<PhotoEditor> {
           TextEditorStyle? textEditorStyle = await showGeneralDialog(
             context: context,
             pageBuilder: (context, animation, secondaryAnimation) {
-              return RectPositioned(
+              return RectClipper(
                 rect: cardBoxRect,
                 child: TextEditor(
-                  textEditorStyle: layer.object,
+                  textEditorStyle: layer.object as TextEditorStyle,
                 ),
               );
             },
@@ -296,6 +309,7 @@ class _PhotoEditorState extends State<PhotoEditor> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ClipPath(
+        key: objectAreaKey,
         clipper: ObjectBoxClip(width: cardBoxRect.width),
         child: Container(
           width: cardBoxRect.width,
@@ -452,15 +466,12 @@ class _PhotoEditorState extends State<PhotoEditor> {
               label: const Text("텍스트"),
               selected: _selectedType == LayerType.text,
               onSelected: (bool selected) async {
-                setState(() {
-                  _selectedType = LayerType.text;
-                });
-
                 TextEditorStyle? textEditorStyle = await showGeneralDialog(
                   context: context,
+                  barrierColor: Colors.black.withOpacity(0.5),
                   pageBuilder: (context, animation, secondaryAnimation) {
-                    return RectPositioned(
-                      rect: cardBoxRect,
+                    return RectClipper(
+                      rect: cardBoxRect.expandToInclude(objectBoxRect),
                       child: const TextEditor(),
                     );
                   },
@@ -483,14 +494,12 @@ class _PhotoEditorState extends State<PhotoEditor> {
               label: const Text("그리기"),
               selected: _selectedType == LayerType.drawing,
               onSelected: (bool selected) async {
-                setState(() {
-                  _selectedType = LayerType.drawing;
-                });
                 (Uint8List?, Size?)? data = await showGeneralDialog(
                   context: context,
+                  barrierColor: Colors.black.withOpacity(0.5),
                   pageBuilder: (context, animation, secondaryAnimation) {
-                    return RectPositioned(
-                      rect: cardBoxRect,
+                    return RectClipper(
+                      rect: cardBoxRect.expandToInclude(objectBoxRect),
                       child: const BrushPainter(),
                     );
                   },
