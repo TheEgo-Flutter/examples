@@ -1,5 +1,7 @@
 List<String> stickers = [
   'stickers/giftest.gif',
+  'stickers/tr_sample1.gif',
+  'stickers/tr_sample2.gif',
   'stickers/lottie.json',
   'stickers/sticker01.png',
   'stickers/sticker02.png',
