@@ -1,12 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-Rect cardBoxRect = Rect.zero;
 final GlobalKey cardAreaKey = GlobalKey();
-Rect objectBoxRect = Rect.zero;
+Rect get cardBoxRect {
+  final RenderBox? cardRenderBox = cardAreaKey.currentContext?.findRenderObject() as RenderBox?;
+  if (cardRenderBox != null) {
+    Offset offset = cardRenderBox.localToGlobal(Offset.zero);
+    return Rect.fromLTWH(offset.dx, offset.dy, cardRenderBox.size.width, cardRenderBox.size.height);
+  }
+  return Rect.zero;
+}
+
 final GlobalKey objectAreaKey = GlobalKey();
-Rect deleteAreaRect = Rect.zero;
+Rect get objectBoxRect {
+  final RenderBox? objectRenderBox = objectAreaKey.currentContext?.findRenderObject() as RenderBox?;
+  if (objectRenderBox != null) {
+    Offset offset = objectRenderBox.localToGlobal(Offset.zero);
+    return Rect.fromLTWH(offset.dx, offset.dy, objectRenderBox.size.width, objectRenderBox.size.height);
+  }
+  return Rect.zero;
+}
+
 final GlobalKey deleteAreaKey = GlobalKey();
+Rect get deleteAreaRect {
+  final RenderBox? deleteAreaRenderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox?;
+  if (deleteAreaRenderBox != null) {
+    final Offset offset = deleteAreaRenderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
+    return Rect.fromLTWH(
+      offset.dx,
+      offset.dy,
+      deleteAreaRenderBox.size.width,
+      deleteAreaRenderBox.size.height,
+    );
+  }
+  return Rect.zero;
+}
 
 ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
 

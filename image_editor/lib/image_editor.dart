@@ -54,9 +54,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      getRect();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {});
     bottomInsetNotifier.addListener(() {
       log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
     });
@@ -65,7 +63,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   @override
   void didChangeMetrics() {
     bottomInsetNotifier.value = MediaQuery.of(context).viewInsets.bottom;
-    getRect();
   }
 
   @override
@@ -367,6 +364,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               );
               layerManager.addLayer(background);
             } else {
+              print(cardBoxRect.size);
               LayerItem layer = LayerItem(
                 UniqueKey(),
                 type: _selectedType,
