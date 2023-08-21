@@ -8,9 +8,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
 
-import 'photo_editor.dart';
+import 'modules/modules.dart';
+import 'ui/rect.dart';
+import 'ui/rect_clipper.dart';
+import 'utils/global.dart';
+import 'utils/layer_manager.dart';
+import 'utils/util.dart';
+import 'widget/delete_icon.dart';
+import 'widget/draggable_resizable.dart';
 
-class PhotoEditor extends StatefulWidget {
+class ImageEditor extends StatefulWidget {
   final Directory? savePath;
   final Uint8List? image;
   final List<dynamic> stickers;
@@ -18,7 +25,7 @@ class PhotoEditor extends StatefulWidget {
   final List<dynamic> frames;
   final AspectRatioOption aspectRatio;
 
-  const PhotoEditor({
+  const ImageEditor({
     super.key,
     this.savePath,
     this.image,
@@ -29,10 +36,10 @@ class PhotoEditor extends StatefulWidget {
   });
 
   @override
-  State<PhotoEditor> createState() => _PhotoEditorState();
+  State<ImageEditor> createState() => _ImageEditorState();
 }
 
-class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   LayerType _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();

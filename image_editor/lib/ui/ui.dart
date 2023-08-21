@@ -1,2 +1,2 @@
 export 'rect.dart';
-export 'rect_cliper.dart';
+export 'rect_clipper.dart';

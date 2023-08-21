@@ -131,7 +131,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
               var file = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PhotoEditor(
+                  builder: (context) => ImageEditor(
                     stickers: stickerList,
                     backgrounds: backgroundList,
                     frames: frameList,
