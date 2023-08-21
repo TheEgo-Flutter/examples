@@ -2,8 +2,8 @@ import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:image_editor/utils/utils.dart';
 
-import '../utils/layer_manager.dart';
 import '../modules/text_layer/text_editor.dart';
 
 enum LayerItemStatus {
@@ -51,59 +51,35 @@ class _DraggableResizableState extends State<DraggableResizable> {
   @override
   void initState() {
     super.initState();
-    size = widget.layerItem.size;
-    offset = widget.layerItem.offset;
     _angle = widget.layerItem.angle;
+    LayerItem item = widget.layerItem;
+    final aspectRatio = item.size.width / item.size.height;
+
+    offset = offset == Offset.zero ? getCenterOffset(cardBoxRect, item.size) : item.offset;
+    size = Size(item.size.width, item.size.width / aspectRatio);
   }
 
   // 생략: buildChild 메서드
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        _setInitialPositionIfNeeded(constraints);
-        _setNormalizedSizeAndPosition(constraints);
-
-        return Stack(
-          children: <Widget>[
-            if (widget.isFocus) ..._buildCenterLine(constraints, isCenteredHorizontally, isCenteredVertically),
-            Positioned(
-              top: offset.dy,
-              left: offset.dx,
-              child: _buildDraggablePoint(constraints),
-            ),
-          ],
-        );
-      },
+    return Stack(
+      children: <Widget>[
+        if (widget.isFocus) ..._buildCenterLine(isCenteredHorizontally, isCenteredVertically),
+        Positioned(
+          top: offset.dy,
+          left: offset.dx,
+          child: _buildDraggablePoint(),
+        ),
+      ],
     );
   }
 
-  void _setInitialPositionIfNeeded(BoxConstraints constraints) {
-    if (offset == Offset.zero) {
-      offset = Offset(
-        constraints.maxWidth / 2 - (size.width / 2),
-        constraints.maxHeight / 2 - (size.height / 2),
-      );
-    }
-  }
-
-  void _setNormalizedSizeAndPosition(BoxConstraints constraints) {
-    final aspectRatio = size.width / size.height;
-    final normalizedWidth = size.width;
-    final normalizedHeight = normalizedWidth / aspectRatio;
-    final normalizedLeft = offset.dx;
-    final normalizedTop = offset.dy;
-
-    size = Size(normalizedWidth, normalizedHeight);
-    offset = Offset(normalizedLeft, normalizedTop);
-  }
-
   // 중앙선 생성
-  List<Widget> _buildCenterLine(BoxConstraints constraints, bool isCenteredHorizontally, bool isCenteredVertically) {
+  List<Widget> _buildCenterLine(bool isCenteredHorizontally, bool isCenteredVertically) {
     return [
       Positioned(
-        top: constraints.maxHeight / 2,
+        top: cardBoxRect.size.height / 2,
         left: 0,
         right: 0,
         child: Container(
@@ -112,7 +88,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
         ),
       ),
       Positioned(
-        left: constraints.maxWidth / 2,
+        left: cardBoxRect.size.width / 2,
         top: 0,
         bottom: 0,
         child: Container(
@@ -132,9 +108,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
   Offset startingFingerPositionFromObject = Offset.zero;
   Offset currentFingerPosition = Offset.zero;
   // 드래그 가능한 포인트 생성
-  Widget _buildDraggablePoint(BoxConstraints constraints) {
+  Widget _buildDraggablePoint() {
     if (widget.layerItem.isFixed) {
-      return buildChild(constraints);
+      return buildChild();
     }
 
     return _DraggablePoint(
@@ -151,15 +127,15 @@ class _DraggableResizableState extends State<DraggableResizable> {
           ? (d, focalPoint) async {
               setState(() {
                 offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
-                isCenteredHorizontally = _checkIfCentered(offset, size, constraints.maxWidth, Axis.horizontal);
-                isCenteredVertically = _checkIfCentered(offset, size, constraints.maxHeight, Axis.vertical);
+                isCenteredHorizontally = _checkIfCentered(offset, size, cardBoxRect.size.width, Axis.horizontal);
+                isCenteredVertically = _checkIfCentered(offset, size, cardBoxRect.size.height, Axis.vertical);
               });
 
               currentFingerPosition = startingFingerPositionFromObject + offset;
               widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.dragging);
             }
           : null,
-      onScale: widget.isFocus ? (s) => _handleScale(s, constraints) : null,
+      onScale: widget.isFocus ? (s) => _handleScale(s) : null,
       onRotate: widget.isFocus
           ? (a) => setState(() {
                 _angle = a;
@@ -171,7 +147,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
           angle: _angle,
           child: Transform.scale(
             scale: _scale,
-            child: buildChild(constraints),
+            child: buildChild(),
           ),
         ),
       ),
@@ -179,7 +155,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
   }
 
   // 스케일 핸들러
-  void _handleScale(double scale, BoxConstraints constraints) {
+  void _handleScale(double scale) {
     log('onScale');
     final updatedSize = Size(
       widget.layerItem.size.width * scale,
@@ -206,7 +182,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
     return (center - widgetCenter).abs() < 5;
   }
 
-  Widget buildChild(BoxConstraints constraints) {
+  Widget buildChild() {
     switch (widget.layerItem.type) {
       case LayerType.sticker:
         return Container(
