@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+const Size device = Size(360.0, 800.0);
 final GlobalKey cardAreaKey = GlobalKey();
 Rect get cardBoxRect {
   final RenderBox? cardRenderBox = cardAreaKey.currentContext?.findRenderObject() as RenderBox?;

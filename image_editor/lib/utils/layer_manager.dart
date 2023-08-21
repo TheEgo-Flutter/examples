@@ -10,9 +10,9 @@ class LayerItem {
   final Key key;
   final LayerType type;
   final dynamic object;
-  final Offset offset;
-  final Size size;
+  final Rect rect;
   final double angle;
+
   bool get isFixed {
     return type == LayerType.frame || type == LayerType.drawing;
   }
@@ -21,24 +21,21 @@ class LayerItem {
     this.key, {
     required this.type,
     required this.object,
-    required this.size,
-    Offset? offset,
+    Rect? rect,
     this.angle = 0,
-  }) : offset = offset ?? cardBoxRect.center;
+  }) : rect = rect ?? Rect.fromCenter(center: cardBoxRect.center, width: 0, height: 0);
 
   LayerItem copyWith({
-    Offset? offset,
-    Size? size,
-    double? rotation,
+    Rect? rect,
+    double? angle,
     dynamic object,
   }) {
     return LayerItem(
       key,
       type: type,
       object: object ?? this.object,
-      offset: offset ?? this.offset,
-      size: size ?? this.size,
-      angle: rotation ?? this.angle,
+      rect: rect ?? this.rect,
+      angle: angle ?? this.angle,
     );
   }
 }

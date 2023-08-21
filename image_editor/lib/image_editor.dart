@@ -40,6 +40,7 @@ class ImageEditor extends StatefulWidget {
 }
 
 class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+  Size get view => MediaQuery.of(context).size;
   LayerType _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
@@ -54,7 +55,10 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {});
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      log(cardBoxRect.toString());
+      log(MediaQuery.of(context).size.toString());
+    });
     bottomInsetNotifier.addListener(() {
       log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
     });
@@ -254,8 +258,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             UniqueKey(),
             type: LayerType.text,
             object: textEditorStyle,
-            offset: item.offset,
-            size: textEditorStyle.fieldSize,
+            rect: (item.rect.topLeft & textEditorStyle.fieldSize),
           );
           layerManager.addLayer(newLayer);
           setState(() {});
@@ -297,12 +300,13 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             Size size = const Size(150, 150);
             Offset offset =
                 Offset(cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
+            //parse rect
+
             LayerItem layer = LayerItem(
               UniqueKey(),
               type: _selectedType,
               object: child,
-              offset: offset,
-              size: size,
+              rect: (offset & size),
             );
             layerManager.addLayer(layer);
             setState(() {});
@@ -318,16 +322,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 UniqueKey(),
                 type: _selectedType,
                 object: null,
-                offset: Offset.zero,
-                size: cardBoxRect.size,
+                rect: cardBoxRect.zero,
               );
             } else {
               layer = LayerItem(
                 UniqueKey(),
                 type: _selectedType,
                 object: child,
-                offset: Offset.zero,
-                size: cardBoxRect.size,
+                rect: cardBoxRect.zero,
               );
             }
             layerManager.addLayer(layer);
@@ -359,8 +361,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 UniqueKey(),
                 type: _selectedType,
                 object: Image.memory(loadImage),
-                offset: Offset.zero,
-                size: cardBoxRect.size,
+                rect: cardBoxRect.zero,
               );
               layerManager.addLayer(background);
             } else {
@@ -369,8 +370,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 UniqueKey(),
                 type: _selectedType,
                 object: child,
-                offset: Offset.zero,
-                size: cardBoxRect.size,
+                rect: cardBoxRect.zero,
               );
               layerManager.addLayer(layer);
             }
@@ -443,8 +443,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   UniqueKey(),
                   type: LayerType.text,
                   object: textEditorStyle,
-                  offset: Offset.zero,
-                  size: textEditorStyle.fieldSize,
+                  rect: Offset.zero & textEditorStyle.fieldSize,
                 );
                 layerManager.addLayer(layer);
                 setState(() {});
@@ -465,18 +464,15 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   },
                 );
                 setState(() {});
-                if ((data != null && data.$1 != null && data.$2 != null)) {
+                if ((data != null && data.$1 != null)) {
                   var image = Image.memory(data.$1!);
-                  var size = data.$2!;
+
                   setState(() {
-                    Offset offset = Offset(
-                        cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
                     var layer = LayerItem(
                       UniqueKey(),
                       type: LayerType.drawing,
                       object: image,
-                      offset: offset,
-                      size: size,
+                      rect: cardBoxRect.zero,
                     );
                     layerManager.addLayer(layer);
                   });

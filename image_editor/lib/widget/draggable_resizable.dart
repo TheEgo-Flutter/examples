@@ -53,10 +53,10 @@ class _DraggableResizableState extends State<DraggableResizable> {
     super.initState();
     _angle = widget.layerItem.angle;
     LayerItem item = widget.layerItem;
-    final aspectRatio = item.size.width / item.size.height;
+    final aspectRatio = item.rect.size.width / item.rect.size.height;
 
-    offset = offset == Offset.zero ? getCenterOffset(cardBoxRect, item.size) : item.offset;
-    size = Size(item.size.width, item.size.width / aspectRatio);
+    offset = offset == Offset.zero ? getCenterOffset(cardBoxRect, item.rect.size) : item.rect.topLeft;
+    size = Size(item.rect.size.width, item.rect.size.width / aspectRatio);
   }
 
   // 생략: buildChild 메서드
@@ -101,9 +101,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
   }
 
   LayerItem get layerItem => widget.layerItem.copyWith(
-        offset: offset,
-        size: size,
-        rotation: _angle,
+        rect: offset & size,
+        angle: _angle,
       );
   Offset startingFingerPositionFromObject = Offset.zero;
   Offset currentFingerPosition = Offset.zero;
@@ -158,8 +157,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
   void _handleScale(double scale) {
     log('onScale');
     final updatedSize = Size(
-      widget.layerItem.size.width * scale,
-      widget.layerItem.size.height * scale,
+      widget.layerItem.rect.size.width * scale,
+      widget.layerItem.rect.size.height * scale,
     );
 
     final midX = offset.dx + (size.width / 2);
@@ -219,8 +218,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
               enabled: !true,
               initialValue: textEditorStyle.text,
               textAlign: textEditorStyle.textAlign,
-              style: textEditorStyle.textStyle
-                  .copyWith(fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.size.width)),
+              style: textEditorStyle.textStyle.copyWith(
+                  fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.rect.size.width)),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(textFieldSpacing),

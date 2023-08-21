@@ -1,8 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/rendering.dart';
 import 'package:image_editor/utils/utils.dart';
-
 
 class CardBoxClip extends CustomClipper<Path> {
   final AspectRatioOption aspectRatio;
