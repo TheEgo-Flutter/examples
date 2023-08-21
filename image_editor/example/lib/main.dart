@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gal/gal.dart';
 import 'package:image_editor/image_editor.dart';
 import 'package:video_player/video_player.dart';
 
@@ -110,6 +111,18 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                   );
                 }
               }),
+            ),
+          const SizedBox(height: 16),
+          if (_file != null)
+            ElevatedButton(
+              child: const Text("Save"),
+              onPressed: () async {
+                await Gal.putVideo(_file!.path, album: 'dingdongU');
+
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Saved! ✅'),
+                ));
+              },
             ),
           const SizedBox(height: 16),
           ElevatedButton(
