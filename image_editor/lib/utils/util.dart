@@ -16,7 +16,7 @@ enum AspectRatioOption {
   r4x3('4:3', 4 / 3),
   r5x4('5:4', 5 / 4),
   r7x5('7:5', 7 / 5),
-  r16x9('9:16', 9 / 16);
+  r9x16('9:16', 9 / 16);
 
   const AspectRatioOption(this.title, this.ratio);
   final String title;

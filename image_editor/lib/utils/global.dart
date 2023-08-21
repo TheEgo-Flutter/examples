@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 Rect cardBoxRect = Rect.zero;
-final GlobalKey cardKey = GlobalKey();
+final GlobalKey cardAreaKey = GlobalKey();
 Rect objectBoxRect = Rect.zero;
 final GlobalKey objectAreaKey = GlobalKey();
 Rect deleteAreaRect = Rect.zero;

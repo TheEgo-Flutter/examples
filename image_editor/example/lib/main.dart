@@ -93,9 +93,9 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                         snapshot.data!,
                         allowScrubbing: true,
                         colors: const VideoProgressColors(
-                          backgroundColor: Colors.transparent,
-                          bufferedColor: Colors.transparent,
-                          playedColor: Colors.transparent,
+                          backgroundColor: Colors.green,
+                          bufferedColor: Colors.white,
+                          playedColor: Colors.orange,
                         ),
                       ),
                     ],

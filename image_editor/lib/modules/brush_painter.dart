@@ -177,7 +177,7 @@ class _BrushPainterState extends State<BrushPainter> {
       child: SizedBox(
         height: objectBoxRect.height,
         child: ClipPath(
-          clipper: ObjectBoxClip(),
+          clipper: CardBoxClip(),
           child: Container(
             color: Colors.white,
             child: buildAppBar(context),

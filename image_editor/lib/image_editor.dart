@@ -32,7 +32,7 @@ class ImageEditor extends StatefulWidget {
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
-    this.aspectRatio = AspectRatioOption.r16x9,
+    this.aspectRatio = AspectRatioOption.r9x16,
   });
 
   @override
@@ -46,20 +46,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
   bool get enableDelete => selectedLayerItem?.type == LayerType.sticker || selectedLayerItem?.type == LayerType.text;
-  final cardBoxClipper = CardBoxClip();
-  final picker = ImagePicker();
-  @override
-  void didChangeMetrics() {
-    bottomInsetNotifier.value = MediaQuery.of(context).viewInsets.bottom;
-    _getRect();
-  }
 
-  @override
-  void dispose() {
-    layerManager.layers.clear();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
+  final picker = ImagePicker();
 
   @override
   void initState() {
@@ -67,39 +55,24 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _getRect();
+      getRect();
     });
     bottomInsetNotifier.addListener(() {
       log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
     });
   }
 
-  Future<void> _getRect() async {
-    //* get card box rect
-    final RenderBox? cardRenderBox = cardKey.currentContext?.findRenderObject() as RenderBox?;
-    if (cardRenderBox != null) {
-      Offset offset = cardRenderBox.localToGlobal(Offset.zero);
-      cardBoxRect = Rect.fromLTWH(offset.dx, offset.dy, cardRenderBox.size.width, cardRenderBox.size.height);
-    }
-    //* get object box rect
-    final RenderBox? objectRenderBox = objectAreaKey.currentContext?.findRenderObject() as RenderBox?;
-    if (objectRenderBox != null) {
-      Offset offset = objectRenderBox.localToGlobal(Offset.zero);
-      objectBoxRect = Rect.fromLTWH(offset.dx, offset.dy, objectRenderBox.size.width, objectRenderBox.size.height);
-    }
-    //* get delete area rect
-    final RenderBox? deleteAreaRenderBox = deleteAreaKey.currentContext?.findRenderObject() as RenderBox?;
-    if (cardRenderBox != null) {
-      final Offset offset = deleteAreaRenderBox!.localToGlobal(Offset.zero) - cardBoxRect.topLeft;
-      deleteAreaRect = Rect.fromLTWH(
-        offset.dx,
-        offset.dy,
-        deleteAreaRenderBox.size.width,
-        deleteAreaRenderBox.size.height,
-      );
-    }
+  @override
+  void didChangeMetrics() {
+    bottomInsetNotifier.value = MediaQuery.of(context).viewInsets.bottom;
+    getRect();
+  }
 
-    log('_getRect card Box Rect : $cardBoxRect\nobject Box Rect : $objectBoxRect');
+  @override
+  void dispose() {
+    layerManager.layers.clear();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _loadImageColor(Uint8List imageFile) async {
@@ -183,12 +156,53 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             ],
           ),
           body: Center(
-            child: Column(
-              children: [
-                Expanded(flex: 3, child: buildScreenshotWidget(context)),
-                const SizedBox(height: 8),
-                Expanded(flex: 1, child: buildObjectSelector()),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double space = 8;
+                int cardFlex = 7;
+                double maxWidth = (constraints.maxHeight - space) * cardFlex / 10 * (widget.aspectRatio.ratio ?? 1);
+
+                return SizedBox(
+                  width: maxWidth,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: cardFlex,
+                        child: Render(
+                          controller: renderController,
+                          child: ClipPath(
+                            key: cardAreaKey,
+                            clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                            child: buildImageLayer(context),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: space),
+                      Expanded(
+                        flex: 10 - cardFlex,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ClipPath(
+                            key: objectAreaKey,
+                            clipper: CardBoxClip(),
+                            child: Container(
+                              color: Colors.grey[200],
+                              padding: const EdgeInsets.all(2),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  buildItemCategory(),
+                                  Expanded(child: buildItemArea()),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -196,39 +210,23 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     );
   }
 
-  Widget buildScreenshotWidget(BuildContext context) {
-    return Render(
-      controller: renderController,
-      child: ClipPath(
-        key: cardKey,
-        clipper: cardBoxClipper,
-        child: buildImageLayer(context),
+  Widget buildImageLayer(BuildContext context) {
+    return Container(
+      decoration: cardColor != null
+          ? BoxDecoration(
+              gradient: cardColor,
+            )
+          : const BoxDecoration(color: Colors.white),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+          DeleteIconButton(
+            visible: enableDelete,
+          ),
+        ],
       ),
     );
-  }
-
-  Widget buildImageLayer(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return Container(
-        decoration: cardColor != null
-            ? BoxDecoration(
-                gradient: cardColor,
-              )
-            : const BoxDecoration(color: Colors.white),
-        child: AspectRatio(
-          aspectRatio: widget.aspectRatio.ratio ?? 1,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-              DeleteIconButton(
-                visible: enableDelete,
-              ),
-            ],
-          ),
-        ),
-      );
-    });
   }
 
   Widget buildLayerWidgets(LayerItem layer) {
@@ -288,29 +286,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       },
       onDelete: _handleDeleteAction,
       layerItem: layer,
-    );
-  }
-
-  //---------------------------------//
-  Widget buildObjectSelector() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: ClipPath(
-        key: objectAreaKey,
-        clipper: ObjectBoxClip(),
-        child: Container(
-          width: cardBoxClipper.width < 1 ? 100 : cardBoxClipper.width,
-          color: Colors.grey[200],
-          padding: const EdgeInsets.all(2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildItemCategory(),
-              Expanded(child: buildItemArea()),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
