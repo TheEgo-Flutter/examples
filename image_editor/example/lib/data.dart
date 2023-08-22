@@ -51,7 +51,11 @@ List<String> stickers = [
 ];
 List<String> frames = [
   "frames/frame01.png",
+  "frames/frame02.png",
 ];
 List<String> backgrounds = [
-  "backgrounds/background01.png",
+  "backgrounds/bg01.png",
+  "backgrounds/bg02.png",
+  "backgrounds/bg03.jpg",
+  "backgrounds/bg04.gif",
 ];
