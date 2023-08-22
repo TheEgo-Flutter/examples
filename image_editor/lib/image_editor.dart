@@ -71,18 +71,22 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.dispose();
   }
 
-  Future<void> _loadImageColor(Uint8List imageFile) async {
-    ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(imageFile));
-    setState(() {
-      cardColor = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomCenter,
-        colors: [
-          newScheme.primaryContainer,
-          newScheme.primary,
-        ],
-      );
-    });
+  Future<void> _loadImageColor(Uint8List? imageFile) async {
+    if (imageFile != null) {
+      ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(imageFile));
+      setState(() {
+        cardColor = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomCenter,
+          colors: [
+            newScheme.primaryContainer,
+            newScheme.primary,
+          ],
+        );
+      });
+    } else {
+      cardColor = null;
+    }
   }
 
   Future<Uint8List> _loadImage(dynamic imageFile) async {
@@ -331,39 +335,28 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             setState(() {});
           },
         );
+      case LayerType.image:
       case LayerType.background:
         return ItemSelector.background(
-          items: [
-            ...List.generate(
-              10,
-              (index) => Container(
-                decoration: BoxDecoration(
-                  gradient: gradients[index],
-                ),
-                width: cardBoxRect.size.width,
-                height: cardBoxRect.size.height,
-              ),
-            ),
-            ...widget.backgrounds
-          ],
+          items: widget.backgrounds,
           onSelected: (child) async {
             if (child == null) {
               var image = await picker.pickImage(source: ImageSource.gallery);
               if (image == null) return;
               Uint8List? loadImage = await _loadImage(image);
               await _loadImageColor(loadImage);
-              LayerItem background = LayerItem(
+              LayerItem imageBackground = LayerItem(
                 UniqueKey(),
-                type: _selectedType,
+                type: LayerType.image,
                 object: Image.memory(loadImage),
                 rect: cardBoxRect.zero,
               );
-              layerManager.addLayer(background);
+              layerManager.addLayer(imageBackground);
             } else {
-              print(cardBoxRect.size);
+              await _loadImageColor(null);
               LayerItem layer = LayerItem(
                 UniqueKey(),
-                type: _selectedType,
+                type: LayerType.background,
                 object: child,
                 rect: cardBoxRect.zero,
               );
@@ -401,7 +394,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             ),
             ChoiceChip(
               label: const Text("배경"),
-              selected: _selectedType == LayerType.background,
+              selected: _selectedType == LayerType.background || _selectedType == LayerType.image,
               onSelected: (bool selected) async {
                 setState(() {
                   _selectedType = LayerType.background;

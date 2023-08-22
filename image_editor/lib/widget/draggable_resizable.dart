@@ -197,7 +197,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
         );
       case LayerType.text:
         TextEditorStyle textEditorStyle = widget.layerItem.object as TextEditorStyle;
-
         return Container(
           decoration: BoxDecoration(
             border: Border.all(
@@ -233,12 +232,13 @@ class _DraggableResizableState extends State<DraggableResizable> {
             ),
           ),
         );
-      case LayerType.background:
+      case LayerType.image:
         return SizedBox(
           height: size.height,
           width: size.width,
           child: widget.layerItem.object,
         );
+      case LayerType.background:
       case LayerType.drawing:
       case LayerType.frame:
       default:
