@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,8 +17,6 @@ import 'widget/delete_icon.dart';
 import 'widget/draggable_resizable.dart';
 
 class ImageEditor extends StatefulWidget {
-  final Directory? savePath;
-  final Uint8List? image;
   final List<dynamic> stickers;
   final List<dynamic> backgrounds;
   final List<dynamic> frames;
@@ -27,8 +24,6 @@ class ImageEditor extends StatefulWidget {
 
   const ImageEditor({
     super.key,
-    this.savePath,
-    this.image,
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],

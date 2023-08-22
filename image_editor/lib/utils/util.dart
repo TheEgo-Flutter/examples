@@ -46,9 +46,9 @@ extension RectExtension on Rect {
 enum AspectRatioOption {
   rFree('Free', null),
   r1x1('1:1', 1),
-  r4x3('4:3', 4 / 3),
-  r5x4('5:4', 5 / 4),
-  r7x5('7:5', 7 / 5),
+  r3x4('3:4', 3 / 4),
+  r4x5('4:5', 4 / 5),
+  r5x7('5:7', 5 / 7),
   r9x16('9:16', 9 / 16);
 
   const AspectRatioOption(this.title, this.ratio);
