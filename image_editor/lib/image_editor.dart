@@ -250,16 +250,18 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               );
             },
           );
-          setState(() {});
-          if (textEditorStyle == null) return;
+          if (textEditorStyle == null) {
+            layerManager.addLayer(layer);
+          } else {
+            var newLayer = LayerItem(
+              UniqueKey(),
+              type: LayerType.text,
+              object: textEditorStyle,
+              rect: (item.rect.topLeft & textEditorStyle.fieldSize),
+            );
+            layerManager.addLayer(newLayer);
+          }
 
-          var newLayer = LayerItem(
-            UniqueKey(),
-            type: LayerType.text,
-            object: textEditorStyle,
-            rect: (item.rect.topLeft & textEditorStyle.fieldSize),
-          );
-          layerManager.addLayer(newLayer);
           setState(() {});
         }
         setState(() {
