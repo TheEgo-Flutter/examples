@@ -25,6 +25,10 @@ class LayerItem {
     return type == LayerType.sticker || type == LayerType.image || type == LayerType.text;
   }
 
+  bool get isObject {
+    return type == LayerType.sticker || type == LayerType.text;
+  }
+
   bool get ignorePoint {
     return type == LayerType.frame || type == LayerType.drawing || type == LayerType.background;
   }

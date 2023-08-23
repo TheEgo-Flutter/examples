@@ -42,7 +42,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
-  bool get enableDelete => selectedLayerItem?.type == LayerType.sticker || selectedLayerItem?.type == LayerType.text;
 
   final picker = ImagePicker();
 
@@ -96,19 +95,16 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   void _handleDeleteAction(
     Offset currentFingerPosition,
     LayerItem layerItem,
-    LayerItemStatus status,
+    bool isDragging,
   ) async {
-    bool deletable = deleteAreaRect.contains(currentFingerPosition);
-    if (!enableDelete) return;
-    if (!deletable) return;
-    if (status == LayerItemStatus.dragging) {
+    if (!(selectedLayerItem?.isObject ?? false)) return;
+    if (!deleteAreaRect.contains(currentFingerPosition)) return;
+    if (isDragging) {
       if (await Vibration.hasVibrator() ?? false) {
         Vibration.vibrate(amplitude: 100);
       }
-    } else if (status == LayerItemStatus.completed) {
-      layerManager.removeLayerByKey(layerItem.key);
     } else {
-      return;
+      layerManager.removeLayerByKey(layerItem.key);
     }
   }
 
@@ -220,7 +216,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         children: [
           ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
           DeleteIconButton(
-            visible: enableDelete,
+            visible: selectedLayerItem?.isObject ?? false,
           ),
         ],
       ),
@@ -259,13 +255,11 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               ),
             );
           }
-
           setState(() {});
         }
         setState(() {
           selectedLayerItem = item;
-
-          if (item.type == LayerType.text || item.type == LayerType.sticker) {
+          if (item.isObject) {
             layerManager.moveLayerToFront(item);
           }
         });
@@ -273,7 +267,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       onDragStart: (LayerItem item) {
         setState(() {
           selectedLayerItem = item;
-          if (item.type == LayerType.text || item.type == LayerType.sticker) {
+          if (item.isObject) {
             layerManager.moveLayerToFront(item);
           }
         });

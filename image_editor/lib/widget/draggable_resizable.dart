@@ -25,7 +25,7 @@ class DraggableResizable extends StatefulWidget {
   }) : super(key: key);
 
   final ValueChanged<LayerItem>? onLayerTapped;
-  final void Function(Offset offset, LayerItem layerItem, LayerItemStatus status)? onDelete;
+  final void Function(Offset offset, LayerItem layerItem, bool isDragging)? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
   final bool isFocus;
@@ -80,7 +80,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                   startingFingerPositionFromObject = d;
                 },
                 onDragEnd: () {
-                  widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.completed);
+                  widget.onDelete?.call(currentFingerPosition, layerItem, false);
                   widget.onDragEnd?.call(layerItem);
                 },
                 onDrag: widget.layerItem.isDraggable && widget.isFocus
@@ -94,7 +94,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                         });
 
                         currentFingerPosition = startingFingerPositionFromObject + _offset;
-                        widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.dragging);
+                        widget.onDelete?.call(currentFingerPosition, layerItem, true);
                       }
                     : null,
                 onScale: widget.layerItem.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
