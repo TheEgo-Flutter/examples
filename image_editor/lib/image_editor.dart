@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
 
@@ -50,10 +51,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      log(cardBoxRect.toString());
-      log(MediaQuery.of(context).size.toString());
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {});
     bottomInsetNotifier.addListener(() {
       log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
     });
@@ -101,7 +99,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     LayerItemStatus status,
   ) async {
     bool deletable = deleteAreaRect.contains(currentFingerPosition);
-    log(deletable.toString());
     if (!enableDelete) return;
     if (!deletable) return;
     if (status == LayerItemStatus.dragging) {
@@ -211,6 +208,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   }
 
   Widget buildImageLayer(BuildContext context) {
+    Logger().i(layerManager.layers.map((e) => '${e.toString()} \n'));
     return Container(
       decoration: cardColor != null
           ? BoxDecoration(
@@ -235,8 +233,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       isFocus: selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
         if (layer.type == LayerType.text) {
+          Logger().e(item.toString());
           setState(() {
-            layerManager.removeLayerByKey(layer.key);
+            layerManager.removeLayerByKey(item.key);
           });
 
           TextEditorStyle? textEditorStyle = await showGeneralDialog(
@@ -251,36 +250,37 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             },
           );
           if (textEditorStyle == null) {
-            layerManager.addLayer(layer);
+            layerManager.addLayer(item);
           } else {
-            var newLayer = LayerItem(
-              UniqueKey(),
-              type: LayerType.text,
-              object: textEditorStyle,
-              rect: (item.rect.topLeft & textEditorStyle.fieldSize),
+            layerManager.addLayer(
+              item.copyWith(
+                object: textEditorStyle,
+                rect: (item.rect.topLeft & textEditorStyle.fieldSize),
+              ),
             );
-            layerManager.addLayer(newLayer);
           }
 
           setState(() {});
         }
         setState(() {
-          selectedLayerItem = layer;
+          selectedLayerItem = item;
 
-          if (layer.type == LayerType.sticker) {
-            layerManager.moveLayerToFront(layer);
+          if (item.type == LayerType.text || item.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(item);
           }
         });
       },
       onDragStart: (LayerItem item) {
         setState(() {
-          selectedLayerItem = layer;
-          if (layer.type == LayerType.text || layer.type == LayerType.sticker) {
-            layerManager.moveLayerToFront(layer);
+          selectedLayerItem = item;
+          if (item.type == LayerType.text || item.type == LayerType.sticker) {
+            layerManager.moveLayerToFront(item);
           }
         });
       },
       onDragEnd: (LayerItem item) {
+        Logger().e(item.toString());
+        layerManager.updateLayer(item);
         setState(() {
           selectedLayerItem = null;
         });

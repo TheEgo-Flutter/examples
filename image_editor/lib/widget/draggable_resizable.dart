@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -37,17 +36,20 @@ class DraggableResizable extends StatefulWidget {
 }
 
 class _DraggableResizableState extends State<DraggableResizable> {
-  // 기본값
   Offset _offset = Offset.zero;
+  Size _size = Size.zero;
   double _angle = 0;
-  double _scale = 1.0;
-  // LayerItem값
-  Size size = Size.zero;
-  Offset offset = Offset.zero;
+  double get _scale => (_size.width / widget.layerItem.rect.size.width);
+  LayerItem get layerItem => widget.layerItem.copyWith(
+        rect: _offset & _size,
+        angle: _angle,
+      );
   // 센터링 검사
   bool isCenteredHorizontally = false;
   bool isCenteredVertically = false;
 
+  Offset startingFingerPositionFromObject = Offset.zero;
+  Offset currentFingerPosition = Offset.zero;
   @override
   void initState() {
     super.initState();
@@ -55,8 +57,8 @@ class _DraggableResizableState extends State<DraggableResizable> {
     LayerItem item = widget.layerItem;
     final aspectRatio = item.rect.size.width / item.rect.size.height;
 
-    offset = offset == Offset.zero ? getCenterOffset(cardBoxRect, item.rect.size) : item.rect.topLeft;
-    size = Size(item.rect.size.width, item.rect.size.width / aspectRatio);
+    _offset = item.rect.topLeft;
+    _size = Size(item.rect.size.width, item.rect.size.width / aspectRatio);
   }
 
   // 생략: buildChild 메서드
@@ -67,10 +69,46 @@ class _DraggableResizableState extends State<DraggableResizable> {
       children: <Widget>[
         if (widget.isFocus) ..._buildCenterLine(isCenteredHorizontally, isCenteredVertically),
         Positioned(
-          top: offset.dy,
-          left: offset.dx,
-          child: _buildDraggablePoint(),
-        ),
+            top: _offset.dy,
+            left: _offset.dx,
+            child: IgnorePointer(
+              ignoring: widget.layerItem.ignorePoint,
+              child: _DraggablePoint(
+                onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
+                onDragStart: (d) {
+                  widget.onDragStart?.call(layerItem);
+                  startingFingerPositionFromObject = d;
+                },
+                onDragEnd: () {
+                  widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.completed);
+                  widget.onDragEnd?.call(layerItem);
+                },
+                onDrag: widget.layerItem.isDraggable && widget.isFocus
+                    ? (d, focalPoint) async {
+                        setState(() {
+                          _offset = Offset(_offset.dx + d.dx, _offset.dy + d.dy);
+                          isCenteredHorizontally =
+                              _checkIfCentered(_offset, _size, cardBoxRect.size.width, Axis.horizontal);
+                          isCenteredVertically =
+                              _checkIfCentered(_offset, _size, cardBoxRect.size.height, Axis.vertical);
+                        });
+
+                        currentFingerPosition = startingFingerPositionFromObject + _offset;
+                        widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.dragging);
+                      }
+                    : null,
+                onScale: widget.layerItem.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
+                onRotate: widget.layerItem.isRotatable && widget.isFocus
+                    ? (a) => setState(() {
+                          _angle = a;
+                        })
+                    : null,
+                child: Transform.rotate(
+                  angle: _angle,
+                  child: buildChild(),
+                ),
+              ),
+            )),
       ],
     );
   }
@@ -100,77 +138,25 @@ class _DraggableResizableState extends State<DraggableResizable> {
     ];
   }
 
-  LayerItem get layerItem => widget.layerItem.copyWith(
-        rect: offset & size,
-        angle: _angle,
-      );
-  Offset startingFingerPositionFromObject = Offset.zero;
-  Offset currentFingerPosition = Offset.zero;
   // 드래그 가능한 포인트 생성
-  Widget _buildDraggablePoint() {
-    if (widget.layerItem.isFixed) {
-      return buildChild();
-    }
-
-    return _DraggablePoint(
-      onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
-      onDragStart: (d) {
-        widget.onDragStart?.call(layerItem);
-        startingFingerPositionFromObject = d;
-      },
-      onDragEnd: () {
-        widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.completed);
-        widget.onDragEnd?.call(layerItem);
-      },
-      onDrag: widget.isFocus
-          ? (d, focalPoint) async {
-              setState(() {
-                offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
-                isCenteredHorizontally = _checkIfCentered(offset, size, cardBoxRect.size.width, Axis.horizontal);
-                isCenteredVertically = _checkIfCentered(offset, size, cardBoxRect.size.height, Axis.vertical);
-              });
-
-              currentFingerPosition = startingFingerPositionFromObject + offset;
-              widget.onDelete?.call(currentFingerPosition, layerItem, LayerItemStatus.dragging);
-            }
-          : null,
-      onScale: widget.isFocus ? (s) => _handleScale(s) : null,
-      onRotate: widget.isFocus
-          ? (a) => setState(() {
-                _angle = a;
-              })
-          : null,
-      child: Transform.translate(
-        offset: _offset,
-        child: Transform.rotate(
-          angle: _angle,
-          child: Transform.scale(
-            scale: _scale,
-            child: buildChild(),
-          ),
-        ),
-      ),
-    );
-  }
 
   // 스케일 핸들러
   void _handleScale(double scale) {
-    log('onScale');
     final updatedSize = Size(
       widget.layerItem.rect.size.width * scale,
       widget.layerItem.rect.size.height * scale,
     );
 
-    final midX = offset.dx + (size.width / 2);
-    final midY = offset.dy + (size.height / 2);
+    final midX = _offset.dx + (_size.width / 2);
+    final midY = _offset.dy + (_size.height / 2);
     final updatedPosition = Offset(
       midX - (updatedSize.width / 2),
       midY - (updatedSize.height / 2),
     );
 
     setState(() {
-      size = updatedSize;
-      offset = updatedPosition;
+      _size = updatedSize;
+      _offset = updatedPosition;
     });
   }
 
@@ -183,72 +169,44 @@ class _DraggableResizableState extends State<DraggableResizable> {
 
   Widget buildChild() {
     switch (widget.layerItem.type) {
-      case LayerType.sticker:
-        return Container(
-          height: size.height,
-          width: size.width,
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 2,
-              color: widget.isFocus ? Colors.blue : Colors.transparent,
-            ),
-          ),
-          child: widget.layerItem.object,
-        );
       case LayerType.text:
         TextEditorStyle textEditorStyle = widget.layerItem.object as TextEditorStyle;
         return Container(
+          height: _size.height,
+          width: _size.width,
+          margin: const EdgeInsets.all(textFieldSpacing),
           decoration: BoxDecoration(
-            border: Border.all(
-              width: 2,
-              color: widget.isFocus ? Colors.blue : Colors.transparent,
-            ),
+            color: textEditorStyle.backgroundColor,
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Container(
-            height: size.height,
-            width: size.width,
-            margin: const EdgeInsets.all(textFieldSpacing),
-            decoration: BoxDecoration(
-              color: textEditorStyle.backgroundColor,
-              borderRadius: BorderRadius.circular(20),
+          child: TextFormField(
+            readOnly: true,
+            enabled: !true,
+            initialValue: textEditorStyle.text,
+            textAlign: textEditorStyle.textAlign,
+            style: textEditorStyle.textStyle.copyWith(fontSize: textEditorStyle.textStyle.fontSize! * _scale),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.all(textFieldSpacing),
             ),
-            child: TextFormField(
-              readOnly: true,
-              enabled: !true,
-              initialValue: textEditorStyle.text,
-              textAlign: textEditorStyle.textAlign,
-              style: textEditorStyle.textStyle.copyWith(
-                  fontSize: textEditorStyle.textStyle.fontSize! * (size.width / widget.layerItem.rect.size.width)),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.all(textFieldSpacing),
-              ),
-              textAlignVertical: TextAlignVertical.center,
-              keyboardType: TextInputType.multiline,
-              enableSuggestions: false,
-              autocorrect: false,
-              maxLines: null,
-              autofocus: true,
-            ),
+            textAlignVertical: TextAlignVertical.center,
+            keyboardType: TextInputType.multiline,
+            enableSuggestions: false,
+            autocorrect: false,
+            maxLines: null,
+            autofocus: true,
           ),
         );
+      case LayerType.sticker:
       case LayerType.image:
-        return SizedBox(
-          height: size.height,
-          width: size.width,
-          child: widget.layerItem.object,
-        );
       case LayerType.background:
       case LayerType.drawing:
       case LayerType.frame:
       default:
-        return IgnorePointer(
-          ignoring: true,
-          child: SizedBox(
-            height: size.height,
-            width: size.width,
-            child: widget.layerItem.object,
-          ),
+        return SizedBox(
+          height: _size.height,
+          width: _size.width,
+          child: widget.layerItem.object,
         );
     }
   }

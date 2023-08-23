@@ -13,7 +13,19 @@ class LayerItem {
   final Rect rect;
   final double angle;
 
-  bool get isFixed {
+  bool get isScalable {
+    return type == LayerType.sticker || type == LayerType.image;
+  }
+
+  bool get isDraggable {
+    return type == LayerType.sticker || type == LayerType.image || type == LayerType.text;
+  }
+
+  bool get isRotatable {
+    return type == LayerType.sticker || type == LayerType.image || type == LayerType.text;
+  }
+
+  bool get ignorePoint {
     return type == LayerType.frame || type == LayerType.drawing || type == LayerType.background;
   }
 
@@ -37,6 +49,11 @@ class LayerItem {
       rect: rect ?? this.rect,
       angle: angle ?? this.angle,
     );
+  }
+
+  @override
+  String toString() {
+    return "LayerItem(rect: $rect, angle: $angle, key: $key, type: $type, object: $object)";
   }
 }
 
@@ -143,11 +160,11 @@ class LayerManager {
     }
   }
 
-  /// old Layer.object new object
   void updateLayer(LayerItem layer) {
-    int index = layers.indexWhere((item) => item.key == layer.key);
+    // sticker, text only
+    int index = _otherLayers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
-      layers[index] = layer;
+      _otherLayers[index] = layer;
     }
   }
 
