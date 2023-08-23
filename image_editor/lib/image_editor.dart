@@ -228,35 +228,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       key: Key('${layer.key}_draggableResizable_asset'),
       isFocus: selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
-        if (layer.type == LayerType.text) {
-          Logger().e(item.toString());
-          setState(() {
-            layerManager.removeLayerByKey(item.key);
-          });
-
-          TextEditorStyle? textEditorStyle = await showGeneralDialog(
-            context: context,
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return RectClipper(
-                rect: cardBoxRect,
-                child: TextEditor(
-                  textEditorStyle: layer.object as TextEditorStyle,
-                ),
-              );
-            },
-          );
-          if (textEditorStyle == null) {
-            layerManager.addLayer(item);
-          } else {
-            layerManager.addLayer(
-              item.copyWith(
-                object: textEditorStyle,
-                rect: (item.rect.topLeft & textEditorStyle.fieldSize),
-              ),
-            );
-          }
-          setState(() {});
-        }
         setState(() {
           selectedLayerItem = item;
           if (item.isObject) {
@@ -273,7 +244,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         });
       },
       onDragEnd: (LayerItem item) {
-        Logger().e(item.toString());
         layerManager.updateLayer(item);
         setState(() {
           selectedLayerItem = null;

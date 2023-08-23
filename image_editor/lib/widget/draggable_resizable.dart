@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/utils.dart';
+import 'package:logger/logger.dart';
 
 import '../modules/text_layer/text_editor.dart';
 
@@ -39,10 +41,12 @@ class _DraggableResizableState extends State<DraggableResizable> {
   Offset _offset = Offset.zero;
   Size _size = Size.zero;
   double _angle = 0;
+  dynamic _object;
   double get _scale => (_size.width / widget.layerItem.rect.size.width);
   LayerItem get layerItem => widget.layerItem.copyWith(
         rect: _offset & _size,
         angle: _angle,
+        object: _object,
       );
   // 센터링 검사
   bool isCenteredHorizontally = false;
@@ -53,12 +57,12 @@ class _DraggableResizableState extends State<DraggableResizable> {
   @override
   void initState() {
     super.initState();
-    _angle = widget.layerItem.angle;
-    LayerItem item = widget.layerItem;
+    final item = widget.layerItem;
     final aspectRatio = item.rect.size.width / item.rect.size.height;
-
-    _offset = item.rect.topLeft;
+    _angle = widget.layerItem.angle;
+    _object = widget.layerItem.object;
     _size = Size(item.rect.size.width, item.rect.size.width / aspectRatio);
+    _offset = item.rect.topLeft;
   }
 
   // 생략: buildChild 메서드
@@ -74,7 +78,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
             child: IgnorePointer(
               ignoring: widget.layerItem.ignorePoint,
               child: _DraggablePoint(
-                onLayerTapped: () => widget.onLayerTapped?.call(layerItem),
+                onLayerTapped: () {
+                  widget.onLayerTapped?.call(layerItem);
+                },
                 onDragStart: (d) {
                   widget.onDragStart?.call(layerItem);
                   startingFingerPositionFromObject = d;
@@ -170,31 +176,64 @@ class _DraggableResizableState extends State<DraggableResizable> {
   Widget buildChild() {
     switch (widget.layerItem.type) {
       case LayerType.text:
-        TextEditorStyle textEditorStyle = widget.layerItem.object as TextEditorStyle;
-        return Container(
-          height: _size.height,
-          width: _size.width,
-          margin: const EdgeInsets.all(textFieldSpacing),
-          decoration: BoxDecoration(
-            color: textEditorStyle.backgroundColor,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: TextFormField(
-            readOnly: true,
-            enabled: !true,
-            initialValue: textEditorStyle.text,
-            textAlign: textEditorStyle.textAlign,
-            style: textEditorStyle.textStyle.copyWith(fontSize: textEditorStyle.textStyle.fontSize! * _scale),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(textFieldSpacing),
+        _object as TextEditorStyle;
+        return GestureDetector(
+          onTap: () async {
+            Logger().e(widget.layerItem.toString());
+            // setState(() {
+            // layerManager.removeLayerByKey(item.key);
+            // });
+            TextEditorStyle? result = await showGeneralDialog(
+              context: context,
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return RectClipper(
+                  rect: cardBoxRect,
+                  child: TextEditor(
+                    textEditorStyle: _object as TextEditorStyle,
+                  ),
+                );
+              },
+            );
+            if (result != null) {
+              _object = result;
+            }
+            // if (textEditorStyle == null) {
+            //   layerManager.addLayer(item);
+            // } else {
+            //   layerManager.addLayer(
+            //     item.copyWith(
+            //       object: textEditorStyle,
+            //       rect: (item.rect.topLeft & textEditorStyle.fieldSize),
+            //     ),
+            //   );
+            // }
+            // setState(() {});
+          },
+          child: Container(
+            height: _size.height,
+            width: _size.width,
+            margin: const EdgeInsets.all(textFieldSpacing),
+            decoration: BoxDecoration(
+              color: _object.backgroundColor,
+              borderRadius: BorderRadius.circular(20),
             ),
-            textAlignVertical: TextAlignVertical.center,
-            keyboardType: TextInputType.multiline,
-            enableSuggestions: false,
-            autocorrect: false,
-            maxLines: null,
-            autofocus: true,
+            child: TextFormField(
+              readOnly: true,
+              enabled: !true,
+              initialValue: _object.text,
+              textAlign: _object.textAlign,
+              style: _object.textStyle.copyWith(fontSize: _object.textStyle.fontSize! * _scale),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(textFieldSpacing),
+              ),
+              textAlignVertical: TextAlignVertical.center,
+              keyboardType: TextInputType.multiline,
+              enableSuggestions: false,
+              autocorrect: false,
+              maxLines: null,
+              autofocus: true,
+            ),
           ),
         );
       case LayerType.sticker:
