@@ -30,6 +30,8 @@ class _TextEditorState extends State<TextEditor> {
   bool isFontBarVisible = true;
   TextAlign align = TextAlign.center;
   int selectedFontIndex = 0;
+  bool isInitialBuild = true;
+  bool isEditing = false;
   TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
         color: currentColor,
         fontSize: fontSize.toDouble(),
@@ -97,103 +99,115 @@ class _TextEditorState extends State<TextEditor> {
         ),
         scaffoldBackgroundColor: Colors.transparent,
       ),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: Align(
-                  alignment: align == TextAlign.center
-                      ? Alignment.center
-                      : align == TextAlign.left
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
-                  child: ValueListenableBuilder<String>(
-                      valueListenable: textNotifier,
-                      builder: (context, text, child) {
-                        return Container(
-                          width: textFieldSize.width,
-                          margin: const EdgeInsets.all(textFieldSpacing),
-                          decoration: BoxDecoration(
-                            color: textBackgroundColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: _textField(),
-                        );
-                      }),
-                ),
-              ),
-            ),
-            Flexible(
-              child: Container(
-                color: Colors.transparent,
-                // height: objectBoxRect.height,
-                width: objectBoxRect.width,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
+      child: GestureDetector(
+        onTap: () => formKey.currentState?.deactivate(),
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          body: ValueListenableBuilder(
+              valueListenable: bottomInsetNotifier,
+              builder: (context, bottomInset, child) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
+                    Navigator.canPop(context) ? Navigator.pop(context) : null;
+                  } else {
+                    isInitialBuild = false;
+                  }
+                });
+
+                return Column(
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(icon),
-                          onPressed: _toggleAlign,
-                          color: Colors.white,
-                          padding: const EdgeInsets.all(15),
+                    Expanded(
+                      child: Center(
+                        child: Align(
+                          alignment: align == TextAlign.center
+                              ? Alignment.center
+                              : align == TextAlign.left
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                          child: ValueListenableBuilder<String>(
+                              valueListenable: textNotifier,
+                              builder: (context, text, child) {
+                                return Container(
+                                  width: textFieldSize.width,
+                                  margin: const EdgeInsets.all(textFieldSpacing),
+                                  decoration: BoxDecoration(
+                                    color: textBackgroundColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: _textField(),
+                                );
+                              }),
                         ),
-                        IconButton(
-                          icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
-                          onPressed: () {
-                            setState(() {
-                              isFontBarVisible = !isFontBarVisible;
-                            });
-                          },
-                          color: Colors.white,
-                          padding: const EdgeInsets.all(15),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.format_color_text_sharp),
-                          onPressed: () {
-                            setState(() {
-                              textBackgroundColor = textBackgroundColor == Colors.transparent
-                                  ? Colors.black45
-                                  : textBackgroundColor == Colors.black45
-                                      ? Colors.white54
-                                      : Colors.transparent;
-                            });
-                          },
-                          color: Colors.white,
-                          padding: const EdgeInsets.all(15),
-                        ),
-                        const Spacer(),
-                      ],
+                      ),
                     ),
-                    isFontBarVisible ? _fontBar(context) : _colorBar(context),
-                    SizedBox(
+                    Container(
+                      color: Colors.transparent,
                       width: objectBoxRect.width,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (textNotifier.value.isEmpty) {
-                            Navigator.pop(context);
-                          } else {
-                            TextEditorStyle result = TextEditorStyle(
-                              text: textNotifier.value,
-                              textAlign: align,
-                              textStyle: currentTextStyle,
-                              backgroundColor: textBackgroundColor,
-                              fieldSize: textFieldSize,
-                            );
-                            Navigator.pop(context, result);
-                          }
-                        },
-                        child: const Text("완료"),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(icon),
+                                onPressed: _toggleAlign,
+                                color: Colors.white,
+                                padding: const EdgeInsets.all(15),
+                              ),
+                              IconButton(
+                                icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
+                                onPressed: () {
+                                  setState(() {
+                                    isFontBarVisible = !isFontBarVisible;
+                                  });
+                                },
+                                color: Colors.white,
+                                padding: const EdgeInsets.all(15),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.format_color_text_sharp),
+                                onPressed: () {
+                                  setState(() {
+                                    textBackgroundColor = textBackgroundColor == Colors.transparent
+                                        ? Colors.black45
+                                        : textBackgroundColor == Colors.black45
+                                            ? Colors.white54
+                                            : Colors.transparent;
+                                  });
+                                },
+                                color: Colors.white,
+                                padding: const EdgeInsets.all(15),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                          isFontBarVisible ? _fontBar(context) : _colorBar(context),
+                          SizedBox(
+                            width: objectBoxRect.width,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (textNotifier.value.isEmpty) {
+                                  Navigator.pop(context);
+                                } else {
+                                  TextEditorStyle result = TextEditorStyle(
+                                    text: textNotifier.value,
+                                    textAlign: align,
+                                    textStyle: currentTextStyle,
+                                    backgroundColor: textBackgroundColor,
+                                    fieldSize: textFieldSize,
+                                  );
+                                  Navigator.pop(context, result);
+                                }
+                              },
+                              child: const Text("완료"),
+                            ),
+                          )
+                        ],
                       ),
                     )
                   ],
-                ),
-              ),
-            )
-          ],
+                );
+              }),
         ),
       ),
     );
@@ -252,8 +266,9 @@ class _TextEditorState extends State<TextEditor> {
           child: ColorButton(
             color: Colors.transparent,
             margin: const EdgeInsets.symmetric(horizontal: 8),
-            onTap: (color) {
-              showModalBottomSheet(
+            onTap: (color) async {
+              isEditing = true;
+              await showModalBottomSheet(
                 context: context,
                 builder: (context) {
                   return Container(
@@ -264,13 +279,18 @@ class _TextEditorState extends State<TextEditor> {
                         padding: const EdgeInsets.only(top: 16),
                         child: HueRingPicker(
                           pickerColor: currentColor,
-                          onColorChanged: changeColor,
+                          onColorChanged: (color) {
+                            setState(() {
+                              currentColor = color;
+                            });
+                          },
                         ),
                       ),
                     ),
                   );
                 },
               );
+              isEditing = false;
             },
           ),
         ),
@@ -311,11 +331,6 @@ class _TextEditorState extends State<TextEditor> {
       }
     });
   }
-
-  void changeColor(Color color) {
-    currentColor = color;
-    setState(() {});
-  }
 }
 
 class TextEditorStyle {
@@ -346,61 +361,5 @@ class TextEditorStyle {
       backgroundColor: backgroundColor ?? this.backgroundColor,
       fieldSize: fieldSize ?? this.fieldSize,
     );
-  }
-}
-
-class TextEditedWidget extends StatefulWidget {
-  const TextEditedWidget({super.key});
-
-  @override
-  State<TextEditedWidget> createState() => _TextEditedWidgetState();
-}
-
-class _TextEditedWidgetState extends State<TextEditedWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
-class _TextStyleItem extends StatelessWidget {
-  const _TextStyleItem({
-    required this.text,
-    required this.style,
-  });
-
-  final TextStyle style;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text('$text ${style.fontSize}', style: style),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TypographyDemo extends StatelessWidget {
-  const TypographyDemo({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final styleItems = [
-      _TextStyleItem(
-        style: textTheme.displayLarge!,
-        text: 'Light 96sp',
-      ),
-    ];
-
-    return ListView(children: styleItems);
   }
 }

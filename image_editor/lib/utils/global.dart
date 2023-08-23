@@ -37,6 +37,7 @@ Rect get deleteAreaRect {
   return Rect.zero;
 }
 
+GlobalKey formKey = GlobalKey<FormState>();
 ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
 
 ThemeData theme = ThemeData().copyWith(
