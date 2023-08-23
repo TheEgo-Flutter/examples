@@ -19,7 +19,6 @@ class TextEditor extends StatefulWidget {
 }
 
 class _TextEditorState extends State<TextEditor> {
-  bool isInitialBuild = true;
   double fontSize = 32.0;
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
@@ -47,6 +46,7 @@ class _TextEditorState extends State<TextEditor> {
   @override
   void initState() {
     super.initState();
+
     if (widget.textEditorStyle != null) {
       textNotifier.value = widget.textEditorStyle!.text;
       align = widget.textEditorStyle!.textAlign;
@@ -90,152 +90,139 @@ class _TextEditorState extends State<TextEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      resizeToAvoidBottomInset: true,
-      body: ValueListenableBuilder(
-          valueListenable: bottomInsetNotifier,
-          builder: (context, bottomInset, child) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!isInitialBuild && bottomInset == 0.0) {
-                Navigator.pop(context);
-              } else {
-                isInitialBuild = false;
-              }
-            });
-
-            return Stack(
-              children: <Widget>[
-                Transform.translate(
-                    offset: Offset.zero,
-                    child: LayoutBuilder(builder: (context, constraints) {
-                      return _buildTextField();
-                    })),
-                Transform.translate(
-                  offset: Offset(0, objectBoxRect.top - cardBoxRect.top - (bottomInset)),
-                  child: SizedBox(
-                    height: objectBoxRect.height,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(icon),
-                              onPressed: _toggleAlign,
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(15),
-                            ),
-                            IconButton(
-                              icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
-                              onPressed: () {
-                                setState(() {
-                                  isFontBarVisible = !isFontBarVisible;
-                                });
-                              },
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(15),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.format_color_text_sharp),
-                              onPressed: () {
-                                setState(() {
-                                  textBackgroundColor = textBackgroundColor == Colors.transparent
-                                      ? Colors.black45
-                                      : textBackgroundColor == Colors.black45
-                                          ? Colors.white54
-                                          : Colors.transparent;
-                                });
-                              },
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(15),
-                            ),
-                            const Spacer(),
-                          ],
-                        ),
-                        isFontBarVisible ? _fontBar(context) : _colorBar(context),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (textNotifier.value.isEmpty) {
-                                Navigator.pop(context);
-                              } else {
-                                TextEditorStyle result = TextEditorStyle(
-                                  text: textNotifier.value,
-                                  textAlign: align,
-                                  textStyle: currentTextStyle,
-                                  backgroundColor: textBackgroundColor,
-                                  fieldSize: textFieldSize,
-                                );
-                                Navigator.pop(context, result);
-                              }
-                            },
-                            child: const Text("완료"),
+    return Theme(
+      data: ThemeData().copyWith(
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.transparent,
+        ),
+        scaffoldBackgroundColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Align(
+                  alignment: align == TextAlign.center
+                      ? Alignment.center
+                      : align == TextAlign.left
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                  child: ValueListenableBuilder<String>(
+                      valueListenable: textNotifier,
+                      builder: (context, text, child) {
+                        return Container(
+                          width: textFieldSize.width,
+                          margin: const EdgeInsets.all(textFieldSpacing),
+                          decoration: BoxDecoration(
+                            color: textBackgroundColor,
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        )
+                          child: _textField(),
+                        );
+                      }),
+                ),
+              ),
+            ),
+            Flexible(
+              child: Container(
+                color: Colors.transparent,
+                // height: objectBoxRect.height,
+                width: objectBoxRect.width,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(icon),
+                          onPressed: _toggleAlign,
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(15),
+                        ),
+                        IconButton(
+                          icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
+                          onPressed: () {
+                            setState(() {
+                              isFontBarVisible = !isFontBarVisible;
+                            });
+                          },
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(15),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.format_color_text_sharp),
+                          onPressed: () {
+                            setState(() {
+                              textBackgroundColor = textBackgroundColor == Colors.transparent
+                                  ? Colors.black45
+                                  : textBackgroundColor == Colors.black45
+                                      ? Colors.white54
+                                      : Colors.transparent;
+                            });
+                          },
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(15),
+                        ),
+                        const Spacer(),
                       ],
                     ),
-                  ),
+                    isFontBarVisible ? _fontBar(context) : _colorBar(context),
+                    SizedBox(
+                      width: objectBoxRect.width,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (textNotifier.value.isEmpty) {
+                            Navigator.pop(context);
+                          } else {
+                            TextEditorStyle result = TextEditorStyle(
+                              text: textNotifier.value,
+                              textAlign: align,
+                              textStyle: currentTextStyle,
+                              backgroundColor: textBackgroundColor,
+                              fieldSize: textFieldSize,
+                            );
+                            Navigator.pop(context, result);
+                          }
+                        },
+                        child: const Text("완료"),
+                      ),
+                    )
+                  ],
                 ),
-              ],
-            );
-          }),
-    );
-  }
-
-  Align _buildTextField() {
-    return Center(
-      child: Align(
-        alignment: align == TextAlign.center
-            ? Alignment.center
-            : align == TextAlign.left
-                ? Alignment.centerLeft
-                : Alignment.centerRight,
-        child: ValueListenableBuilder<String>(
-            valueListenable: textNotifier,
-            builder: (context, text, child) {
-              return Container(
-                width: textFieldSize.width,
-                margin: const EdgeInsets.all(textFieldSpacing),
-                decoration: BoxDecoration(
-                  color: textBackgroundColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: _textField(),
-              );
-            }),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget _fontBar(BuildContext context) {
-    return SizedBox(
-      width: cardBoxRect.size.width,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: koreanFonts.asMap().entries.map((entry) {
-            int index = entry.key;
-            String fontFamily = entry.value;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: koreanFonts.asMap().entries.map((entry) {
+          int index = entry.key;
+          String fontFamily = entry.value;
 
-            return ChoiceChip(
-              label: Text(
-                'Aa',
-                style: GoogleFonts.getFont(fontFamily),
-              ),
-              shape: const CircleBorder(),
-              selected: selectedFontIndex == index,
-              onSelected: (bool selected) {
-                setState(() {
-                  if (selected) {
-                    selectedFontIndex = index;
-                  }
-                });
-              },
-            );
-          }).toList(),
-        ),
+          return ChoiceChip(
+            label: Text(
+              'Aa',
+              style: GoogleFonts.getFont(fontFamily),
+            ),
+            shape: const CircleBorder(),
+            selected: selectedFontIndex == index,
+            onSelected: (bool selected) {
+              setState(() {
+                if (selected) {
+                  selectedFontIndex = index;
+                }
+              });
+            },
+          );
+        }).toList(),
       ),
     );
   }
@@ -373,5 +360,47 @@ class _TextEditedWidgetState extends State<TextEditedWidget> {
   @override
   Widget build(BuildContext context) {
     return const Placeholder();
+  }
+}
+
+class _TextStyleItem extends StatelessWidget {
+  const _TextStyleItem({
+    required this.text,
+    required this.style,
+  });
+
+  final TextStyle style;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text('$text ${style.fontSize}', style: style),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TypographyDemo extends StatelessWidget {
+  const TypographyDemo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final styleItems = [
+      _TextStyleItem(
+        style: textTheme.displayLarge!,
+        text: 'Light 96sp',
+      ),
+    ];
+
+    return ListView(children: styleItems);
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,10 +49,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {});
-    bottomInsetNotifier.addListener(() {
-      log('bottomInsetNotifier : ${bottomInsetNotifier.value}');
-    });
   }
 
   @override
@@ -113,9 +108,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: theme,
-      child: WillPopScope(
+    return MaterialApp(
+      theme: theme,
+      home: WillPopScope(
         onWillPop: () async => false,
         child: Scaffold(
           resizeToAvoidBottomInset: false,
