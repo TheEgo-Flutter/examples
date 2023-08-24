@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,10 +9,8 @@ import '../../utils/global.dart';
 import '../brush_painter.dart';
 import 'constants/constants.dart';
 
-const double textFieldSpacing = 10;
-
 class TextEditor extends StatefulWidget {
-  final TextEditorStyle? textEditorStyle;
+  final TextBoxInput? textEditorStyle;
 
   const TextEditor({Key? key, this.textEditorStyle}) : super(key: key);
 
@@ -19,25 +19,43 @@ class TextEditor extends StatefulWidget {
 }
 
 class _TextEditorState extends State<TextEditor> {
+  // textStyle values
+  ValueNotifier<String> textNotifier = ValueNotifier<String>("");
   double fontSize = 32.0;
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
+  TextAlign align = TextAlign.center;
   List<String> koreanFonts = googleFontsDetails.entries
       .where((entry) => (entry.value['subsets'] as String).contains('korean'))
       .map((entry) => entry.key)
       .toList();
-  ValueNotifier<String> textNotifier = ValueNotifier<String>("");
+  // local
   bool isFontBarVisible = true;
-  TextAlign align = TextAlign.center;
+
   int selectedFontIndex = 0;
+  // for Navigator.pop
   bool isInitialBuild = true;
   bool isEditing = false;
+  // for size and position
+  final GlobalKey textBoxKey = GlobalKey();
+  Rect get textBoxRect {
+    final RenderBox? renderBox = textBoxKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      return Rect.zero;
+    }
+    log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(cardBoxRect.topLeft)}\t${renderBox.localToGlobal(cardBoxRect.topLeft)}');
+    return renderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft & renderBox.size;
+  }
+
   TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
         color: currentColor,
         fontSize: fontSize.toDouble(),
       );
 
-  Size get textFieldSize => addSizes(_textSize, const Size((textFieldSpacing * 4), 10));
+  Size get textFieldSize => addSizes(
+      _textSize,
+      Size((inputDecorationTheme.contentPadding?.horizontal ?? 4) * 4,
+          inputDecorationTheme.contentPadding?.vertical ?? 4));
 
   Size get _textSize => textSize(
       TextSpan(
@@ -45,20 +63,6 @@ class _TextEditorState extends State<TextEditor> {
         style: currentTextStyle,
       ),
       context);
-  @override
-  void initState() {
-    super.initState();
-
-    if (widget.textEditorStyle != null) {
-      textNotifier.value = widget.textEditorStyle!.text;
-      align = widget.textEditorStyle!.textAlign;
-      textBackgroundColor = widget.textEditorStyle!.backgroundColor;
-      selectedFontIndex = getFontIndex();
-      fontSize = widget.textEditorStyle!.textStyle.fontSize ?? fontSize;
-      currentColor = widget.textEditorStyle!.textStyle.color ?? currentColor;
-    }
-  }
-
   IconData get icon {
     switch (align) {
       case TextAlign.left:
@@ -71,25 +75,27 @@ class _TextEditorState extends State<TextEditor> {
     }
   }
 
-  TextFormField _textField({bool readOnly = false}) => TextFormField(
-        readOnly: readOnly,
-        enabled: !readOnly,
-        initialValue: textNotifier.value,
-        textAlign: align,
-        style: currentTextStyle,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.all(textFieldSpacing),
-        ),
-        onChanged: (value) => textNotifier.value = value,
-        textAlignVertical: TextAlignVertical.center,
-        keyboardType: TextInputType.multiline,
-        enableSuggestions: false,
-        autocorrect: false,
-        maxLines: null,
-        autofocus: true,
-      );
+  @override
+  void initState() {
+    super.initState();
 
+    if (widget.textEditorStyle != null) {
+      textNotifier.value = widget.textEditorStyle?.text ?? '';
+      align = widget.textEditorStyle!.align;
+      textBackgroundColor = widget.textEditorStyle!.backgroundColor;
+      selectedFontIndex = getFontIndex();
+      fontSize = widget.textEditorStyle!.style.fontSize ?? fontSize;
+      currentColor = widget.textEditorStyle!.style.color ?? currentColor;
+    }
+  }
+
+  TextBoxInput get input => TextBoxInput(
+        text: textNotifier.value,
+        align: align,
+        style: currentTextStyle,
+        backgroundColor: textBackgroundColor,
+        size: textFieldSize,
+      );
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -98,117 +104,118 @@ class _TextEditorState extends State<TextEditor> {
           backgroundColor: Colors.transparent,
         ),
         scaffoldBackgroundColor: Colors.transparent,
+        inputDecorationTheme: inputDecorationTheme,
       ),
-      child: GestureDetector(
-        onTap: () => formKey.currentState?.deactivate(),
-        child: Scaffold(
-          resizeToAvoidBottomInset: true,
-          body: ValueListenableBuilder(
-              valueListenable: bottomInsetNotifier,
-              builder: (context, bottomInset, child) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
-                    Navigator.canPop(context) ? Navigator.pop(context) : null;
-                  } else {
-                    isInitialBuild = false;
-                  }
-                });
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: ValueListenableBuilder(
+            valueListenable: bottomInsetNotifier,
+            builder: (context, bottomInset, child) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
+                  Navigator.canPop(context) ? Navigator.pop(context) : null;
+                } else {
+                  isInitialBuild = false;
+                }
+              });
 
-                return Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Align(
-                          alignment: align == TextAlign.center
-                              ? Alignment.center
-                              : align == TextAlign.left
-                                  ? Alignment.centerLeft
-                                  : Alignment.centerRight,
-                          child: ValueListenableBuilder<String>(
-                              valueListenable: textNotifier,
-                              builder: (context, text, child) {
-                                return Container(
-                                  width: textFieldSize.width,
-                                  margin: const EdgeInsets.all(textFieldSpacing),
-                                  decoration: BoxDecoration(
-                                    color: textBackgroundColor,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: _textField(),
-                                );
-                              }),
+              return Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Align(
+                        alignment: align == TextAlign.center
+                            ? Alignment.center
+                            : align == TextAlign.left
+                                ? Alignment.centerLeft
+                                : Alignment.centerRight,
+                        child: ValueListenableBuilder<String>(
+                            valueListenable: textNotifier,
+                            builder: (context, text, child) {
+                              return TextBox(
+                                key: textBoxKey,
+                                isReadOnly: false,
+                                input: input,
+                                onChanged: (value) => textNotifier.value = value,
+                              );
+                            }),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTapDown: (_) {
+                        log("onTapDown");
+                        isEditing = true;
+                      },
+                      onTapUp: (_) {
+                        log("onTapUp");
+                        isEditing = false;
+                      },
+                      child: Container(
+                        color: Colors.transparent,
+                        width: objectBoxRect.width,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(icon),
+                                  onPressed: _toggleAlign,
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.all(15),
+                                ),
+                                IconButton(
+                                  icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
+                                  onPressed: () {
+                                    setState(() {
+                                      isFontBarVisible = !isFontBarVisible;
+                                    });
+                                  },
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.all(15),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.format_color_text_sharp),
+                                  onPressed: () {
+                                    setState(() {
+                                      textBackgroundColor = textBackgroundColor == Colors.transparent
+                                          ? Colors.black45
+                                          : textBackgroundColor == Colors.black45
+                                              ? Colors.white54
+                                              : Colors.transparent;
+                                    });
+                                  },
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.all(15),
+                                ),
+                                const Spacer(),
+                              ],
+                            ),
+                            isFontBarVisible ? _fontBar(context) : _colorBar(context),
+                            SizedBox(
+                              width: objectBoxRect.width,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (textNotifier.value.isEmpty) {
+                                    Navigator.pop(context);
+                                  } else {
+                                    TextBoxInput result = input.copyWith(size: textBoxRect.size);
+                                    Navigator.pop(context, (result, textBoxRect.topLeft));
+                                  }
+                                },
+                                child: const Text("완료"),
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),
-                    Container(
-                      color: Colors.transparent,
-                      width: objectBoxRect.width,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(icon),
-                                onPressed: _toggleAlign,
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(15),
-                              ),
-                              IconButton(
-                                icon: isFontBarVisible ? const Icon(Icons.color_lens) : const Icon(Icons.text_fields),
-                                onPressed: () {
-                                  setState(() {
-                                    isFontBarVisible = !isFontBarVisible;
-                                  });
-                                },
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(15),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.format_color_text_sharp),
-                                onPressed: () {
-                                  setState(() {
-                                    textBackgroundColor = textBackgroundColor == Colors.transparent
-                                        ? Colors.black45
-                                        : textBackgroundColor == Colors.black45
-                                            ? Colors.white54
-                                            : Colors.transparent;
-                                  });
-                                },
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(15),
-                              ),
-                              const Spacer(),
-                            ],
-                          ),
-                          isFontBarVisible ? _fontBar(context) : _colorBar(context),
-                          SizedBox(
-                            width: objectBoxRect.width,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (textNotifier.value.isEmpty) {
-                                  Navigator.pop(context);
-                                } else {
-                                  TextEditorStyle result = TextEditorStyle(
-                                    text: textNotifier.value,
-                                    textAlign: align,
-                                    textStyle: currentTextStyle,
-                                    backgroundColor: textBackgroundColor,
-                                    fieldSize: textFieldSize,
-                                  );
-                                  Navigator.pop(context, result);
-                                }
-                              },
-                              child: const Text("완료"),
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                );
-              }),
-        ),
+                  )
+                ],
+              );
+            }),
       ),
     );
   }
@@ -307,7 +314,7 @@ class _TextEditorState extends State<TextEditor> {
   /// return element == fontFamily
   int getFontIndex() {
     int index = koreanFonts.indexWhere((element) {
-      return widget.textEditorStyle!.textStyle.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
+      return widget.textEditorStyle!.style.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
     });
     if (index < 0) {
       index = 0;
@@ -333,33 +340,72 @@ class _TextEditorState extends State<TextEditor> {
   }
 }
 
-class TextEditorStyle {
-  final String text;
-  final TextAlign textAlign;
-  final TextStyle textStyle;
+class TextBoxInput {
+  final String? text;
+  final Size size;
+  final TextStyle style;
+  final TextAlign align;
   final Color backgroundColor;
-  final Size fieldSize;
-  TextEditorStyle({
+  TextBoxInput({
     required this.text,
-    required this.textAlign,
-    required this.textStyle,
+    required this.align,
+    required this.style,
     required this.backgroundColor,
-    required this.fieldSize,
+    required this.size,
   });
 
-  TextEditorStyle copyWith({
+  TextBoxInput copyWith({
     String? text,
-    TextAlign? textAlign,
-    TextStyle? textStyle,
+    TextAlign? align,
+    TextStyle? style,
     Color? backgroundColor,
-    Size? fieldSize,
+    Size? size,
   }) {
-    return TextEditorStyle(
+    return TextBoxInput(
       text: text ?? this.text,
-      textAlign: textAlign ?? this.textAlign,
-      textStyle: textStyle ?? this.textStyle,
+      align: align ?? this.align,
+      style: style ?? this.style,
       backgroundColor: backgroundColor ?? this.backgroundColor,
-      fieldSize: fieldSize ?? this.fieldSize,
+      size: size ?? this.size,
+    );
+  }
+}
+
+class TextBox extends StatelessWidget {
+  final bool isReadOnly;
+  final ValueChanged<String>? onChanged;
+  final TextBoxInput input;
+  const TextBox({
+    Key? key,
+    required this.isReadOnly,
+    this.onChanged,
+    required this.input,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: input.size.width,
+      margin: inputDecorationTheme.contentPadding,
+      decoration: BoxDecoration(
+        color: input.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: TextFormField(
+        readOnly: isReadOnly,
+        enabled: !isReadOnly,
+        initialValue: input.text,
+        textAlign: input.align,
+        style: input.style,
+        onChanged: onChanged,
+        //
+        textAlignVertical: TextAlignVertical.center,
+        keyboardType: TextInputType.multiline,
+        enableSuggestions: false,
+        autocorrect: false,
+        maxLines: null,
+        autofocus: true,
+      ),
     );
   }
 }

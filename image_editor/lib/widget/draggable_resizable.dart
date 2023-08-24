@@ -1,9 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/utils.dart';
-import 'package:logger/logger.dart';
 
 import '../modules/text_layer/text_editor.dart';
 
@@ -176,65 +174,11 @@ class _DraggableResizableState extends State<DraggableResizable> {
   Widget buildChild() {
     switch (widget.layerItem.type) {
       case LayerType.text:
-        _object as TextEditorStyle;
-        return GestureDetector(
-          onTap: () async {
-            Logger().e(widget.layerItem.toString());
-            // setState(() {
-            // layerManager.removeLayerByKey(item.key);
-            // });
-            TextEditorStyle? result = await showGeneralDialog(
-              context: context,
-              pageBuilder: (context, animation, secondaryAnimation) {
-                return RectClipper(
-                  rect: cardBoxRect,
-                  child: TextEditor(
-                    textEditorStyle: _object as TextEditorStyle,
-                  ),
-                );
-              },
-            );
-            if (result != null) {
-              _object = result;
-            }
-            // if (textEditorStyle == null) {
-            //   layerManager.addLayer(item);
-            // } else {
-            //   layerManager.addLayer(
-            //     item.copyWith(
-            //       object: textEditorStyle,
-            //       rect: (item.rect.topLeft & textEditorStyle.fieldSize),
-            //     ),
-            //   );
-            // }
-            // setState(() {});
-          },
-          child: Container(
-            height: _size.height,
-            width: _size.width,
-            margin: const EdgeInsets.all(textFieldSpacing),
-            decoration: BoxDecoration(
-              color: _object.backgroundColor,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: TextFormField(
-              readOnly: true,
-              enabled: !true,
-              initialValue: _object.text,
-              textAlign: _object.textAlign,
-              style: _object.textStyle.copyWith(fontSize: _object.textStyle.fontSize! * _scale),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.all(textFieldSpacing),
-              ),
-              textAlignVertical: TextAlignVertical.center,
-              keyboardType: TextInputType.multiline,
-              enableSuggestions: false,
-              autocorrect: false,
-              maxLines: null,
-              autofocus: true,
-            ),
-          ),
+        _object as TextBoxInput;
+
+        return TextBox(
+          isReadOnly: true,
+          input: _object,
         );
       case LayerType.sticker:
       case LayerType.image:

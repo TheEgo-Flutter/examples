@@ -223,6 +223,33 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       key: Key('${layer.key}_draggableResizable_asset'),
       isFocus: selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
+        if (item.type == LayerType.text) {
+          Logger().e(item.toString());
+          setState(() {
+            layerManager.removeLayerByKey(item.key);
+          });
+          (TextBoxInput, Offset)? result = await showGeneralDialog(
+            context: context,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return RectClipper(
+                rect: cardBoxRect.expandToInclude(objectBoxRect),
+                child: TextEditor(
+                  textEditorStyle: item.object as TextBoxInput,
+                ),
+              );
+            },
+          );
+          if (result != null) {
+            layerManager.addLayer(
+              item.copyWith(
+                object: result.$1,
+                rect: (item.rect.topLeft & result.$1.size),
+              ),
+            );
+          } else {
+            layerManager.addLayer(item);
+          }
+        }
         setState(() {
           selectedLayerItem = item;
           if (item.isObject) {
@@ -375,7 +402,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               label: const Text("텍스트"),
               selected: _selectedType == LayerType.text,
               onSelected: (bool selected) async {
-                TextEditorStyle? textEditorStyle = await showGeneralDialog(
+                (TextBoxInput, Offset)? result = await showGeneralDialog(
                   context: context,
                   barrierColor: Colors.black.withOpacity(0.5),
                   pageBuilder: (context, animation, secondaryAnimation) {
@@ -387,12 +414,12 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 );
                 setState(() {});
 
-                if (textEditorStyle == null) return;
+                if (result == null) return;
                 var layer = LayerItem(
                   UniqueKey(),
                   type: LayerType.text,
-                  object: textEditorStyle,
-                  rect: Offset.zero & textEditorStyle.fieldSize,
+                  object: result.$1,
+                  rect: result.$2 & result.$1.size,
                 );
                 layerManager.addLayer(layer);
                 setState(() {});

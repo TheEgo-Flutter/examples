@@ -37,7 +37,6 @@ Rect get deleteAreaRect {
   return Rect.zero;
 }
 
-GlobalKey formKey = GlobalKey<FormState>();
 ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
 
 ThemeData theme = ThemeData().copyWith(
@@ -58,4 +57,9 @@ ThemeData theme = ThemeData().copyWith(
   textTheme: const TextTheme(
     bodyMedium: TextStyle(color: Colors.white),
   ),
+  inputDecorationTheme: const InputDecorationTheme().copyWith(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+    border: InputBorder.none,
+  ),
 );
+InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme;
