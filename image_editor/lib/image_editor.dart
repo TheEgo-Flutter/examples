@@ -119,6 +119,86 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           appBar: AppBar(
             elevation: 0,
             leading: const BackButton(),
+            centerTitle: true,
+            title: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
+                    onPressed: () {
+                      setState(() {
+                        _selectedType = LayerType.frame;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.face), // 스티커에 어울리는 아이콘
+                    onPressed: () {
+                      setState(() {
+                        _selectedType = LayerType.sticker;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
+                    onPressed: () async {
+                      (TextBoxInput, Offset)? result = await showGeneralDialog(
+                        context: context,
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return RectClipper(
+                            rect: cardBoxRect.expandToInclude(objectBoxRect),
+                            child: const TextEditor(),
+                          );
+                        },
+                      );
+                      setState(() {});
+
+                      if (result == null) return;
+                      var layer = LayerItem(
+                        UniqueKey(),
+                        type: LayerType.text,
+                        object: result.$1,
+                        rect: result.$2 & result.$1.size,
+                      );
+                      layerManager.addLayer(layer);
+                      setState(() {});
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.brush), // 그리기에 어울리는 아이콘
+                    onPressed: () async {
+                      (Uint8List?, Size?)? data = await showGeneralDialog(
+                        context: context,
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return RectClipper(
+                            rect: cardBoxRect.expandToInclude(objectBoxRect),
+                            child: const BrushPainter(),
+                          );
+                        },
+                      );
+                      setState(() {});
+                      if ((data != null && data.$1 != null)) {
+                        var image = Image.memory(data.$1!);
+
+                        setState(() {
+                          var layer = LayerItem(
+                            UniqueKey(),
+                            type: LayerType.drawing,
+                            object: image,
+                            rect: cardBoxRect.zero,
+                          );
+                          layerManager.addLayer(layer);
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.check),
