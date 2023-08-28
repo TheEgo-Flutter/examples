@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -46,18 +45,36 @@ class ItemSelector extends StatelessWidget {
   }
 }
 
+class BackgroundItem {
+  final BackgroundType type;
+  final dynamic value;
+  BackgroundItem.color(Color color)
+      : type = BackgroundType.color,
+        value = color;
+  BackgroundItem.image(dynamic image)
+      : type = BackgroundType.image,
+        value = image;
+}
+
+enum BackgroundType {
+  color('컬러'),
+  image('배경');
+
+  const BackgroundType(this.label);
+  final String label;
+}
+
 class BackgroundSelector extends StatefulWidget {
   const BackgroundSelector({
-    super.key,
-    required this.images,
-    required this.colors,
+    Key? key,
+    required this.items,
     required this.onItemSelected,
     required this.onGallerySelected,
     required this.galleryButton,
-  });
+  }) : super(key: key);
+
   final Widget galleryButton;
-  final List<dynamic> images;
-  final List<Color> colors;
+  final List<BackgroundItem> items;
   final ValueChanged<Widget?> onItemSelected;
   final ValueChanged<XFile?> onGallerySelected;
 
@@ -68,6 +85,10 @@ class BackgroundSelector extends StatefulWidget {
 class _BackgroundSelectorState extends State<BackgroundSelector> {
   final picker = ImagePicker();
   int toggleIndex = 0;
+  int? selectedItemIndex;
+  List<BackgroundItem> get currentItems => toggleIndex == 0
+      ? widget.items.where((item) => item.type == BackgroundType.color).toList()
+      : widget.items.where((item) => item.type == BackgroundType.image).toList();
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -78,7 +99,7 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
             Flexible(
               flex: 1,
               child: AnimatedToggle(
-                values: const ['컬러', '배경'],
+                values: BackgroundType.values.map((e) => e.label).toList(),
                 onToggleCallback: (value) {
                   setState(() {
                     toggleIndex = value;
@@ -95,28 +116,33 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
                 shrinkWrap: false,
                 physics: const ClampingScrollPhysics(),
                 scrollDirection: Axis.horizontal,
-                itemCount: widget.images.length + 1,
-                // itemExtent: itemWidth, // 아이템 간 간격
+                itemCount: currentItems.length + (toggleIndex == 1 ? 1 : 0),
                 separatorBuilder: (context, index) => const SizedBox(
                   width: 8,
                 ),
                 itemBuilder: (BuildContext context, int index) {
                   Widget? item;
                   if (toggleIndex == 0) {
-                    Widget? child = ColoredBox(color: widget.colors[index]);
+                    var backgroundItem = widget.items.where((e) => e.type == BackgroundType.color).toList()[index];
+                    Widget? child = ColoredBox(color: backgroundItem.value as Color);
                     item = GestureDetector(
                       onTap: () {
                         widget.onItemSelected(child);
+                        setState(() {
+                          selectedItemIndex = index;
+                        });
                       },
                       child: child,
                     );
                   } else {
                     if (index == 0) {
-                      // 첫 아이템인 경우 버튼을 반환
                       item = GestureDetector(
                         onTap: () async {
                           var image = await picker.pickImage(source: ImageSource.gallery);
                           widget.onGallerySelected(image);
+                          setState(() {
+                            selectedItemIndex = index;
+                          });
                         },
                         child: ColoredBox(
                           color: const Color(0xff404040),
@@ -124,39 +150,51 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
                         ),
                       );
                     } else {
-                      int itemIndex = index - 1; // 실제 items의 인덱스
-                      var item = widget.images[itemIndex];
+                      int itemIndex = index - 1;
+                      var backgroundItem =
+                          widget.items.where((e) => e.type == BackgroundType.image).toList()[itemIndex];
+                      Widget? child = _getItemChild(backgroundItem.value);
 
-                      Widget? child = _getItemChild(item);
                       item = ColoredBox(
                         color: Colors.transparent,
                         child: GestureDetector(
                           onTap: () {
                             widget.onItemSelected(child);
+                            setState(() {
+                              selectedItemIndex = index;
+                            });
                           },
                           child: child,
                         ),
                       );
-                      return SizedBox(
-                        width: itemWidth,
-                        child: ClipPath(
-                          clipper: CardBoxClip(aspectRatio: ratio),
-                          child: item,
+                      return Transform.translate(
+                        offset: index == selectedItemIndex ? Offset(0, -5) : Offset.zero,
+                        child: SizedBox(
+                          width: itemWidth,
+                          child: ClipPath(
+                            clipper: CardBoxClip(
+                              aspectRatio: ratio,
+                            ),
+                            child: item,
+                          ),
                         ),
                       );
                     }
                   }
-                  return SizedBox(
-                    width: itemWidth,
-                    child: ClipPath(
-                      clipper: CardBoxClip(
-                        aspectRatio: ratio,
+                  return Transform.translate(
+                    offset: index == selectedItemIndex ? Offset(0, -5) : Offset.zero,
+                    child: SizedBox(
+                      width: itemWidth,
+                      child: ClipPath(
+                        clipper: CardBoxClip(
+                          aspectRatio: ratio,
+                        ),
+                        child: item,
                       ),
-                      child: item,
                     ),
                   );
                 },
-                padding: const EdgeInsets.all(8.0), // 모든 방향에 8 패딩 적용
+                padding: const EdgeInsets.all(8.0),
               ),
             ),
           ],
@@ -181,6 +219,8 @@ class _ListSelector extends StatefulWidget {
 }
 
 class _ListSelectorState extends State<_ListSelector> {
+  int? selectedItemIndex;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -200,35 +240,34 @@ class _ListSelectorState extends State<_ListSelector> {
               itemBuilder: (BuildContext context, int index) {
                 Widget? item;
                 if (index == 0) {
-                  // 첫 아이템인 경우 버튼을 반환
                   item = _getFirstItemButton(widget.button, widget.onSelected);
                 } else {
-                  int itemIndex = index - 1; // 실제 items의 인덱스
-                  var item = widget.items[itemIndex];
-                  Widget? child = _getItemChild(item);
-                  log(child.toString());
+                  int itemIndex = index - 1;
+                  var dataItem = widget.items[itemIndex];
+                  Widget? child = _getItemChild(dataItem);
+
                   item = ColoredBox(
                     color: Colors.transparent,
                     child: GestureDetector(
                       onTap: () {
                         widget.onSelected(child);
+                        setState(() {
+                          selectedItemIndex = index;
+                        });
                       },
                       child: child,
                     ),
                   );
-                  return SizedBox(
+                }
+
+                return Transform.translate(
+                  offset: index == selectedItemIndex ? Offset(0, -5) : Offset.zero,
+                  child: SizedBox(
                     width: itemWidth,
                     child: ClipPath(
                       clipper: CardBoxClip(aspectRatio: ratio),
                       child: item,
                     ),
-                  );
-                }
-                return SizedBox(
-                  width: itemWidth,
-                  child: ClipPath(
-                    clipper: CardBoxClip(aspectRatio: ratio),
-                    child: item,
                   ),
                 );
               },
@@ -242,7 +281,12 @@ class _ListSelectorState extends State<_ListSelector> {
 
   _getFirstItemButton(Widget button, ValueChanged<Widget?> onSelected) {
     return GestureDetector(
-      onTap: () => onSelected(null),
+      onTap: () {
+        onSelected(null);
+        setState(() {
+          selectedItemIndex = 0;
+        });
+      },
       child: ColoredBox(
         color: const Color(0xff404040),
         child: button,
@@ -295,23 +339,18 @@ _getItemChild(item) {
     child = item;
   } else if (item is Uint8List) {
     try {
-      // 시도해 보기: JSON 파싱
       json.decode(utf8.decode(item));
-      // 성공하면 Lottie로 처리
+
       child = LottieBuilder.memory(item);
     } catch (e) {
-      // 실패하면 이미지로 처리
       child = Image.memory(item);
     }
   } else if (item is String) {
     if (item.contains('.json')) {
-      // asset의 Lottie 처리
       child = Lottie.asset('assets/$item');
     } else if (item.startsWith('http')) {
-      // 네트워크 이미지 처리
       child = Image.network(item);
     } else {
-      // 로컬 asset 이미지 처리
       child = Image.asset('assets/$item');
     }
   }

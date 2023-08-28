@@ -127,16 +127,16 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
                       return SizedBox(
                         width: maxWidth,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: kToolbarHeight,
-                                child: innerAppBar(context),
-                              ),
-                              Expanded(
-                                flex: cardFlex,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: kToolbarHeight,
+                              child: innerAppBar(context),
+                            ),
+                            Expanded(
+                              flex: cardFlex,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Render(
                                   controller: renderController,
                                   child: ClipPath(
@@ -146,23 +146,23 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                   ),
                                 ),
                               ),
-                              SizedBox(height: space),
-                              Expanded(
-                                flex: 100 - cardFlex,
-                                child: SizedBox(
-                                  width: maxWidth,
-                                  child: ClipPath(
-                                    key: objectAreaKey,
-                                    clipper: CardBoxClip(),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      child: buildItemArea(),
-                                    ),
+                            ),
+                            SizedBox(height: space),
+                            Expanded(
+                              flex: 100 - cardFlex,
+                              child: SizedBox(
+                                width: maxWidth,
+                                child: ClipPath(
+                                  key: objectAreaKey,
+                                  clipper: CardBoxClip(),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    child: buildItemArea(),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -431,8 +431,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       case LayerType.background:
       default:
         return BackgroundSelector(
-          colors: [Colors.white, ...List.generate(10, (index) => gradients[index].colors[0])],
-          images: widget.backgrounds,
+          items: [
+            BackgroundItem.color(Colors.white),
+            ...List.generate(
+              10,
+              (index) => BackgroundItem.color(gradients[index].colors[0]),
+            ),
+            ...widget.backgrounds.map((image) => BackgroundItem.image(image)).toList(),
+          ],
           galleryButton: Icon(
             Icons.image_outlined,
             color: Colors.grey[600],
