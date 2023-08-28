@@ -117,10 +117,10 @@ packages:
     dependency: transitive
     description:
       name: ffi
-      sha256: ed5337a5660c506388a9f012be0288fb38b49020ce2b45fe1f8b8323fe429f99
+      sha256: "7bf0adc28a23d395f19f3f1eb21dd7cfd1dd9f8e1c50051c069122e6853bc878"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "2.1.0"
   ffmpeg_kit_flutter_https_gpl:
     dependency: transitive
     description:
@@ -236,10 +236,10 @@ packages:
     dependency: "direct main"
     description:
       name: gal
-      sha256: "5dc4a17cecb35a8690cfa83d16d016a467bf71d7b0990de8c93d38f46fbf164e"
+      sha256: dcb4c90691cc6957cc0c9eca7850b46cab97ac371dde9cd9b4871808ca939c38
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.5"
+    version: "1.9.0"
   google_fonts:
     dependency: transitive
     description:
@@ -283,10 +283,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker
-      sha256: "6296e98782726d37f59663f0727d0e978eee1ced1ffed45ccaba591786a7f7b3"
+      sha256: "841837258e0b42c80946c43443054fc726f5e8aa84a97f363eb9ef0d45b33c14"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   image_picker_android:
     dependency: transitive
     description:
@@ -299,18 +299,18 @@ packages:
     dependency: transitive
     description:
       name: image_picker_for_web
-      sha256: "869fe8a64771b7afbc99fc433a5f7be2fea4d1cb3d7c11a48b6b579eb9c797f0"
+      sha256: "8b6c160cdbe572199103a091c783685b236110e4a0fd7a4947f32ff5b7da8765"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.0"
+    version: "3.0.0"
   image_picker_ios:
     dependency: transitive
     description:
       name: image_picker_ios
-      sha256: b3e2f21feb28b24dd73a35d7ad6e83f568337c70afab5eabac876e23803f264b
+      sha256: bee3b7c7e6266a37fb1bfdc275bc60427029d447205d44933aac130fbb9d3330
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.8"
+    version: "0.8.8+1"
   image_picker_linux:
     dependency: transitive
     description:
@@ -379,10 +379,10 @@ packages:
     dependency: transitive
     description:
       name: lottie
-      sha256: "0793a5866062e5cc8a8b24892fa94c3095953ea914a7fdf790f550dd7537fe60"
+      sha256: b8bdd54b488c54068c57d41ae85d02808da09e2bee8b8dd1f59f441e7efa60cd
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.0"
+    version: "2.6.0"
   matcher:
     dependency: transitive
     description:
@@ -443,10 +443,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider
-      sha256: "3087813781ab814e4157b172f1a11c46be20179fcc9bea043e0fba36bc0acaa2"
+      sha256: "909b84830485dbcd0308edf6f7368bc8fd76afa26a270420f34cabea2a6467a0"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.15"
+    version: "2.1.0"
   path_provider_android:
     dependency: transitive
     description:
@@ -499,10 +499,10 @@ packages:
     dependency: transitive
     description:
       name: platform
-      sha256: "4a451831508d7d6ca779f7ac6e212b4023dd5a7d08a27a63da33756410e32b76"
+      sha256: "57c07bf82207aee366dfaa3867b3164e4f03a238a461a11b0e8a3a510d51203d"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.0"
+    version: "3.1.1"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -704,10 +704,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: f2add6fa510d3ae152903412227bda57d0d5a8da61d2c39c1fb022c9429a41c0
+      sha256: "9e82a402b7f3d518fb9c02d0e9ae45952df31b9bf34d77baf19da2de03fc2aaa"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.6"
+    version: "5.0.7"
   win32_registry:
     dependency: transitive
     description:
@@ -720,10 +720,10 @@ packages:
     dependency: transitive
     description:
       name: xdg_directories
-      sha256: e0b1147eec179d3911f1f19b59206448f78195ca1d20514134e10641b7d7fbff
+      sha256: f0c26453a2d47aa4c2570c6a033246a3fc62da2fe23c7ffdd0a7495086dc0247
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   xml:
     dependency: transitive
     description:

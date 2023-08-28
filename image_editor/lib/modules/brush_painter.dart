@@ -57,7 +57,7 @@ class _BrushPainterState extends State<BrushPainter> {
               shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
               builder: (_, DrawConfig dc, ___) {
                 return SizedBox(
-                  width: 120,
+                  width: objectBoxRect.width * 0.4,
                   child: Slider(
                     value: dc.strokeWidth,
                     max: 30,
@@ -71,26 +71,32 @@ class _BrushPainterState extends State<BrushPainter> {
             TextButton(onPressed: _drawingController.clear, child: const Text('clear')),
           ],
         ),
-        Row(
-          children: [
-            ColorButton(
-              color: _drawingController.getColor,
-              onTap: (color) => _showColorPicker(context, color),
+        SizedBox(
+          width: objectBoxRect.width,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ColorButton(
+                  color: _drawingController.getColor,
+                  onTap: (color) => _showColorPicker(context, color),
+                ),
+                //Random generate ColorButton 10
+                ...List.generate(
+                  3,
+                  (index) => ColorButton(
+                    color: Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0),
+                    onTap: changeColor,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+                _buildIconButton(context, Icons.edit, () => _drawingController.setPaintContent(SimpleLine())),
+                _buildIconButton(context, Icons.brush, () => _drawingController.setPaintContent(SmoothLine())),
+                _buildIconButton(context, Icons.phonelink_erase_rounded,
+                    () => _drawingController.setPaintContent(Eraser(color: Colors.white))),
+              ],
             ),
-            //Random generate ColorButton 10
-            ...List.generate(
-              3,
-              (index) => ColorButton(
-                color: Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0),
-                onTap: changeColor,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-            _buildIconButton(context, Icons.edit, () => _drawingController.setPaintContent(SimpleLine())),
-            _buildIconButton(context, Icons.brush, () => _drawingController.setPaintContent(SmoothLine())),
-            _buildIconButton(context, Icons.phonelink_erase_rounded,
-                () => _drawingController.setPaintContent(Eraser(color: Colors.white))),
-          ],
+          ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -131,6 +137,7 @@ class _BrushPainterState extends State<BrushPainter> {
       context: context,
       builder: (context) {
         return Theme(
+          //check
           data: ThemeData.from(colorScheme: ColorScheme.fromSeed(seedColor: Colors.black87)),
           child: SingleChildScrollView(
             child: Container(
@@ -176,6 +183,7 @@ class _BrushPainterState extends State<BrushPainter> {
       offset: Offset(0, objectBoxRect.top - cardBoxRect.top),
       child: SizedBox(
         height: objectBoxRect.height,
+        // width: objectBoxRect.width,
         child: ClipPath(
           clipper: CardBoxClip(),
           child: Container(

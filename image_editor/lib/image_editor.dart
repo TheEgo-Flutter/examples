@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
@@ -36,13 +35,11 @@ class ImageEditor extends StatefulWidget {
 
 class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   Size get view => MediaQuery.of(context).size;
-  LayerType _selectedType = LayerType.background;
+  LayerType? _selectedType = LayerType.background;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
-
-  final picker = ImagePicker();
 
   @override
   void initState() {
@@ -110,171 +107,181 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: theme,
-      home: WillPopScope(
-        onWillPop: () async => false,
-        child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          key: scaffoldGlobalKey,
-          backgroundColor: Colors.grey,
-          appBar: AppBar(
-            elevation: 0,
-            leading: const BackButton(),
-            centerTitle: true,
-            title: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
-                    onPressed: () {
-                      setState(() {
-                        _selectedType = LayerType.frame;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.face), // 스티커에 어울리는 아이콘
-                    onPressed: () {
-                      setState(() {
-                        _selectedType = LayerType.sticker;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
-                    onPressed: () async {
-                      (TextBoxInput, Offset)? result = await showGeneralDialog(
-                        context: context,
-                        barrierColor: Colors.black.withOpacity(0.5),
-                        pageBuilder: (context, animation, secondaryAnimation) {
-                          return RectClipper(
-                            rect: cardBoxRect.expandToInclude(objectBoxRect),
+      home: Builder(builder: (context) {
+        return WillPopScope(
+            onWillPop: () async => false,
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              key: scaffoldGlobalKey,
+              backgroundColor: Theme.of(context).canvasColor,
+              appBar: AppBar(
+                elevation: 0,
+                leading: const BackButton(),
+                centerTitle: true,
+                title: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
+                        onPressed: () {
+                          setState(() {
+                            _selectedType = LayerType.frame;
+                          });
+                          ;
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.face), // 스티커에 어울리는 아이콘
+                        onPressed: () {
+                          setState(() {
+                            _selectedType = LayerType.sticker;
+                          });
+                          customObjectBoxSizeDialog(
+                              context: context,
+                              child: ItemSelector.grid(
+                                items: widget.stickers,
+                                onSelected: (child) {
+                                  if (child == null) return;
+                                  // size dynamic change for device (default is 150X150)
+                                  Size size = const Size(150, 150);
+                                  Offset offset = Offset(cardBoxRect.size.width / 2 - size.width / 2,
+                                      cardBoxRect.size.height / 2 - size.height / 2);
+                                  //parse rect
+
+                                  LayerItem layer = LayerItem(
+                                    UniqueKey(),
+                                    type: LayerType.sticker,
+                                    object: child,
+                                    rect: (offset & size),
+                                  );
+                                  layerManager.addLayer(layer);
+                                  setState(() {});
+                                },
+                              ));
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
+                        onPressed: () async {
+                          (TextBoxInput, Offset)? result = await customFullSizeDialog(
+                            context: context,
                             child: const TextEditor(),
                           );
-                        },
-                      );
-                      setState(() {});
 
-                      if (result == null) return;
-                      var layer = LayerItem(
-                        UniqueKey(),
-                        type: LayerType.text,
-                        object: result.$1,
-                        rect: result.$2 & result.$1.size,
-                      );
-                      layerManager.addLayer(layer);
-                      setState(() {});
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.brush), // 그리기에 어울리는 아이콘
-                    onPressed: () async {
-                      (Uint8List?, Size?)? data = await showGeneralDialog(
-                        context: context,
-                        barrierColor: Colors.black.withOpacity(0.5),
-                        pageBuilder: (context, animation, secondaryAnimation) {
-                          return RectClipper(
-                            rect: cardBoxRect.expandToInclude(objectBoxRect),
-                            child: const BrushPainter(),
-                          );
-                        },
-                      );
-                      setState(() {});
-                      if ((data != null && data.$1 != null)) {
-                        var image = Image.memory(data.$1!);
+                          setState(() {});
 
-                        setState(() {
+                          if (result == null) return;
                           var layer = LayerItem(
                             UniqueKey(),
-                            type: LayerType.drawing,
-                            object: image,
-                            rect: cardBoxRect.zero,
+                            type: LayerType.text,
+                            object: result.$1,
+                            rect: result.$2 & result.$1.size,
                           );
                           layerManager.addLayer(layer);
-                        });
-                      }
+                          setState(() {});
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.brush), // 그리기에 어울리는 아이콘
+                        onPressed: () async {
+                          (Uint8List?, Size?)? data = await customFullSizeDialog(
+                            context: context,
+                            child: const BrushPainter(),
+                          );
+                          setState(() {});
+                          if ((data != null && data.$1 != null)) {
+                            var image = Image.memory(data.$1!);
+
+                            setState(() {
+                              var layer = LayerItem(
+                                UniqueKey(),
+                                type: LayerType.drawing,
+                                object: image,
+                                rect: cardBoxRect.zero,
+                              );
+                              layerManager.addLayer(layer);
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.check),
+                    onPressed: () async {
+                      final stream = renderController.captureMotionWithStream(
+                        const Duration(seconds: 5),
+                        settings: const MotionSettings(
+                          pixelRatio: 5,
+                          frameRate: 80,
+                          simultaneousCaptureHandlers: 10,
+                        ),
+                        logInConsole: true,
+                      );
+                      setState(() {
+                        renderStream = stream;
+                      });
+                      final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
+                      if (result.isFatalError) return;
+
+                      if (mounted) Navigator.pop(context, (result as RenderResult).output);
                     },
                   ),
                 ],
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.check),
-                onPressed: () async {
-                  final stream = renderController.captureMotionWithStream(
-                    const Duration(seconds: 5),
-                    settings: const MotionSettings(
-                      pixelRatio: 5,
-                      frameRate: 80,
-                      simultaneousCaptureHandlers: 10,
-                    ),
-                    logInConsole: true,
-                  );
-                  setState(() {
-                    renderStream = stream;
-                  });
-                  final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
-                  if (result.isFatalError) return;
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      double space = 8;
+                      int cardFlex = 7;
+                      double maxWidth =
+                          (constraints.maxHeight - space) * cardFlex / 10 * (widget.aspectRatio.ratio ?? 1);
 
-                  if (mounted) Navigator.pop(context, (result as RenderResult).output);
-                },
-              ),
-            ],
-          ),
-          body: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                double space = 8;
-                int cardFlex = 7;
-                double maxWidth = (constraints.maxHeight - space) * cardFlex / 10 * (widget.aspectRatio.ratio ?? 1);
-
-                return SizedBox(
-                  width: maxWidth,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        flex: cardFlex,
-                        child: Render(
-                          controller: renderController,
-                          child: ClipPath(
-                            key: cardAreaKey,
-                            clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                            child: buildImageLayer(context),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: space),
-                      Expanded(
-                        flex: 10 - cardFlex,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: ClipPath(
-                            key: objectAreaKey,
-                            clipper: CardBoxClip(),
-                            child: Container(
-                              color: Colors.grey[200],
-                              padding: const EdgeInsets.all(2),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  buildItemCategory(),
-                                  Expanded(child: buildItemArea()),
-                                ],
+                      return SizedBox(
+                        width: maxWidth,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              flex: cardFlex,
+                              child: Render(
+                                controller: renderController,
+                                child: ClipPath(
+                                  key: cardAreaKey,
+                                  clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                  child: buildImageLayer(context),
+                                ),
                               ),
                             ),
-                          ),
+                            SizedBox(height: space),
+                            Expanded(
+                              flex: 10 - cardFlex,
+                              child: SizedBox(
+                                width: maxWidth,
+                                child: ClipPath(
+                                  key: objectAreaKey,
+                                  clipper: CardBoxClip(),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    child: buildItemArea(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
+                ),
+              ),
+            ));
+      }),
     );
   }
 
@@ -358,43 +365,43 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   Widget buildItemArea() {
     switch (_selectedType) {
-      case LayerType.sticker:
-        return ItemSelector.sticker(
-          items: widget.stickers,
-          onSelected: (child) {
-            if (child == null) return;
-            // size dynamic change for device (default is 150X150)
-            Size size = const Size(150, 150);
-            Offset offset =
-                Offset(cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
-            //parse rect
+      // case LayerType.sticker:
+      //   return ItemSelector.sticker(
+      //     items: widget.stickers,
+      //     onSelected: (child) {
+      //       if (child == null) return;
+      //       // size dynamic change for device (default is 150X150)
+      //       Size size = const Size(150, 150);
+      //       Offset offset =
+      //           Offset(cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
+      //       //parse rect
 
-            LayerItem layer = LayerItem(
-              UniqueKey(),
-              type: _selectedType,
-              object: child,
-              rect: (offset & size),
-            );
-            layerManager.addLayer(layer);
-            setState(() {});
-          },
-        );
+      //       LayerItem layer = LayerItem(
+      //         UniqueKey(),
+      //         type: LayerType.sticker,
+      //         object: child,
+      //         rect: (offset & size),
+      //       );
+      //       layerManager.addLayer(layer);
+      //       setState(() {});
+      //     },
+      //   );
       case LayerType.frame:
-        return ItemSelector.frame(
+        return ItemSelector.list(
           items: widget.frames,
           onSelected: (child) {
             late LayerItem layer;
             if (child == null) {
               layer = LayerItem(
                 UniqueKey(),
-                type: _selectedType,
+                type: LayerType.frame,
                 object: null,
                 rect: cardBoxRect.zero,
               );
             } else {
               layer = LayerItem(
                 UniqueKey(),
-                type: _selectedType,
+                type: LayerType.frame,
                 object: child,
                 rect: cardBoxRect.zero,
               );
@@ -405,22 +412,28 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         );
       case LayerType.image:
       case LayerType.background:
-        return ItemSelector.background(
-          items: widget.backgrounds,
-          onSelected: (child) async {
-            if (child == null) {
-              var image = await picker.pickImage(source: ImageSource.gallery);
-              if (image == null) return;
-              Uint8List? loadImage = await _loadImage(image);
-              await _loadImageColor(loadImage);
-              LayerItem imageBackground = LayerItem(
-                UniqueKey(),
-                type: LayerType.image,
-                object: Image.memory(loadImage),
-                rect: cardBoxRect.zero,
-              );
-              layerManager.addLayer(imageBackground);
-            } else {
+      default:
+        return BackgroundSelector(
+          colors: [Colors.white, ...List.generate(10, (index) => gradients[index].colors[0])],
+          images: widget.backgrounds,
+          galleryButton: Icon(
+            Icons.image_outlined,
+            color: Colors.grey[600],
+          ),
+          onGallerySelected: (value) async {
+            if (value == null) return;
+            Uint8List? loadImage = await _loadImage(value);
+            await _loadImageColor(loadImage);
+            LayerItem imageBackground = LayerItem(
+              UniqueKey(),
+              type: LayerType.image,
+              object: Image.memory(loadImage),
+              rect: cardBoxRect.zero,
+            );
+            layerManager.addLayer(imageBackground);
+          },
+          onItemSelected: (child) async {
+            {
               await _loadImageColor(null);
               LayerItem layer = LayerItem(
                 UniqueKey(),
@@ -433,111 +446,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             setState(() {});
           },
         );
-      default:
-        return const SizedBox();
     }
-  }
-
-  Widget buildItemCategory() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Theme(
-        data: ThemeData(
-          chipTheme: const ChipThemeData(padding: EdgeInsets.zero, labelPadding: EdgeInsets.symmetric(horizontal: 8)),
-          textTheme: Theme.of(context).textTheme.apply(
-                fontSizeFactor: 0.6,
-                fontSizeDelta: 2.0,
-              ),
-        ),
-        child: Row(
-          children: [
-            ChoiceChip(
-              label: const Text("프레임"),
-              selected: _selectedType == LayerType.frame,
-              onSelected: (bool selected) async {
-                setState(() {
-                  _selectedType = LayerType.frame;
-                });
-              },
-            ),
-            ChoiceChip(
-              label: const Text("배경"),
-              selected: _selectedType == LayerType.background || _selectedType == LayerType.image,
-              onSelected: (bool selected) async {
-                setState(() {
-                  _selectedType = LayerType.background;
-                });
-              },
-            ),
-            ChoiceChip(
-              label: const Text("스티커"),
-              selected: _selectedType == LayerType.sticker,
-              onSelected: (bool selected) async {
-                setState(() {
-                  _selectedType = LayerType.sticker;
-                });
-              },
-            ),
-            ChoiceChip(
-              label: const Text("텍스트"),
-              selected: _selectedType == LayerType.text,
-              onSelected: (bool selected) async {
-                (TextBoxInput, Offset)? result = await showGeneralDialog(
-                  context: context,
-                  barrierColor: Colors.black.withOpacity(0.5),
-                  pageBuilder: (context, animation, secondaryAnimation) {
-                    return RectClipper(
-                      rect: cardBoxRect.expandToInclude(objectBoxRect),
-                      child: const TextEditor(),
-                    );
-                  },
-                );
-                setState(() {});
-
-                if (result == null) return;
-                var layer = LayerItem(
-                  UniqueKey(),
-                  type: LayerType.text,
-                  object: result.$1,
-                  rect: result.$2 & result.$1.size,
-                );
-                layerManager.addLayer(layer);
-                setState(() {});
-              },
-            ),
-            ChoiceChip(
-              label: const Text("그리기"),
-              selected: _selectedType == LayerType.drawing,
-              onSelected: (bool selected) async {
-                (Uint8List?, Size?)? data = await showGeneralDialog(
-                  context: context,
-                  barrierColor: Colors.black.withOpacity(0.5),
-                  pageBuilder: (context, animation, secondaryAnimation) {
-                    return RectClipper(
-                      rect: cardBoxRect.expandToInclude(objectBoxRect),
-                      child: const BrushPainter(),
-                    );
-                  },
-                );
-                setState(() {});
-                if ((data != null && data.$1 != null)) {
-                  var image = Image.memory(data.$1!);
-
-                  setState(() {
-                    var layer = LayerItem(
-                      UniqueKey(),
-                      type: LayerType.drawing,
-                      object: image,
-                      rect: cardBoxRect.zero,
-                    );
-                    layerManager.addLayer(layer);
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

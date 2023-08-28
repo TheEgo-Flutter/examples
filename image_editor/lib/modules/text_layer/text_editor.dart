@@ -99,6 +99,8 @@ class _TextEditorState extends State<TextEditor> {
   @override
   Widget build(BuildContext context) {
     return Theme(
+      //check
+
       data: ThemeData().copyWith(
         bottomSheetTheme: const BottomSheetThemeData(
           backgroundColor: Colors.transparent,
