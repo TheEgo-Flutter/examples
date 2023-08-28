@@ -57,6 +57,10 @@ ThemeData theme = ThemeData().copyWith(
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     backgroundColor: Colors.transparent,
   ),
+  iconButtonTheme: const IconButtonThemeData(
+      style: ButtonStyle(
+    splashFactory: NoSplash.splashFactory,
+  )),
   iconTheme: IconThemeData(
     color: customColors.label,
   ),

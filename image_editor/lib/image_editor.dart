@@ -114,166 +114,55 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               resizeToAvoidBottomInset: false,
               key: scaffoldGlobalKey,
               backgroundColor: Theme.of(context).canvasColor,
-              appBar: AppBar(
-                elevation: 0,
-                leading: const BackButton(),
-                centerTitle: true,
-                title: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
-                        onPressed: () {
-                          setState(() {
-                            _selectedType = LayerType.frame;
-                          });
-                          ;
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.face), // 스티커에 어울리는 아이콘
-                        onPressed: () {
-                          setState(() {
-                            _selectedType = LayerType.sticker;
-                          });
-                          customObjectBoxSizeDialog(
-                              context: context,
-                              child: ItemSelector.grid(
-                                items: widget.stickers,
-                                onSelected: (child) {
-                                  if (child == null) return;
-                                  // size dynamic change for device (default is 150X150)
-                                  Size size = const Size(150, 150);
-                                  Offset offset = Offset(cardBoxRect.size.width / 2 - size.width / 2,
-                                      cardBoxRect.size.height / 2 - size.height / 2);
-                                  //parse rect
-
-                                  LayerItem layer = LayerItem(
-                                    UniqueKey(),
-                                    type: LayerType.sticker,
-                                    object: child,
-                                    rect: (offset & size),
-                                  );
-                                  layerManager.addLayer(layer);
-                                  setState(() {});
-                                },
-                              ));
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
-                        onPressed: () async {
-                          (TextBoxInput, Offset)? result = await customFullSizeDialog(
-                            context: context,
-                            child: const TextEditor(),
-                          );
-
-                          setState(() {});
-
-                          if (result == null) return;
-                          var layer = LayerItem(
-                            UniqueKey(),
-                            type: LayerType.text,
-                            object: result.$1,
-                            rect: result.$2 & result.$1.size,
-                          );
-                          layerManager.addLayer(layer);
-                          setState(() {});
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.brush), // 그리기에 어울리는 아이콘
-                        onPressed: () async {
-                          (Uint8List?, Size?)? data = await customFullSizeDialog(
-                            context: context,
-                            child: const BrushPainter(),
-                          );
-                          setState(() {});
-                          if ((data != null && data.$1 != null)) {
-                            var image = Image.memory(data.$1!);
-
-                            setState(() {
-                              var layer = LayerItem(
-                                UniqueKey(),
-                                type: LayerType.drawing,
-                                object: image,
-                                rect: cardBoxRect.zero,
-                              );
-                              layerManager.addLayer(layer);
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () async {
-                      final stream = renderController.captureMotionWithStream(
-                        const Duration(seconds: 5),
-                        settings: const MotionSettings(
-                          pixelRatio: 5,
-                          frameRate: 80,
-                          simultaneousCaptureHandlers: 10,
-                        ),
-                        logInConsole: true,
-                      );
-                      setState(() {
-                        renderStream = stream;
-                      });
-                      final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
-                      if (result.isFatalError) return;
-
-                      if (mounted) Navigator.pop(context, (result as RenderResult).output);
-                    },
-                  ),
-                ],
-              ),
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
+              body: SafeArea(
+                child: Center(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       double space = 8;
-                      int cardFlex = 7;
-                      double maxWidth =
-                          (constraints.maxHeight - space) * cardFlex / 10 * (widget.aspectRatio.ratio ?? 1);
+                      int cardFlex = 75;
+                      double maxWidth = (constraints.maxHeight - space - kToolbarHeight) *
+                          cardFlex /
+                          100 *
+                          (widget.aspectRatio.ratio ?? 1);
 
                       return SizedBox(
                         width: maxWidth,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              flex: cardFlex,
-                              child: Render(
-                                controller: renderController,
-                                child: ClipPath(
-                                  key: cardAreaKey,
-                                  clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                                  child: buildImageLayer(context),
-                                ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: kToolbarHeight,
+                                child: innerAppBar(context),
                               ),
-                            ),
-                            SizedBox(height: space),
-                            Expanded(
-                              flex: 10 - cardFlex,
-                              child: SizedBox(
-                                width: maxWidth,
-                                child: ClipPath(
-                                  key: objectAreaKey,
-                                  clipper: CardBoxClip(),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    child: buildItemArea(),
+                              Expanded(
+                                flex: cardFlex,
+                                child: Render(
+                                  controller: renderController,
+                                  child: ClipPath(
+                                    key: cardAreaKey,
+                                    clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                    child: buildImageLayer(context),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: space),
+                              Expanded(
+                                flex: 100 - cardFlex,
+                                child: SizedBox(
+                                  width: maxWidth,
+                                  child: ClipPath(
+                                    key: objectAreaKey,
+                                    clipper: CardBoxClip(),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      child: buildItemArea(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -282,6 +171,134 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               ),
             ));
       }),
+    );
+  }
+
+  Row innerAppBar(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const BackButton(),
+        Row(
+          children: [
+            IconButton(
+              padding: const EdgeInsets.all(4.0), // 패딩 설정
+              constraints: const BoxConstraints(), // constraints
+              icon: const Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
+              onPressed: () {
+                setState(() {
+                  _selectedType = LayerType.frame;
+                });
+                ;
+              },
+            ),
+            IconButton(
+              padding: const EdgeInsets.all(4.0), // 패딩 설정
+              constraints: const BoxConstraints(), // constraints
+              icon: const Icon(Icons.face), // 스티커에 어울리는 아이콘
+              onPressed: () {
+                setState(() {
+                  _selectedType = LayerType.sticker;
+                });
+                customObjectBoxSizeDialog(
+                    context: context,
+                    child: ItemSelector.grid(
+                      items: widget.stickers,
+                      onSelected: (child) {
+                        if (child == null) return;
+                        // size dynamic change for device (default is 150X150)
+                        Size size = const Size(150, 150);
+                        Offset offset = Offset(
+                            cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
+                        //parse rect
+
+                        LayerItem layer = LayerItem(
+                          UniqueKey(),
+                          type: LayerType.sticker,
+                          object: child,
+                          rect: (offset & size),
+                        );
+                        layerManager.addLayer(layer);
+                        setState(() {});
+                      },
+                    ));
+              },
+            ),
+            IconButton(
+              padding: const EdgeInsets.all(4.0), // 패딩 설정
+              constraints: const BoxConstraints(), // constraints
+              icon: const Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
+              onPressed: () async {
+                (TextBoxInput, Offset)? result = await customFullSizeDialog(
+                  context: context,
+                  child: const TextEditor(),
+                );
+
+                setState(() {});
+
+                if (result == null) return;
+                var layer = LayerItem(
+                  UniqueKey(),
+                  type: LayerType.text,
+                  object: result.$1,
+                  rect: result.$2 & result.$1.size,
+                );
+                layerManager.addLayer(layer);
+                setState(() {});
+              },
+            ),
+            IconButton(
+              padding: const EdgeInsets.all(4.0), // 패딩 설정
+              constraints: const BoxConstraints(), // constraints
+              icon: const Icon(Icons.brush), // 그리기에 어울리는 아이콘
+
+              onPressed: () async {
+                (Uint8List?, Size?)? data = await customFullSizeDialog(
+                  context: context,
+                  child: const BrushPainter(),
+                );
+                setState(() {});
+                if ((data != null && data.$1 != null)) {
+                  var image = Image.memory(data.$1!);
+
+                  setState(() {
+                    var layer = LayerItem(
+                      UniqueKey(),
+                      type: LayerType.drawing,
+                      object: image,
+                      rect: cardBoxRect.zero,
+                    );
+                    layerManager.addLayer(layer);
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+        IconButton(
+          icon: const Icon(Icons.check),
+          onPressed: () async {
+            final stream = renderController.captureMotionWithStream(
+              const Duration(seconds: 5),
+              settings: const MotionSettings(
+                pixelRatio: 5,
+                frameRate: 80,
+                simultaneousCaptureHandlers: 10,
+              ),
+              logInConsole: true,
+            );
+            setState(() {
+              renderStream = stream;
+            });
+            final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
+            if (result.isFatalError) return;
+
+            if (mounted) Navigator.pop(context, (result as RenderResult).output);
+          },
+        ),
+      ],
     );
   }
 
