@@ -6,11 +6,11 @@ import 'package:image_editor/utils/utils.dart';
 import '../modules/text_layer/text_editor.dart';
 
 enum LayerItemStatus {
-  touched, // 사용자가 아이템을 처음으로 터치했을 때
-  dragging, // 아이템이 드래그 중일 때
-  resizing, // 아이템 크기 조정 중일 때
-  rotating, // 아이템을 회전 중일 때
-  completed, // 모든 동작이 완료되었을 때
+  touched,
+  dragging,
+  resizing,
+  rotating,
+  completed,
 }
 
 class DraggableResizable extends StatefulWidget {
@@ -46,7 +46,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
         angle: _angle,
         object: _object,
       );
-  // 센터링 검사
+
   bool isCenteredHorizontally = false;
   bool isCenteredVertically = false;
 
@@ -62,8 +62,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
     _size = Size(item.rect.size.width, item.rect.size.width / aspectRatio);
     _offset = item.rect.topLeft;
   }
-
-  // 생략: buildChild 메서드
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +115,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
     );
   }
 
-  // 중앙선 생성
   List<Widget> _buildCenterLine(bool isCenteredHorizontally, bool isCenteredVertically) {
     return [
       Positioned(
@@ -138,13 +135,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
           color: isCenteredHorizontally ? Colors.red : Colors.transparent,
         ),
       ),
-      //DeleteArea
     ];
   }
 
-  // 드래그 가능한 포인트 생성
-
-  // 스케일 핸들러
   void _handleScale(double scale) {
     final updatedSize = Size(
       widget.layerItem.rect.size.width * scale,
@@ -164,7 +157,6 @@ class _DraggableResizableState extends State<DraggableResizable> {
     });
   }
 
-  // 센터링 검사 메서드 (수평/수직)
   bool _checkIfCentered(Offset position, Size size, double canvasDimen, Axis axis) {
     final center = canvasDimen / 2;
     final widgetCenter = (axis == Axis.vertical ? position.dy : position.dx) + size.width / 2;

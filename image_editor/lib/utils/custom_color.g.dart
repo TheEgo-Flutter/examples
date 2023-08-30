@@ -14,10 +14,6 @@ CustomColors customColors = const CustomColors(
   accent: accent,
 );
 
-/// Defines a set of custom colors, each comprised of 4 complementary tones.
-///
-/// See also:
-///   * <https://m3.material.io/styles/color/the-color-system/custom-colors>
 @immutable
 class CustomColors extends ThemeExtension<CustomColors> {
   final Color? background;
@@ -59,11 +55,6 @@ class CustomColors extends ThemeExtension<CustomColors> {
     );
   }
 
-  /// Returns an instance of [CustomColors] in which the following custom
-  /// colors are harmonized with [dynamic]'s [ColorScheme.primary].
-  ///
-  /// See also:
-  ///   * <https://m3.material.io/styles/color/the-color-system/custom-colors#harmonization>
   CustomColors harmonized(ColorScheme dynamic) {
     return copyWith();
   }

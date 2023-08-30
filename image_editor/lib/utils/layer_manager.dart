@@ -139,7 +139,6 @@ class LayerManager {
     }
   }
 
-  /// Remove layer by type background, frame, drawing
   void removeLayerByType(LayerType type) {
     LayerItem? layer;
     switch (type) {
@@ -165,7 +164,6 @@ class LayerManager {
   }
 
   void updateLayer(LayerItem layer) {
-    // sticker, text only
     int index = _otherLayers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
       _otherLayers[index] = layer;

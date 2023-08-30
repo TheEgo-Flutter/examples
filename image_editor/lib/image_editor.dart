@@ -35,7 +35,7 @@ class ImageEditor extends StatefulWidget {
 
 class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   Size get view => MediaQuery.of(context).size;
-  LayerType? _selectedType = LayerType.background;
+  LayerType? _selectedType;
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   List<LinearGradient> gradients = [];
@@ -120,19 +120,13 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     builder: (context, constraints) {
                       double space = 8;
                       int cardFlex = 75;
-                      double maxWidth = (constraints.maxHeight - space - kToolbarHeight) *
-                          cardFlex /
-                          100 *
-                          (widget.aspectRatio.ratio ?? 1);
+                      double maxWidth =
+                          (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
                       return SizedBox(
                         width: maxWidth,
                         child: Column(
                           children: [
-                            SizedBox(
-                              height: kToolbarHeight,
-                              child: innerAppBar(context),
-                            ),
                             Expanded(
                               flex: cardFlex,
                               child: Padding(
@@ -155,10 +149,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                 child: ClipPath(
                                   key: objectAreaKey,
                                   clipper: CardBoxClip(),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    child: buildItemArea(),
-                                  ),
+                                  child: buildItemArea(),
                                 ),
                               ),
                             ),
@@ -171,134 +162,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               ),
             ));
       }),
-    );
-  }
-
-  Row innerAppBar(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const BackButton(),
-        Row(
-          children: [
-            IconButton(
-              padding: const EdgeInsets.all(4.0), // 패딩 설정
-              constraints: const BoxConstraints(), // constraints
-              icon: const Icon(Icons.texture_outlined), // 프레임에 어울리는 아이콘
-              onPressed: () {
-                setState(() {
-                  _selectedType = LayerType.frame;
-                });
-                ;
-              },
-            ),
-            IconButton(
-              padding: const EdgeInsets.all(4.0), // 패딩 설정
-              constraints: const BoxConstraints(), // constraints
-              icon: const Icon(Icons.face), // 스티커에 어울리는 아이콘
-              onPressed: () {
-                setState(() {
-                  _selectedType = LayerType.sticker;
-                });
-                customObjectBoxSizeDialog(
-                    context: context,
-                    child: ItemSelector.grid(
-                      items: widget.stickers,
-                      onSelected: (child) {
-                        if (child == null) return;
-                        // size dynamic change for device (default is 150X150)
-                        Size size = const Size(150, 150);
-                        Offset offset = Offset(
-                            cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
-                        //parse rect
-
-                        LayerItem layer = LayerItem(
-                          UniqueKey(),
-                          type: LayerType.sticker,
-                          object: child,
-                          rect: (offset & size),
-                        );
-                        layerManager.addLayer(layer);
-                        setState(() {});
-                      },
-                    ));
-              },
-            ),
-            IconButton(
-              padding: const EdgeInsets.all(4.0), // 패딩 설정
-              constraints: const BoxConstraints(), // constraints
-              icon: const Icon(Icons.font_download_rounded), // 텍스트에 어울리는 아이콘
-              onPressed: () async {
-                (TextBoxInput, Offset)? result = await customFullSizeDialog(
-                  context: context,
-                  child: const TextEditor(),
-                );
-
-                setState(() {});
-
-                if (result == null) return;
-                var layer = LayerItem(
-                  UniqueKey(),
-                  type: LayerType.text,
-                  object: result.$1,
-                  rect: result.$2 & result.$1.size,
-                );
-                layerManager.addLayer(layer);
-                setState(() {});
-              },
-            ),
-            IconButton(
-              padding: const EdgeInsets.all(4.0), // 패딩 설정
-              constraints: const BoxConstraints(), // constraints
-              icon: const Icon(Icons.brush), // 그리기에 어울리는 아이콘
-
-              onPressed: () async {
-                (Uint8List?, Size?)? data = await customFullSizeDialog(
-                  context: context,
-                  child: const BrushPainter(),
-                );
-                setState(() {});
-                if ((data != null && data.$1 != null)) {
-                  var image = Image.memory(data.$1!);
-
-                  setState(() {
-                    var layer = LayerItem(
-                      UniqueKey(),
-                      type: LayerType.drawing,
-                      object: image,
-                      rect: cardBoxRect.zero,
-                    );
-                    layerManager.addLayer(layer);
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-        IconButton(
-          icon: const Icon(Icons.check),
-          onPressed: () async {
-            final stream = renderController.captureMotionWithStream(
-              const Duration(seconds: 5),
-              settings: const MotionSettings(
-                pixelRatio: 5,
-                frameRate: 80,
-                simultaneousCaptureHandlers: 10,
-              ),
-              logInConsole: true,
-            );
-            setState(() {
-              renderStream = stream;
-            });
-            final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
-            if (result.isFatalError) return;
-
-            if (mounted) Navigator.pop(context, (result as RenderResult).output);
-          },
-        ),
-      ],
     );
   }
 
@@ -381,94 +244,270 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   }
 
   Widget buildItemArea() {
-    switch (_selectedType) {
-      // case LayerType.sticker:
-      //   return ItemSelector.sticker(
-      //     items: widget.stickers,
-      //     onSelected: (child) {
-      //       if (child == null) return;
-      //       // size dynamic change for device (default is 150X150)
-      //       Size size = const Size(150, 150);
-      //       Offset offset =
-      //           Offset(cardBoxRect.size.width / 2 - size.width / 2, cardBoxRect.size.height / 2 - size.height / 2);
-      //       //parse rect
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.image),
+                  onPressed: () {
+                    List<Color> colors = [
+                      Colors.white,
+                      Colors.red,
+                      Colors.orange,
+                      Colors.yellow,
+                      Colors.cyan,
+                      Colors.green,
+                      Colors.blue,
+                      Colors.indigo,
+                      Colors.purple
+                    ];
+                    setState(() {
+                      _selectedType = LayerType.background;
+                    });
+                    customObjectBoxSizeDialog(
+                        context: context,
+                        child: BackgroundSelector(
+                          items: [
+                            ...List.generate(
+                              colors.length,
+                              (index) => BackgroundItem.color(colors[index]),
+                            ),
+                            ...widget.backgrounds.map((image) => BackgroundItem.image(image)).toList(),
+                          ],
+                          galleryButton: const Icon(
+                            Icons.image_outlined,
+                            color: Colors.white,
+                          ),
+                          onGallerySelected: (value) async {
+                            if (value == null) return;
+                            Uint8List? loadImage = await _loadImage(value);
+                            await _loadImageColor(loadImage);
+                            LayerItem imageBackground = LayerItem(
+                              UniqueKey(),
+                              type: LayerType.image,
+                              object: Image.memory(loadImage),
+                              rect: cardBoxRect.zero,
+                            );
+                            layerManager.addLayer(imageBackground);
+                          },
+                          onItemSelected: (child) async {
+                            {
+                              await _loadImageColor(null);
+                              LayerItem layer = LayerItem(
+                                UniqueKey(),
+                                type: LayerType.background,
+                                object: child,
+                                rect: cardBoxRect.zero,
+                              );
+                              layerManager.addLayer(layer);
+                            }
+                            setState(() {});
+                          },
+                        ));
+                  },
+                ),
+              ),
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.texture_outlined),
+                  onPressed: () {
+                    setState(() {
+                      _selectedType = LayerType.frame;
+                    });
+                    customObjectBoxSizeDialog(
+                        context: context,
+                        child: FrameSelector(
+                          items: widget.frames,
+                          onItemSelected: (child) {
+                            late LayerItem layer;
+                            if (child == null) {
+                              layer = LayerItem(
+                                UniqueKey(),
+                                type: LayerType.frame,
+                                object: null,
+                                rect: cardBoxRect.zero,
+                              );
+                            } else {
+                              layer = LayerItem(
+                                UniqueKey(),
+                                type: LayerType.frame,
+                                object: child,
+                                rect: cardBoxRect.zero,
+                              );
+                            }
+                            layerManager.addLayer(layer);
+                            setState(() {});
+                          },
+                        ));
+                  },
+                ),
+              ),
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.face),
+                  onPressed: () {
+                    setState(() {
+                      _selectedType = LayerType.sticker;
+                    });
+                    customObjectBoxSizeDialog(
+                        context: context,
+                        child: ItemSelector.sticker(
+                          items: widget.stickers,
+                          onSelected: (child) {
+                            if (child == null) return;
 
-      //       LayerItem layer = LayerItem(
-      //         UniqueKey(),
-      //         type: LayerType.sticker,
-      //         object: child,
-      //         rect: (offset & size),
-      //       );
-      //       layerManager.addLayer(layer);
-      //       setState(() {});
-      //     },
-      //   );
-      case LayerType.frame:
-        return ItemSelector.list(
-          items: widget.frames,
-          onSelected: (child) {
-            late LayerItem layer;
-            if (child == null) {
-              layer = LayerItem(
-                UniqueKey(),
-                type: LayerType.frame,
-                object: null,
-                rect: cardBoxRect.zero,
-              );
-            } else {
-              layer = LayerItem(
-                UniqueKey(),
-                type: LayerType.frame,
-                object: child,
-                rect: cardBoxRect.zero,
-              );
-            }
-            layerManager.addLayer(layer);
-            setState(() {});
-          },
-        );
-      case LayerType.image:
-      case LayerType.background:
-      default:
-        return BackgroundSelector(
-          items: [
-            BackgroundItem.color(Colors.white),
-            ...List.generate(
-              10,
-              (index) => BackgroundItem.color(gradients[index].colors[0]),
-            ),
-            ...widget.backgrounds.map((image) => BackgroundItem.image(image)).toList(),
-          ],
-          galleryButton: Icon(
-            Icons.image_outlined,
-            color: Colors.grey[600],
+                            Size size = const Size(150, 150);
+                            Offset offset = Offset(cardBoxRect.size.width / 2 - size.width / 2,
+                                cardBoxRect.size.height / 2 - size.height / 2);
+
+                            LayerItem layer = LayerItem(
+                              UniqueKey(),
+                              type: LayerType.sticker,
+                              object: child,
+                              rect: (offset & size),
+                            );
+                            layerManager.addLayer(layer);
+                            setState(() {});
+                          },
+                        ));
+                  },
+                ),
+              ),
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.font_download_rounded),
+                  onPressed: () async {
+                    (TextBoxInput, Offset)? result = await customFullSizeDialog(
+                      context: context,
+                      child: const TextEditor(),
+                    );
+
+                    setState(() {});
+
+                    if (result == null) return;
+                    var layer = LayerItem(
+                      UniqueKey(),
+                      type: LayerType.text,
+                      object: result.$1,
+                      rect: result.$2 & result.$1.size,
+                    );
+                    layerManager.addLayer(layer);
+                    setState(() {});
+                  },
+                ),
+              ),
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.brush),
+                  onPressed: () async {
+                    (Uint8List?, Size?)? data = await customFullSizeDialog(
+                      context: context,
+                      child: const BrushPainter(),
+                    );
+                    setState(() {});
+                    if ((data != null && data.$1 != null)) {
+                      var image = Image.memory(data.$1!);
+
+                      setState(() {
+                        var layer = LayerItem(
+                          UniqueKey(),
+                          type: LayerType.drawing,
+                          object: image,
+                          rect: cardBoxRect.zero,
+                        );
+                        layerManager.addLayer(layer);
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-          onGallerySelected: (value) async {
-            if (value == null) return;
-            Uint8List? loadImage = await _loadImage(value);
-            await _loadImageColor(loadImage);
-            LayerItem imageBackground = LayerItem(
-              UniqueKey(),
-              type: LayerType.image,
-              object: Image.memory(loadImage),
-              rect: cardBoxRect.zero,
-            );
-            layerManager.addLayer(imageBackground);
-          },
-          onItemSelected: (child) async {
-            {
-              await _loadImageColor(null);
-              LayerItem layer = LayerItem(
-                UniqueKey(),
-                type: LayerType.background,
-                object: child,
-                rect: cardBoxRect.zero,
-              );
-              layerManager.addLayer(layer);
-            }
-            setState(() {});
-          },
-        );
-    }
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 50.0),
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: CircleAvatar(
+                  backgroundColor: Colors.grey[850],
+                  foregroundColor: Colors.white,
+                  child: IconButton(
+                    padding: const EdgeInsets.all(4.0),
+                    constraints: const BoxConstraints(),
+                    icon: Transform.translate(
+                      offset: const Offset(5, 0),
+                      child: const Icon(
+                        Icons.arrow_back_ios,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.canPop(context) ? Navigator.pop(context) : null;
+                    },
+                  ),
+                ),
+              ),
+              Center(
+                child: CircleAvatar(
+                  foregroundColor: Colors.grey[850],
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.check),
+                    onPressed: () async {
+                      final stream = renderController.captureMotionWithStream(
+                        const Duration(seconds: 5),
+                        settings: const MotionSettings(
+                          pixelRatio: 5,
+                          frameRate: 80,
+                          simultaneousCaptureHandlers: 10,
+                        ),
+                        logInConsole: true,
+                      );
+                      setState(() {
+                        renderStream = stream;
+                      });
+                      final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
+                      if (result.isFatalError) return;
+
+                      if (mounted) Navigator.pop(context, (result as RenderResult).output);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 30.0),
+        )
+      ],
+    );
   }
 }

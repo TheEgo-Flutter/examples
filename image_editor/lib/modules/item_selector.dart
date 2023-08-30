@@ -2,29 +2,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_editor/ui/label_switch.dart';
 import 'package:image_editor/ui/rect.dart';
-import 'package:image_editor/utils/global.dart';
+import 'package:image_editor/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 
 class ItemSelector extends StatelessWidget {
-  ItemSelector.list({
-    super.key,
-    required this.items,
-    required this.onSelected,
-  }) {
-    widget = _ListSelector(
-      items: items,
-      onSelected: onSelected,
-      button: Icon(
-        Icons.not_interested,
-        color: Colors.grey[600],
-      ),
-    );
-  }
-
-  ItemSelector.grid({
+  ItemSelector.sticker({
     super.key,
     required this.items,
     required this.onSelected,
@@ -84,48 +68,80 @@ class BackgroundSelector extends StatefulWidget {
 
 class _BackgroundSelectorState extends State<BackgroundSelector> {
   final picker = ImagePicker();
-  int toggleIndex = 0;
+
   int? selectedItemIndex;
-  List<BackgroundItem> get currentItems => toggleIndex == 0
-      ? widget.items.where((item) => item.type == BackgroundType.color).toList()
-      : widget.items.where((item) => item.type == BackgroundType.image).toList();
+  List<BackgroundItem> get imageItems => widget.items.where((e) => e.type == BackgroundType.image).toList();
+  List<BackgroundItem> get colorItems => widget.items.where((e) => e.type == BackgroundType.color).toList();
+  Color? selectedColor = Colors.white;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double itemWidth = constraints.maxHeight * (ratio.ratio ?? 1) * (2 / 3);
         return Column(
           children: [
-            Flexible(
-              flex: 1,
-              child: AnimatedToggle(
-                values: BackgroundType.values.map((e) => e.label).toList(),
-                onToggleCallback: (value) {
-                  setState(() {
-                    toggleIndex = value;
-                  });
+            SizedBox(
+              height: constraints.maxHeight * 0.2,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                separatorBuilder: (context, index) => const SizedBox(
+                  width: 4,
+                ),
+                itemCount: colorItems.length,
+                itemBuilder: (context, index) {
+                  return SizedBox(
+                    width: constraints.maxHeight * 0.15,
+                    child: Radio(
+                      value: colorItems[index].value as Color,
+                      groupValue: selectedColor,
+                      fillColor: MaterialStatePropertyAll<Color>(colorItems[index].value as Color),
+                      onChanged: (Color? newValue) {
+                        setState(() {
+                          selectedColor = newValue;
+                          widget.onItemSelected(ColoredBox(color: newValue!));
+                        });
+                      },
+                    ),
+                  );
                 },
-                buttonColor: const Color(0xFFFFFFFF),
-                backgroundColor: const Color(0xFF939393),
-                textColor: const Color(0xFF000000),
               ),
             ),
             Expanded(
-              flex: 3,
-              child: ListView.separated(
-                shrinkWrap: false,
-                physics: const ClampingScrollPhysics(),
-                scrollDirection: Axis.horizontal,
-                itemCount: currentItems.length + (toggleIndex == 1 ? 1 : 0),
-                separatorBuilder: (context, index) => const SizedBox(
-                  width: 8,
-                ),
-                itemBuilder: (BuildContext context, int index) {
-                  Widget? item;
-                  if (toggleIndex == 0) {
-                    var backgroundItem = widget.items.where((e) => e.type == BackgroundType.color).toList()[index];
-                    Widget? child = ColoredBox(color: backgroundItem.value as Color);
-                    item = GestureDetector(
+                child: GridView.builder(
+              shrinkWrap: false,
+              physics: const ClampingScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                mainAxisSpacing: 8.0,
+                crossAxisSpacing: 4.0,
+                childAspectRatio: ratio.ratio ?? 1,
+              ),
+              itemCount: imageItems.length,
+              itemBuilder: (context, index) {
+                Widget? item;
+                if (index == 0) {
+                  item = GestureDetector(
+                    onTap: () async {
+                      var image = await picker.pickImage(source: ImageSource.gallery);
+                      widget.onGallerySelected(image);
+                      setState(() {
+                        selectedItemIndex = index;
+                      });
+                    },
+                    child: ColoredBox(
+                      color: const Color(0xff404040),
+                      child: widget.galleryButton,
+                    ),
+                  );
+                } else {
+                  int itemIndex = index;
+                  var backgroundWidget = imageItems[itemIndex];
+                  Widget? child = _getItemChild(backgroundWidget.value);
+
+                  item = ColoredBox(
+                    color: Colors.transparent,
+                    child: GestureDetector(
                       onTap: () {
                         widget.onItemSelected(child);
                         setState(() {
@@ -133,73 +149,105 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
                         });
                       },
                       child: child,
-                    );
-                  } else {
-                    if (index == 0) {
-                      item = GestureDetector(
-                        onTap: () async {
-                          var image = await picker.pickImage(source: ImageSource.gallery);
-                          widget.onGallerySelected(image);
-                          setState(() {
-                            selectedItemIndex = index;
-                          });
-                        },
-                        child: ColoredBox(
-                          color: const Color(0xff404040),
-                          child: widget.galleryButton,
-                        ),
-                      );
-                    } else {
-                      int itemIndex = index - 1;
-                      var backgroundItem =
-                          widget.items.where((e) => e.type == BackgroundType.image).toList()[itemIndex];
-                      Widget? child = _getItemChild(backgroundItem.value);
-
-                      item = ColoredBox(
-                        color: Colors.transparent,
-                        child: GestureDetector(
-                          onTap: () {
-                            widget.onItemSelected(child);
-                            setState(() {
-                              selectedItemIndex = index;
-                            });
-                          },
-                          child: child,
-                        ),
-                      );
-                      return Transform.translate(
-                        offset: index == selectedItemIndex ? Offset(0, -5) : Offset.zero,
-                        child: SizedBox(
-                          width: itemWidth,
-                          child: ClipPath(
-                            clipper: CardBoxClip(
-                              aspectRatio: ratio,
-                            ),
-                            child: item,
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                  return Transform.translate(
-                    offset: index == selectedItemIndex ? Offset(0, -5) : Offset.zero,
-                    child: SizedBox(
-                      width: itemWidth,
-                      child: ClipPath(
-                        clipper: CardBoxClip(
-                          aspectRatio: ratio,
-                        ),
-                        child: item,
-                      ),
                     ),
                   );
-                },
-                padding: const EdgeInsets.all(8.0),
-              ),
-            ),
+                }
+
+                return item;
+              },
+            ))
           ],
         );
       },
+    );
+  }
+}
+
+class FrameSelector extends StatefulWidget {
+  const FrameSelector({
+    Key? key,
+    required this.items,
+    required this.onItemSelected,
+  }) : super(key: key);
+
+  final List<dynamic> items;
+  final ValueChanged<Widget?> onItemSelected;
+
+  @override
+  State<FrameSelector> createState() => _FrameSelectorState();
+}
+
+class _FrameSelectorState extends State<FrameSelector> {
+  final picker = ImagePicker();
+
+  int? selectedItemIndex;
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            Expanded(
+                child: GridView.builder(
+              shrinkWrap: false,
+              physics: const ClampingScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                mainAxisSpacing: 8.0,
+                crossAxisSpacing: 4.0,
+                childAspectRatio: ratio.ratio ?? 1,
+              ),
+              itemCount: widget.items.length,
+              itemBuilder: (context, index) {
+                Widget? item;
+                if (index == 0) {
+                  item = _getFirstItemButton(
+                      Icon(
+                        Icons.not_interested,
+                        color: Colors.grey[600],
+                      ),
+                      widget.onItemSelected);
+                } else {
+                  int itemIndex = index;
+                  var backgroundWidget = widget.items[itemIndex];
+                  Widget? child = _getItemChild(backgroundWidget);
+
+                  item = ColoredBox(
+                    color: Colors.transparent,
+                    child: GestureDetector(
+                      onTap: () {
+                        widget.onItemSelected(child);
+                        setState(() {
+                          selectedItemIndex = index;
+                        });
+                      },
+                      child: child,
+                    ),
+                  );
+                }
+
+                return item;
+              },
+            ))
+          ],
+        );
+      },
+    );
+  }
+
+  _getFirstItemButton(Widget button, ValueChanged<Widget?> onSelected) {
+    return GestureDetector(
+      onTap: () {
+        onSelected(null);
+        setState(() {
+          selectedItemIndex = 0;
+        });
+      },
+      child: ColoredBox(
+        color: const Color(0xff404040),
+        child: button,
+      ),
     );
   }
 }
@@ -318,16 +366,10 @@ class _GridSelector extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         var item = items[index];
         Widget? child = _getItemChild(item);
-
-        return ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Container(
-              padding: const EdgeInsets.all(4.0),
-              child: GestureDetector(
-                onTap: () => onSelected(child),
-                child: child,
-              ),
-            ));
+        return GestureDetector(
+          onTap: () => onSelected(child),
+          child: child,
+        );
       },
     );
   }
@@ -341,17 +383,17 @@ _getItemChild(item) {
     try {
       json.decode(utf8.decode(item));
 
-      child = LottieBuilder.memory(item);
+      child = LottieBuilder.memory(item, fit: BoxFit.fill);
     } catch (e) {
-      child = Image.memory(item);
+      child = Image.memory(item, fit: BoxFit.fill);
     }
   } else if (item is String) {
     if (item.contains('.json')) {
-      child = Lottie.asset('assets/$item');
+      child = Lottie.asset('assets/$item', fit: BoxFit.fill);
     } else if (item.startsWith('http')) {
-      child = Image.network(item);
+      child = Image.network(item, fit: BoxFit.fill);
     } else {
-      child = Image.asset('assets/$item');
+      child = Image.asset('assets/$item', fit: BoxFit.fill);
     }
   }
   return child;

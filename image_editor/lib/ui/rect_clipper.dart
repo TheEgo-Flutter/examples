@@ -10,13 +10,16 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
     ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
-        top: Radius.circular(20),
+        top: Radius.circular(10),
       ),
     ),
     barrierColor: Colors.transparent,
-    backgroundColor: Colors.black,
+    backgroundColor: const Color(0xff1C1C17),
     builder: (BuildContext context) {
-      return child;
+      return Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+        child: child,
+      );
     },
   );
 }

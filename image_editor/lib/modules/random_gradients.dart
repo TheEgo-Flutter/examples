@@ -22,7 +22,6 @@ class RandomGradientContainers {
     );
   }
 
-  //return RandomGradientContainer with random gradient need index
   List<LinearGradient> buildRandomGradientContainer(int length) {
     return List.generate(
       length,

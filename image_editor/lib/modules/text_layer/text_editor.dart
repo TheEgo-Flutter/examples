@@ -19,7 +19,6 @@ class TextEditor extends StatefulWidget {
 }
 
 class _TextEditorState extends State<TextEditor> {
-  // textStyle values
   ValueNotifier<String> textNotifier = ValueNotifier<String>("");
   double fontSize = 32.0;
   Color currentColor = Colors.white;
@@ -29,14 +28,14 @@ class _TextEditorState extends State<TextEditor> {
       .where((entry) => (entry.value['subsets'] as String).contains('korean'))
       .map((entry) => entry.key)
       .toList();
-  // local
+
   bool isFontBarVisible = true;
 
   int selectedFontIndex = 0;
-  // for Navigator.pop
+
   bool isInitialBuild = true;
   bool isEditing = false;
-  // for size and position
+
   final GlobalKey textBoxKey = GlobalKey();
   Rect get textBoxRect {
     final RenderBox? renderBox = textBoxKey.currentContext?.findRenderObject() as RenderBox?;
@@ -99,8 +98,6 @@ class _TextEditorState extends State<TextEditor> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      //check
-
       data: ThemeData().copyWith(
         bottomSheetTheme: const BottomSheetThemeData(
           backgroundColor: Colors.transparent,
@@ -311,9 +308,6 @@ class _TextEditorState extends State<TextEditor> {
     return Size(size1.width + size2.width, size1.height + size2.height);
   }
 
-  /// element => Dongle
-  /// fontFamily => Dongle_regular, Dongle_bold ...
-  /// return element == fontFamily
   int getFontIndex() {
     int index = koreanFonts.indexWhere((element) {
       return widget.textEditorStyle!.style.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
@@ -400,7 +394,6 @@ class TextBox extends StatelessWidget {
         textAlign: input.align,
         style: input.style,
         onChanged: onChanged,
-        //
         textAlignVertical: TextAlignVertical.center,
         keyboardType: TextInputType.multiline,
         enableSuggestions: false,
