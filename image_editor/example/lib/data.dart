@@ -52,10 +52,21 @@ List<String> stickers = [
 List<String> frames = [
   "frames/frame01.png",
   "frames/frame02.png",
+  "frames/frame_163.png",
+  "frames/frame_164.png",
+  "frames/frame_165.png",
+  "frames/frame_166.png",
+  "frames/frame_167.png",
+  "frames/frame_168.png",
 ];
 List<String> backgrounds = [
-  "backgrounds/bg01.png",
-  "backgrounds/bg02.png",
-  "backgrounds/bg03.jpg",
-  "backgrounds/bg04.gif",
+  "backgrounds/bg_165.png",
+  "backgrounds/bg_166.png",
+  "backgrounds/bg_168.png",
+  "backgrounds/bg_169.png",
+  "backgrounds/bg_170.png",
+  "backgrounds/bg_172.png",
+  "backgrounds/bg_173.png",
+  "backgrounds/bg_174.png",
+  "backgrounds/bg_175.png",
 ];
