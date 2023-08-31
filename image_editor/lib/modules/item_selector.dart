@@ -383,17 +383,17 @@ _getItemChild(item) {
     try {
       json.decode(utf8.decode(item));
 
-      child = LottieBuilder.memory(item, fit: BoxFit.fill);
+      child = LottieBuilder.memory(item);
     } catch (e) {
-      child = Image.memory(item, fit: BoxFit.fill);
+      child = Image.memory(item);
     }
   } else if (item is String) {
     if (item.contains('.json')) {
-      child = Lottie.asset('assets/$item', fit: BoxFit.fill);
+      child = Lottie.asset('assets/$item');
     } else if (item.startsWith('http')) {
-      child = Image.network(item, fit: BoxFit.fill);
+      child = Image.network(item);
     } else {
-      child = Image.asset('assets/$item', fit: BoxFit.fill);
+      child = Image.asset('assets/$item');
     }
   }
   return child;
