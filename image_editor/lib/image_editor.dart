@@ -127,10 +127,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                         width: maxWidth,
                         child: Column(
                           children: [
+                            SizedBox(
+                              width: objectBoxRect.width,
+                              height: kToolbarHeight,
+                            ),
                             Expanded(
                               flex: cardFlex,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: cardPadding,
                                 child: Render(
                                   controller: renderController,
                                   child: ClipPath(
@@ -260,17 +264,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.image),
                   onPressed: () {
-                    List<Color> colors = [
-                      Colors.white,
-                      Colors.red,
-                      Colors.orange,
-                      Colors.yellow,
-                      Colors.cyan,
-                      Colors.green,
-                      Colors.blue,
-                      Colors.indigo,
-                      Colors.purple
-                    ];
                     setState(() {
                       _selectedType = LayerType.background;
                     });
@@ -426,10 +419,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.brush),
                   onPressed: () async {
-                    (Uint8List?, Size?)? data = await customFullSizeDialog(
+                    (Uint8List?, Size?)? data = await showGeneralDialog(
                       context: context,
-                      child: const BrushPainter(),
+                      barrierColor: Colors.transparent,
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        return const BrushPainter();
+                      },
                     );
+
                     setState(() {});
                     if ((data != null && data.$1 != null)) {
                       var image = Image.memory(data.$1!);

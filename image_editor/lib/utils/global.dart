@@ -5,12 +5,31 @@ import 'package:image_editor/utils/util.dart';
 
 AspectRatioOption ratio = AspectRatioOption.r9x16;
 const Size device = Size(360.0, 800.0);
+// Expanded 내부의 Padding 값
+const EdgeInsets cardPadding = EdgeInsets.symmetric(horizontal: 16.0);
+List<Color> colors = [
+  Colors.black,
+  Colors.white,
+  Colors.red,
+  Colors.orange,
+  Colors.yellow,
+  Colors.cyan,
+  Colors.green,
+  Colors.blue,
+  Colors.indigo,
+  Colors.purple
+];
 final GlobalKey cardAreaKey = GlobalKey();
 Rect get cardBoxRect {
   final RenderBox? cardRenderBox = cardAreaKey.currentContext?.findRenderObject() as RenderBox?;
   if (cardRenderBox != null) {
     Offset offset = cardRenderBox.localToGlobal(Offset.zero);
-    return Rect.fromLTWH(offset.dx, offset.dy, cardRenderBox.size.width, cardRenderBox.size.height);
+
+    // SafeArea의 padding 값
+    final EdgeInsets safeAreaPadding = MediaQuery.of(cardAreaKey.currentContext!).padding;
+
+    return Rect.fromLTWH(offset.dx + safeAreaPadding.left, offset.dy + safeAreaPadding.top,
+        cardRenderBox.size.width - safeAreaPadding.horizontal, cardRenderBox.size.height - safeAreaPadding.vertical);
   }
   return Rect.zero;
 }

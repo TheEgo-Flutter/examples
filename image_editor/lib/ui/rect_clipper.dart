@@ -5,7 +5,7 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
   return showModalBottomSheet(
     context: context,
     constraints: BoxConstraints(
-      maxWidth: cardBoxRect.width,
+      maxWidth: objectBoxRect.width,
       maxHeight: objectBoxRect.height,
     ),
     shape: const RoundedRectangleBorder(
