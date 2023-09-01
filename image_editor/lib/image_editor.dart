@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
@@ -266,42 +267,71 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     setState(() {
                       _selectedType = LayerType.background;
                     });
+                    LayerItem? background =
+                        layerManager.layers.where((element) => element.type == LayerType.background).firstOrNull;
+                    Color? initialColor = background == null
+                        ? Colors.white
+                        : background.object.runtimeType == ColoredBox
+                            ? (background.object as ColoredBox).color
+                            : null;
                     customObjectBoxSizeDialog(
                         context: context,
-                        child: BackgroundSelector(
-                          items: [
-                          
-                            ...widget.backgrounds.map((image) => BackgroundItem.image(image)).toList(),
+                        child: Column(
+                          children: [
+                            ColorBar(
+                              initialColor: initialColor,
+                              onColorChanged: (color) async {
+                                {
+                                  await _loadImageColor(null);
+                                  LayerItem layer = LayerItem(
+                                    UniqueKey(),
+                                    type: LayerType.background,
+                                    object: ColoredBox(color: color),
+                                    rect: cardBoxRect.zero,
+                                  );
+                                  layerManager.addLayer(layer);
+                                }
+                                setState(() {});
+                              },
+                            ),
+                            Expanded(
+                              child: ImageSelector(
+                                items: widget.backgrounds,
+                                firstItem: GestureDetector(
+                                    onTap: () async {
+                                      final picker = ImagePicker();
+                                      var value = await picker.pickImage(source: ImageSource.gallery);
+                                      if (value == null) return;
+                                      Uint8List? loadImage = await _loadImage(value);
+                                      await _loadImageColor(loadImage);
+                                      LayerItem imageBackground = LayerItem(
+                                        UniqueKey(),
+                                        type: LayerType.image,
+                                        object: Image.memory(loadImage),
+                                        rect: cardBoxRect.zero,
+                                      );
+                                      layerManager.addLayer(imageBackground);
+                                    },
+                                    child: const Icon(
+                                      Icons.image_outlined,
+                                      color: Colors.white,
+                                    )),
+                                onItemSelected: (child) async {
+                                  {
+                                    await _loadImageColor(null);
+                                    LayerItem layer = LayerItem(
+                                      UniqueKey(),
+                                      type: LayerType.background,
+                                      object: child,
+                                      rect: cardBoxRect.zero,
+                                    );
+                                    layerManager.addLayer(layer);
+                                  }
+                                  setState(() {});
+                                },
+                              ),
+                            ),
                           ],
-                          galleryButton: const Icon(
-                            Icons.image_outlined,
-                            color: Colors.white,
-                          ),
-                          onGallerySelected: (value) async {
-                            if (value == null) return;
-                            Uint8List? loadImage = await _loadImage(value);
-                            await _loadImageColor(loadImage);
-                            LayerItem imageBackground = LayerItem(
-                              UniqueKey(),
-                              type: LayerType.image,
-                              object: Image.memory(loadImage),
-                              rect: cardBoxRect.zero,
-                            );
-                            layerManager.addLayer(imageBackground);
-                          },
-                          onItemSelected: (child) async {
-                            {
-                              await _loadImageColor(null);
-                              LayerItem layer = LayerItem(
-                                UniqueKey(),
-                                type: LayerType.background,
-                                object: child,
-                                rect: cardBoxRect.zero,
-                              );
-                              layerManager.addLayer(layer);
-                            }
-                            setState(() {});
-                          },
                         ));
                   },
                 ),
@@ -319,25 +349,32 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     });
                     customObjectBoxSizeDialog(
                         context: context,
-                        child: FrameSelector(
+                        child: ImageSelector(
                           items: widget.frames,
-                          onItemSelected: (child) {
-                            late LayerItem layer;
-                            if (child == null) {
-                              layer = LayerItem(
+                          firstItem: GestureDetector(
+                            onTap: () async {
+                              LayerItem layer = LayerItem(
                                 UniqueKey(),
                                 type: LayerType.frame,
                                 object: null,
                                 rect: cardBoxRect.zero,
                               );
-                            } else {
-                              layer = LayerItem(
-                                UniqueKey(),
-                                type: LayerType.frame,
-                                object: child,
-                                rect: cardBoxRect.zero,
-                              );
-                            }
+                              layerManager.addLayer(layer);
+                              setState(() {});
+                            },
+                            child: const Icon(
+                              Icons.not_interested,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onItemSelected: (child) {
+                            LayerItem layer = LayerItem(
+                              UniqueKey(),
+                              type: LayerType.frame,
+                              object: child,
+                              rect: cardBoxRect.zero,
+                            );
+
                             layerManager.addLayer(layer);
                             setState(() {});
                           },
@@ -358,7 +395,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     });
                     customObjectBoxSizeDialog(
                         context: context,
-                        child: ItemSelector.sticker(
+                        child: StickerSelector(
                           items: widget.stickers,
                           onSelected: (child) {
                             if (child == null) return;
