@@ -308,32 +308,35 @@ text effects
     ),
  */
   Widget _fontBar(BuildContext context) {
-    return SizedBox(
-      height: 32,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: koreanFonts.length,
-        itemBuilder: (context, index) {
-          String fontFamily = koreanFonts[index];
-          bool isSelected = selectedFontIndex == index;
-          return ChoiceChip(
-            label: Text(
-              'Aa',
-              style: GoogleFonts.getFont(fontFamily).copyWith(color: isSelected ? Colors.purple[900] : Colors.white),
-            ),
-            shape: const CircleBorder(),
-            selected: isSelected,
-            selectedColor: Colors.white,
-            backgroundColor: Colors.black.withOpacity(0.5),
-            onSelected: (bool selected) {
-              setState(() {
-                if (selected) {
-                  selectedFontIndex = index;
-                }
-              });
-            },
-          );
-        },
+    return Theme(
+      data: ThemeData(canvasColor: Colors.transparent),
+      child: SizedBox(
+        height: 32,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: koreanFonts.length,
+          itemBuilder: (context, index) {
+            String fontFamily = koreanFonts[index];
+            bool isSelected = selectedFontIndex == index;
+            return ChoiceChip(
+              label: Text(
+                'Aa',
+                style: GoogleFonts.getFont(fontFamily).copyWith(color: isSelected ? Colors.purple[900] : Colors.white),
+              ),
+              shape: const CircleBorder(),
+              selected: isSelected,
+              selectedColor: Colors.white,
+              backgroundColor: Colors.black.withOpacity(0.5),
+              onSelected: (bool selected) {
+                setState(() {
+                  if (selected) {
+                    selectedFontIndex = index;
+                  }
+                });
+              },
+            );
+          },
+        ),
       ),
     );
   }
