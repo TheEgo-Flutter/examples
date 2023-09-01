@@ -30,7 +30,7 @@ Future<T?> customFullSizeDialog<T>({
 }) {
   return showGeneralDialog(
     context: context,
-    barrierColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.2),
     pageBuilder: (context, animation, secondaryAnimation) {
       return RectClipper(
         rect: cardBoxRect.expandToInclude(objectBoxRect),

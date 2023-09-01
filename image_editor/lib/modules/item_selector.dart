@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_editor/ui/rect.dart';
 import 'package:image_editor/utils/utils.dart';
+import 'package:image_editor/widget/widget.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 
@@ -71,7 +72,6 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
 
   int? selectedItemIndex;
   List<BackgroundItem> get imageItems => widget.items.where((e) => e.type == BackgroundType.image).toList();
-  List<BackgroundItem> get colorItems => widget.items.where((e) => e.type == BackgroundType.color).toList();
   Color? selectedColor = Colors.white;
 
   @override
@@ -80,32 +80,14 @@ class _BackgroundSelectorState extends State<BackgroundSelector> {
       builder: (context, constraints) {
         return Column(
           children: [
-            SizedBox(
-              height: constraints.maxHeight * 0.2,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                separatorBuilder: (context, index) => const SizedBox(
-                  width: 4,
-                ),
-                itemCount: colorItems.length,
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: constraints.maxHeight * 0.15,
-                    child: Radio(
-                      value: colorItems[index].value as Color,
-                      groupValue: selectedColor,
-                      fillColor: MaterialStatePropertyAll<Color>(colorItems[index].value as Color),
-                      onChanged: (Color? newValue) {
-                        setState(() {
-                          selectedColor = newValue;
-                          widget.onItemSelected(ColoredBox(color: newValue!));
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+            ColorBar(
+                // initialColor: ,
+                onColorChanged: (color) {
+              setState(() {
+                selectedColor = color;
+                widget.onItemSelected(ColoredBox(color: color));
+              });
+            }),
             Expanded(
                 child: GridView.builder(
               shrinkWrap: false,

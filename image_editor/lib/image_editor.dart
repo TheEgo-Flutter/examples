@@ -12,6 +12,7 @@ import 'ui/rect_clipper.dart';
 import 'utils/global.dart';
 import 'utils/layer_manager.dart';
 import 'utils/util.dart';
+import 'widget/color_button.dart';
 import 'widget/delete_icon.dart';
 import 'widget/draggable_resizable.dart';
 
@@ -200,16 +201,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             layerManager.removeLayerByKey(item.key);
           });
           (TextBoxInput, Offset)? result = await showGeneralDialog(
-            context: context,
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return RectClipper(
-                rect: cardBoxRect.expandToInclude(objectBoxRect),
-                child: TextEditor(
+              context: context,
+              barrierColor: Colors.transparent,
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return TextEditor(
                   textEditorStyle: item.object as TextBoxInput,
-                ),
-              );
-            },
-          );
+                );
+              });
+
           if (result != null) {
             layerManager.addLayer(
               item.copyWith(
@@ -271,10 +270,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                         context: context,
                         child: BackgroundSelector(
                           items: [
-                            ...List.generate(
-                              colors.length,
-                              (index) => BackgroundItem.color(colors[index]),
-                            ),
+                          
                             ...widget.backgrounds.map((image) => BackgroundItem.image(image)).toList(),
                           ],
                           galleryButton: const Icon(
@@ -392,10 +388,12 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.font_download_rounded),
                   onPressed: () async {
-                    (TextBoxInput, Offset)? result = await customFullSizeDialog(
-                      context: context,
-                      child: const TextEditor(),
-                    );
+                    (TextBoxInput, Offset)? result = await showGeneralDialog(
+                        context: context,
+                        barrierColor: Colors.transparent,
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return const TextEditor();
+                        });
 
                     setState(() {});
 

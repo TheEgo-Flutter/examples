@@ -3,22 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/utils/util.dart';
 
+// const _iconButton = IconButton(
+//   icon:  Icon(Icons.add),
+//   onPressed: null,
+// );
+// final iconButtonSize = _iconButton.constraints?.minHeight ?? 32.0;
 AspectRatioOption ratio = AspectRatioOption.r9x16;
 const Size device = Size(360.0, 800.0);
 // Expanded 내부의 Padding 값
 const EdgeInsets cardPadding = EdgeInsets.symmetric(horizontal: 16.0);
-List<Color> colors = [
-  Colors.black,
-  Colors.white,
-  Colors.red,
-  Colors.orange,
-  Colors.yellow,
-  Colors.cyan,
-  Colors.green,
-  Colors.blue,
-  Colors.indigo,
-  Colors.purple
-];
+
 final GlobalKey cardAreaKey = GlobalKey();
 Rect get cardBoxRect {
   final RenderBox? cardRenderBox = cardAreaKey.currentContext?.findRenderObject() as RenderBox?;
