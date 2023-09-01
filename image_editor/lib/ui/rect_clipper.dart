@@ -4,6 +4,7 @@ import 'package:image_editor/utils/utils.dart';
 Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required Widget child}) {
   return showModalBottomSheet(
     context: context,
+    isDismissible: true,
     constraints: BoxConstraints(
       maxWidth: objectBoxRect.width,
       maxHeight: objectBoxRect.height,

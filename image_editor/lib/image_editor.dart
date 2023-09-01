@@ -395,6 +395,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     });
                     customObjectBoxSizeDialog(
                         context: context,
+                        
                         child: StickerSelector(
                           items: widget.stickers,
                           onSelected: (child) {

@@ -96,6 +96,8 @@ class _TextEditorState extends State<TextEditor> {
         backgroundColor: textBackgroundColor,
         size: textFieldSize,
       );
+  double fontMin = 12;
+  double fontMax = 64;
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -109,24 +111,24 @@ class _TextEditorState extends State<TextEditor> {
             resizeToAvoidBottomInset: true,
             backgroundColor: Colors.black.withOpacity(0.2),
             body: SafeArea(
-              child: Center(
-                child: ValueListenableBuilder(
-                    valueListenable: bottomInsetNotifier,
-                    builder: (context, bottomInset, child) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
-                          /*
+              child: ValueListenableBuilder(
+                  valueListenable: bottomInsetNotifier,
+                  builder: (context, bottomInset, child) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
+                        /*
                         키보드 내려가면 뒤로가기 
                         */
-                          Navigator.canPop(context) ? Navigator.pop(context) : null;
-                        } else {
-                          isInitialBuild = false;
-                        }
-                      });
+                        Navigator.canPop(context) ? Navigator.pop(context) : null;
+                      } else {
+                        isInitialBuild = false;
+                      }
+                    });
 
-                      return Stack(
-                        children: [
-                          Column(
+                    return Stack(
+                      children: [
+                        Center(
+                          child: Column(
                             children: [
                               SizedBox(
                                 width: objectBoxRect.width,
@@ -239,31 +241,17 @@ class _TextEditorState extends State<TextEditor> {
                               ),
                             ],
                           ),
-                          Builder(builder: (context) {
-                            double sliderHeight = cardBoxRect.height * 0.5;
-                            double sliderWidth = cardBoxRect.width * 0.075;
-                            double fontMin = 12;
-                            double fontMax = 64;
-                            return Transform.translate(
-                              offset: Offset(
-                                  0,
-                                  (cardBoxRect.height + kToolbarHeight * 2) -
-                                      (cardBoxRect.height + (cardBoxRect.height * 0.5) + bottomInset) / 2),
-                              child: VerticalSlider(
-                                min: fontMin,
-                                max: fontMax,
-                                height: sliderHeight,
-                                width: sliderWidth,
-                                value: fontSize,
-                                thumbColor: customColors.accent!,
-                                onChanged: (double v) => setState(() => fontSize = v),
-                              ),
-                            );
-                          }),
-                        ],
-                      );
-                    }),
-              ),
+                        ),
+                        VerticalSlider(
+                          min: fontMin,
+                          max: fontMax,
+                          value: fontSize,
+                          thumbColor: customColors.accent!,
+                          onChanged: (double v) => setState(() => fontSize = v),
+                        ),
+                      ],
+                    );
+                  }),
             )));
   }
 
