@@ -12,6 +12,23 @@ AspectRatioOption ratio = AspectRatioOption.r9x16;
 const Size device = Size(360.0, 800.0);
 // Expanded 내부의 Padding 값
 const EdgeInsets cardPadding = EdgeInsets.symmetric(horizontal: 16.0);
+final GlobalKey toolBarAreaKey = GlobalKey();
+Rect get toolBarBoxRect {
+  final RenderBox? toolBarRenderBox = toolBarAreaKey.currentContext?.findRenderObject() as RenderBox?;
+  if (toolBarRenderBox != null) {
+    Offset offset = toolBarRenderBox.localToGlobal(Offset.zero);
+
+    // SafeArea의 padding 값
+    final EdgeInsets safeAreaPadding = MediaQuery.of(toolBarAreaKey.currentContext!).padding;
+
+    return Rect.fromLTWH(
+        offset.dx + safeAreaPadding.left,
+        offset.dy + safeAreaPadding.top,
+        toolBarRenderBox.size.width - safeAreaPadding.horizontal,
+        toolBarRenderBox.size.height - safeAreaPadding.vertical);
+  }
+  return Rect.zero;
+}
 
 final GlobalKey cardAreaKey = GlobalKey();
 Rect get cardBoxRect {

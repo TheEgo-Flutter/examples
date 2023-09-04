@@ -130,8 +130,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                         child: Column(
                           children: [
                             SizedBox(
-                              width: objectBoxRect.width,
+                              key: toolBarAreaKey,
                               height: kToolbarHeight,
+                              width: objectBoxRect.width,
                             ),
                             Expanded(
                               flex: cardFlex,
@@ -395,7 +396,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                     });
                     customObjectBoxSizeDialog(
                         context: context,
-                        
                         child: StickerSelector(
                           items: widget.stickers,
                           onSelected: (child) {
