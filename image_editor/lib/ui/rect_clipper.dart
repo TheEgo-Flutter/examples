@@ -1,6 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/utils/utils.dart';
 
+class TransformedWidget extends StatelessWidget {
+  final ThemeData? themeData;
+  final Widget? top;
+  final Widget main;
+  final Widget bottom;
+  final Widget? left;
+  final bool useWillPopScope;
+
+  const TransformedWidget({
+    super.key,
+    this.themeData,
+    this.top,
+    required this.main,
+    required this.bottom,
+    this.left,
+    this.useWillPopScope = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return themeData != null
+        ? Theme(
+            data: themeData!,
+            child: buildBody(context),
+          )
+        : buildBody(context);
+  }
+
+  Widget buildBody(BuildContext context) {
+    Widget body = Scaffold(
+      resizeToAvoidBottomInset: true,
+      body: Stack(children: [
+        Center(
+          child: Column(
+            children: [
+              if (top != null) top!,
+              main,
+              bottom,
+            ],
+          ),
+        ),
+        if (left != null) left!,
+        // Container(
+        //   //Random colors
+        //   color: colors[math.Random().nextInt(colors.length)],
+        //   width: cardBoxRect.width,
+        //   height: cardBoxRect.height,
+        //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
+        // )
+      ]),
+    );
+
+    if (useWillPopScope) {
+      return WillPopScope(onWillPop: () async => false, child: body);
+    }
+    return body;
+  }
+}
+
 Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required Widget child}) {
   return showModalBottomSheet(
     context: context,

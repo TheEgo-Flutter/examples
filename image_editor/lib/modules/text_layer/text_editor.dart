@@ -1,14 +1,14 @@
 import 'dart:developer';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_editor/ui/rect_clipper.dart';
+import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/utils/util.dart';
 import 'package:image_editor/widget/color_button.dart';
 import 'package:image_editor/widget/tool_bar.dart';
 import 'package:image_editor/widget/vertical_slider.dart';
 
-import '../../utils/custom_color.g.dart';
 import '../../utils/global.dart';
 import 'constants/constants.dart';
 
@@ -102,154 +102,130 @@ class _TextEditorState extends State<TextEditor> {
   double fontMax = 64;
   @override
   Widget build(BuildContext context) {
-    return Theme(
-        data: ThemeData().copyWith(
-          bottomSheetTheme: const BottomSheetThemeData(
-            backgroundColor: Colors.transparent,
-          ),
-          inputDecorationTheme: inputDecorationTheme,
-        ),
-        child: Scaffold(
-            resizeToAvoidBottomInset: true,
-            backgroundColor: Colors.black.withOpacity(0.2),
-            body: ValueListenableBuilder(
-                valueListenable: bottomInsetNotifier,
-                builder: (context, bottomInset, child) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
-                      /*
-                      키보드 내려가면 뒤로가기 
-                      */
-                      Navigator.canPop(context) ? Navigator.pop(context) : null;
-                    } else {
-                      isInitialBuild = false;
-                    }
-                  });
+    return ValueListenableBuilder(
+        valueListenable: bottomInsetNotifier,
+        builder: (context, bottomInset, child) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
+              /*
+                키보드 내려가면 뒤로가기 
+              */
+              Navigator.canPop(context) ? Navigator.pop(context) : null;
+            } else {
+              isInitialBuild = false;
+            }
+          });
 
-                  return Stack(
-                    children: [
-                      Center(
-                        child: Column(
+          return TransformedWidget(
+            themeData: ThemeData().copyWith(
+              scaffoldBackgroundColor: Colors.black.withOpacity(0.2),
+              bottomSheetTheme: const BottomSheetThemeData(
+                backgroundColor: Colors.black,
+              ),
+              inputDecorationTheme: inputDecorationTheme,
+            ),
+            top: GlobalToolBar(
+              onConfirmPressed: () {
+                if (textNotifier.value.isEmpty) {
+                  Navigator.pop(context);
+                } else {
+                  TextBoxInput result = input.copyWith(size: textBoxRect.size);
+                  Navigator.pop(context, (result, textBoxRect.topLeft));
+                }
+              },
+            ),
+            main: Center(
+              child: Expanded(
+                child: SizedBox(
+                  width: cardBoxRect.width,
+                  // height: cardBoxRect.height,
+                  child: Center(
+                    child: Align(
+                      alignment: align == TextAlign.center
+                          ? Alignment.center
+                          : align == TextAlign.left
+                              ? Alignment.centerLeft
+                              : Alignment.centerRight,
+                      child: ValueListenableBuilder<String>(
+                          valueListenable: textNotifier,
+                          builder: (context, text, child) {
+                            return TextBox(
+                              key: textBoxKey,
+                              isReadOnly: false,
+                              input: input,
+                              onChanged: (value) => textNotifier.value = value,
+                            );
+                          }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            bottom: Expanded(
+              child: SizedBox(
+                width: objectBoxRect.width,
+                // color: Colors.black,
+                child: GestureDetector(
+                  onTapDown: (_) {
+                    log("onTapDown");
+                    isEditing = true;
+                  },
+                  onTapUp: (_) {
+                    log("onTapUp");
+                    isEditing = false;
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    width: objectBoxRect.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  SizedBox(
-                                    width: cardBoxRect.width,
-                                    // height: cardBoxRect.height,
-                                    child: Center(
-                                      child: Align(
-                                        alignment: align == TextAlign.center
-                                            ? Alignment.center
-                                            : align == TextAlign.left
-                                                ? Alignment.centerLeft
-                                                : Alignment.centerRight,
-                                        child: ValueListenableBuilder<String>(
-                                            valueListenable: textNotifier,
-                                            builder: (context, text, child) {
-                                              return TextBox(
-                                                key: textBoxKey,
-                                                isReadOnly: false,
-                                                input: input,
-                                                onChanged: (value) => textNotifier.value = value,
-                                              );
-                                            }),
-                                      ),
-                                    ),
-                                  ),
-                                  GlobalToolBar(
-                                    onConfirmPressed: () {
-                                      if (textNotifier.value.isEmpty) {
-                                        Navigator.pop(context);
-                                      } else {
-                                        TextBoxInput result = input.copyWith(size: textBoxRect.size);
-                                        Navigator.pop(context, (result, textBoxRect.topLeft));
-                                      }
-                                    },
-                                  )
-                                ],
-                              ),
+                            IconButton(
+                              icon: Icon(icon),
+                              onPressed: _toggleAlign,
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(4),
                             ),
-                            Expanded(
-                              child: SizedBox(
-                                width: objectBoxRect.width,
-                                // color: Colors.black,
-                                child: GestureDetector(
-                                  onTapDown: (_) {
-                                    log("onTapDown");
-                                    isEditing = true;
-                                  },
-                                  onTapUp: (_) {
-                                    log("onTapUp");
-                                    isEditing = false;
-                                  },
-                                  child: Container(
-                                    color: Colors.transparent,
-                                    width: objectBoxRect.width,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            IconButton(
-                                              icon: Icon(icon),
-                                              onPressed: _toggleAlign,
-                                              color: Colors.white,
-                                              padding: const EdgeInsets.all(4),
-                                            ),
-                                            IconButton(
-                                              icon: isFontBarVisible
-                                                  ? rainbowColorButton()
-                                                  : const Icon(Icons.text_fields),
-                                              onPressed: () {
-                                                setState(() {
-                                                  isFontBarVisible = !isFontBarVisible;
-                                                });
-                                              },
-                                              color: Colors.white,
-                                              padding: const EdgeInsets.all(4),
-                                            ),
-                                          ],
-                                        ),
-                                        isFontBarVisible
-                                            ? Container(
-                                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                                child: _fontBar(context))
-                                            : ColorBar(
-                                                initialColor: currentColor,
-                                                onColorChanged: (value) {
-                                                  setState(() {
-                                                    currentColor = value;
-                                                  });
-                                                },
-                                              ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            IconButton(
+                              icon: isFontBarVisible ? rainbowColorButton() : const Icon(Icons.text_fields),
+                              onPressed: () {
+                                setState(() {
+                                  isFontBarVisible = !isFontBarVisible;
+                                });
+                              },
+                              color: Colors.white,
+                              padding: const EdgeInsets.all(4),
                             ),
                           ],
                         ),
-                      ),
-                      VerticalSlider(
-                        min: fontMin,
-                        max: fontMax,
-                        value: fontSize,
-                        thumbColor: customColors.accent!,
-                        onChanged: (double v) => setState(() => fontSize = v),
-                      ),
-                      // Container(
-                      //   //Random colors
-                      //   color: colors[math.Random().nextInt(colors.length)],
-                      //   width: cardBoxRect.width,
-                      //   height: cardBoxRect.height,
-                      //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
-                      // )
-                    ],
-                  );
-                })));
+                        isFontBarVisible
+                            ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
+                            : ColorBar(
+                                initialColor: currentColor,
+                                onColorChanged: (value) {
+                                  setState(() {
+                                    currentColor = value;
+                                  });
+                                },
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            left: VerticalSlider(
+              min: fontMin,
+              max: fontMax,
+              value: fontSize,
+              thumbColor: customColors.accent!,
+              onChanged: (double v) => setState(() => fontSize = v),
+            ),
+          );
+        });
   }
 
   Widget rainbowColorButton() => Container(
