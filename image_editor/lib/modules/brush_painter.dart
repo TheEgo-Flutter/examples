@@ -79,8 +79,8 @@ class _BrushPainterState extends State<BrushPainter> {
           child: DrawingBoard(
             controller: _drawingController,
             background: Container(
-              width: cardBoxRect.size.width,
-              height: cardBoxRect.size.height,
+              width: cardBoxRect.width,
+              height: cardBoxRect.height,
               color: Colors.transparent,
             ),
             boardPanEnabled: false,
