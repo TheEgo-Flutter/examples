@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_editor/utils/util.dart';
 import 'package:image_editor/widget/color_button.dart';
+import 'package:image_editor/widget/tool_bar.dart';
 import 'package:image_editor/widget/vertical_slider.dart';
 
 import '../../utils/custom_color.g.dart';
@@ -130,17 +131,34 @@ class _TextEditorState extends State<TextEditor> {
                         Center(
                           child: Column(
                             children: [
-                              SizedBox(
-                                width: objectBoxRect.width,
-                                height: kToolbarHeight,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              Expanded(
+                                child: Stack(
                                   children: [
-                                    const BackButton(
-                                      color: Colors.white,
+                                    SizedBox(
+                                      width: cardBoxRect.width,
+                                      // height: cardBoxRect.height,
+                                      child: Center(
+                                        child: Align(
+                                          alignment: align == TextAlign.center
+                                              ? Alignment.center
+                                              : align == TextAlign.left
+                                                  ? Alignment.centerLeft
+                                                  : Alignment.centerRight,
+                                          child: ValueListenableBuilder<String>(
+                                              valueListenable: textNotifier,
+                                              builder: (context, text, child) {
+                                                return TextBox(
+                                                  key: textBoxKey,
+                                                  isReadOnly: false,
+                                                  input: input,
+                                                  onChanged: (value) => textNotifier.value = value,
+                                                );
+                                              }),
+                                        ),
+                                      ),
                                     ),
-                                    IconButton(
-                                      onPressed: () {
+                                    GlobalToolBar(
+                                      onConfirmPressed: () {
                                         if (textNotifier.value.isEmpty) {
                                           Navigator.pop(context);
                                         } else {
@@ -148,35 +166,8 @@ class _TextEditorState extends State<TextEditor> {
                                           Navigator.pop(context, (result, textBoxRect.topLeft));
                                         }
                                       },
-                                      icon: const Icon(Icons.check),
-                                      color: Colors.white,
-                                    ),
+                                    )
                                   ],
-                                ),
-                              ),
-                              Expanded(
-                                child: SizedBox(
-                                  width: cardBoxRect.width,
-                                  // height: cardBoxRect.height,
-                                  child: Center(
-                                    child: Align(
-                                      alignment: align == TextAlign.center
-                                          ? Alignment.center
-                                          : align == TextAlign.left
-                                              ? Alignment.centerLeft
-                                              : Alignment.centerRight,
-                                      child: ValueListenableBuilder<String>(
-                                          valueListenable: textNotifier,
-                                          builder: (context, text, child) {
-                                            return TextBox(
-                                              key: textBoxKey,
-                                              isReadOnly: false,
-                                              input: input,
-                                              onChanged: (value) => textNotifier.value = value,
-                                            );
-                                          }),
-                                    ),
-                                  ),
                                 ),
                               ),
                               Expanded(

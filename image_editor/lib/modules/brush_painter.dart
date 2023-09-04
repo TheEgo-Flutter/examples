@@ -6,6 +6,7 @@ import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:image_editor/ui/rect.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/widget/color_button.dart';
+import 'package:image_editor/widget/tool_bar.dart';
 
 import '../utils/global.dart';
 import '../widget/vertical_slider.dart';
@@ -57,7 +58,7 @@ class _BrushPainterState extends State<BrushPainter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         backgroundColor: Colors.transparent,
         body: SafeArea(
           child: ClipPath(
@@ -66,25 +67,11 @@ class _BrushPainterState extends State<BrushPainter> {
                 Center(
                   child: Column(
                     children: [
-                      SizedBox(
-                        width: objectBoxRect.width,
-                        height: kToolbarHeight,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const BackButton(
-                              color: Colors.white,
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
-                                _getImageData(context);
-                              },
-                              icon: const Icon(Icons.check),
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
+                      GlobalToolBar(
+                        onConfirmPressed: () {
+                          drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
+                          _getImageData(context);
+                        },
                       ),
                       ClipPath(
                         clipper: CardBoxClip(aspectRatio: ratio),
