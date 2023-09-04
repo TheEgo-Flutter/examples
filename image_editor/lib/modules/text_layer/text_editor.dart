@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_editor/ui/rect_clipper.dart';
@@ -68,12 +69,12 @@ class _TextEditorState extends State<TextEditor> {
   IconData get icon {
     switch (align) {
       case TextAlign.left:
-        return Icons.align_horizontal_left;
+        return DUIcons.align_left;
       case TextAlign.right:
-        return Icons.align_horizontal_right;
+        return DUIcons.align_right;
       case TextAlign.center:
       default:
-        return Icons.align_horizontal_center;
+        return DUIcons.align_center;
     }
   }
 
@@ -190,7 +191,7 @@ class _TextEditorState extends State<TextEditor> {
                               padding: const EdgeInsets.all(4),
                             ),
                             IconButton(
-                              icon: isFontBarVisible ? rainbowColorButton() : const Icon(Icons.text_fields),
+                              icon: isFontBarVisible ? rainbowColorButton() : const Icon(DUIcons.text),
                               onPressed: () {
                                 setState(() {
                                   isFontBarVisible = !isFontBarVisible;
@@ -254,7 +255,7 @@ class _TextEditorState extends State<TextEditor> {
 /*
 text effects
     IconButton(
-      icon: const Icon(Icons.format_color_text_sharp),
+      icon: const Icon(DUIcons.format_color_text_sharp),
       onPressed: () {
         setState(() {
           textBackgroundColor = textBackgroundColor == Colors.transparent

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:du_icons/du_icons.dart';
 
 import '../utils/global.dart';
 
@@ -23,7 +24,7 @@ class DeleteIconButton extends StatelessWidget {
             color: Colors.white,
           ),
           child: Icon(
-            Icons.delete,
+            DUIcons.trash_empty,
             color: Colors.green[900],
           ),
         ),

@@ -105,6 +105,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.0"
+  du_icons:
+    dependency: "direct main"
+    description:
+      path: du_icons
+      ref: HEAD
+      resolved-ref: "3859331943c690df7b1ec931a411cb5daeaf753c"
+      url: "https://github.com/the-ego/samples.git"
+    source: git
+    version: "0.1.0"
   fake_async:
     dependency: transitive
     description:

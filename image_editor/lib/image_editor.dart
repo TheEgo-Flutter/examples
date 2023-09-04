@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:du_icons/du_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
@@ -272,7 +273,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 child: IconButton(
                   padding: const EdgeInsets.all(4.0),
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.image),
+                  icon: const Icon(DUIcons.picture),
                   onPressed: () {
                     setState(() {
                       _selectedType = LayerType.background;
@@ -323,7 +324,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                       layerManager.addLayer(imageBackground);
                                     },
                                     child: const Icon(
-                                      Icons.image_outlined,
+                                      DUIcons.picture,
                                       color: Colors.white,
                                     )),
                                 onItemSelected: (child) async {
@@ -352,7 +353,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 child: IconButton(
                   padding: const EdgeInsets.all(4.0),
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.texture_outlined),
+                  icon: const Icon(DUIcons.tool_marquee),
                   onPressed: () {
                     setState(() {
                       _selectedType = LayerType.frame;
@@ -373,7 +374,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                               setState(() {});
                             },
                             child: const Icon(
-                              Icons.not_interested,
+                              DUIcons.ban,
                               color: Colors.white,
                             ),
                           ),
@@ -398,7 +399,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 child: IconButton(
                   padding: const EdgeInsets.all(4.0),
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.face),
+                  icon: const Icon(DUIcons.sticker),
                   onPressed: () {
                     setState(() {
                       _selectedType = LayerType.sticker;
@@ -433,7 +434,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 child: IconButton(
                   padding: const EdgeInsets.all(4.0),
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.font_download_rounded),
+                  icon: const Icon(DUIcons.letter_case),
                   onPressed: () async {
                     (TextBoxInput, Offset)? result = await showGeneralDialog(
                         context: context,
@@ -462,7 +463,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 child: IconButton(
                   padding: const EdgeInsets.all(4.0),
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.brush),
+                  icon: const Icon(DUIcons.paint_brush),
                   onPressed: () async {
                     (Uint8List?, Size?)? data = await showGeneralDialog(
                       context: context,
@@ -504,11 +505,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   child: IconButton(
                     padding: const EdgeInsets.all(4.0),
                     constraints: const BoxConstraints(),
-                    icon: Transform.translate(
-                      offset: const Offset(5, 0),
-                      child: const Icon(
-                        Icons.arrow_back_ios,
-                      ),
+                    icon: const Icon(
+                      DUIcons.back,
                     ),
                     onPressed: () {
                       Navigator.canPop(context) ? Navigator.pop(context) : null;
