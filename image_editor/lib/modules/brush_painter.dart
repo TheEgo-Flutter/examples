@@ -60,92 +60,95 @@ class _BrushPainterState extends State<BrushPainter> {
     return Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: ClipPath(
-            child: Stack(
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      GlobalToolBar(
-                        onConfirmPressed: () {
-                          drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
-                          _getImageData(context);
-                        },
-                      ),
-                      ClipPath(
-                        clipper: CardBoxClip(aspectRatio: ratio),
-                        child: SizedBox(
-                          width: cardBoxRect.width,
-                          height: cardBoxRect.height,
-                          child: DrawingBoard(
-                            controller: _drawingController,
-                            background: Container(
-                              width: cardBoxRect.size.width,
-                              height: cardBoxRect.size.height,
-                              color: Colors.transparent,
-                            ),
-                            boardPanEnabled: false,
-                            boardScaleEnabled: false,
-                            showDefaultActions: false,
-                            showDefaultTools: false,
-                          ),
+        body: Stack(
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  GlobalToolBar(
+                    onConfirmPressed: () {
+                      drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
+                      _getImageData(context);
+                    },
+                  ),
+                  ClipPath(
+                    clipper: CardBoxClip(aspectRatio: ratio),
+                    child: SizedBox(
+                      width: cardBoxRect.width,
+                      height: cardBoxRect.height,
+                      child: DrawingBoard(
+                        controller: _drawingController,
+                        background: Container(
+                          width: cardBoxRect.size.width,
+                          height: cardBoxRect.size.height,
+                          color: Colors.transparent,
                         ),
+                        boardPanEnabled: false,
+                        boardScaleEnabled: false,
+                        showDefaultActions: false,
+                        showDefaultTools: false,
                       ),
-                      Expanded(
-                        child: ClipPath(
-                          clipper: CardBoxClip(),
-                          child: Container(
-                            width: objectBoxRect.width,
-                            color: Colors.black,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                    ),
+                  ),
+                  Expanded(
+                    child: ClipPath(
+                      clipper: CardBoxClip(),
+                      child: Container(
+                        width: objectBoxRect.width,
+                        color: Colors.black,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => _drawingController.undo(),
-                                      icon: const Icon(Icons.undo),
-                                      color: Colors.white,
-                                    ),
-                                    IconButton(
-                                      onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
-                                      icon: const Icon(Icons.remove),
-                                      color: Colors.white,
-                                    )
-                                  ],
+                                IconButton(
+                                  onPressed: () => _drawingController.undo(),
+                                  icon: const Icon(Icons.undo),
+                                  color: Colors.white,
                                 ),
-                                ColorBar(
-                                  onColorChanged: changeColor,
-                                  initialColor: _drawingController.getColor,
-                                ),
+                                IconButton(
+                                  onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
+                                  icon: const Icon(Icons.remove),
+                                  color: Colors.white,
+                                )
                               ],
                             ),
-                          ),
+                            ColorBar(
+                              onColorChanged: changeColor,
+                              initialColor: _drawingController.getColor,
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                ExValueBuilder<DrawConfig>(
-                  valueListenable: _drawingController.drawConfig,
-                  shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
-                  builder: (_, DrawConfig dc, ___) {
-                    return VerticalSlider(
-                      min: min,
-                      max: max,
-                      value: dc.strokeWidth,
-                      thumbColor: customColors.accent!,
-                      onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
-                    );
-                  },
-                )
-              ],
+                ],
+              ),
             ),
-          ),
+            ExValueBuilder<DrawConfig>(
+              valueListenable: _drawingController.drawConfig,
+              shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
+              builder: (_, DrawConfig dc, ___) {
+                return VerticalSlider(
+                  min: min,
+                  max: max,
+                  value: dc.strokeWidth,
+                  thumbColor: customColors.accent!,
+                  onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+                );
+              },
+            ),
+            // Container(
+            //   //Random colors
+            //   color: colors[math.Random().nextInt(colors.length)],
+            //   width: cardBoxRect.width,
+            //   height: cardBoxRect.height,
+            //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
+            // )
+          ],
         ));
   }
 }

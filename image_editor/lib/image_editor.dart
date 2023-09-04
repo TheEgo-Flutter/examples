@@ -116,56 +116,65 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               resizeToAvoidBottomInset: false,
               key: scaffoldGlobalKey,
               backgroundColor: Theme.of(context).canvasColor,
-              body: SafeArea(
-                child: Center(
-                  child: LayoutBuilder(
+              body: Stack(
+                children: [
+                  LayoutBuilder(
                     builder: (context, constraints) {
                       double space = 8;
                       int cardFlex = 75;
                       double maxWidth =
                           (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
-                      return SizedBox(
-                        width: maxWidth,
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              key: toolBarAreaKey,
-                              height: kToolbarHeight,
-                              width: objectBoxRect.width,
-                            ),
-                            Expanded(
-                              flex: cardFlex,
-                              child: Padding(
-                                padding: cardPadding,
-                                child: Render(
-                                  controller: renderController,
-                                  child: ClipPath(
-                                    key: cardAreaKey,
-                                    clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                                    child: buildImageLayer(context),
+                      return Center(
+                        child: SizedBox(
+                          width: maxWidth,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                key: toolBarAreaKey,
+                                height: kToolbarHeight,
+                                width: objectBoxRect.width,
+                              ),
+                              Expanded(
+                                flex: cardFlex,
+                                child: Padding(
+                                  padding: cardPadding,
+                                  child: Render(
+                                    controller: renderController,
+                                    child: ClipPath(
+                                      key: cardAreaKey,
+                                      clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                      child: buildImageLayer(context),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            SizedBox(height: space),
-                            Expanded(
-                              flex: 100 - cardFlex,
-                              child: SizedBox(
-                                width: maxWidth,
-                                child: ClipPath(
-                                  key: objectAreaKey,
-                                  clipper: CardBoxClip(),
-                                  child: buildItemArea(),
+                              SizedBox(height: space),
+                              Expanded(
+                                flex: 100 - cardFlex,
+                                child: SizedBox(
+                                  width: maxWidth,
+                                  child: ClipPath(
+                                    key: objectAreaKey,
+                                    clipper: CardBoxClip(),
+                                    child: buildItemArea(),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
                   ),
-                ),
+                  // Container(
+                  //   //Random colors
+                  //   color: colors[Random().nextInt(colors.length)],
+                  //   width: cardBoxRect.width,
+                  //   height: cardBoxRect.height,
+                  //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
+                  // )
+                ],
               ),
             ));
       }),

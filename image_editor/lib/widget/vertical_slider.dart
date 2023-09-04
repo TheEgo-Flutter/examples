@@ -32,9 +32,14 @@ class _VerticalSliderState extends State<VerticalSlider> {
 
   double get width => cardBoxRect.width * 0.08;
   double get height => cardBoxRect.height * 0.5;
-  double defaultTop(double inset) {
-    inset > cardBoxRect.bottom ? inset = 0 : inset = inset;
-    return cardBoxRect.top + ((cardBoxRect.height - inset) * 0.25);
+  double get defaultTop {
+    double blockedHeight = bottomInsetNotifier.value - cardBoxRect.top - cardBoxRect.height;
+
+    if (blockedHeight > 0.0) {
+      return cardBoxRect.top + (cardBoxRect.height * 0.25) + (blockedHeight / 2);
+    } else {
+      return cardBoxRect.top + (cardBoxRect.height * 0.25);
+    }
   }
 
   @override
@@ -46,62 +51,54 @@ class _VerticalSliderState extends State<VerticalSlider> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ValueListenableBuilder(
-            valueListenable: bottomInsetNotifier,
-            builder: (context, bottomInset, child) {
-              return AnimatedPositioned(
-                left: leftPosition,
-                top: defaultTop(bottomInset),
-                duration: const Duration(milliseconds: 200),
-                child: GestureDetector(
-                  onScaleStart: (details) {
-                    setState(() {
-                      leftPosition = cardBoxRect.left + (width / 2);
-                    });
-                  },
-                  onScaleEnd: (details) {
-                    setState(() {
-                      leftPosition = objectBoxRect.left - (width / 2);
-                    });
-                  },
-                  onScaleUpdate: (details) {
-                    final dy = details.localFocalPoint.dy.clamp(0, height);
-                    setState(() {
-                      _currentValue = widget.min + (widget.max - widget.min) * (1 - (dy / height));
+    return AnimatedPositioned(
+      left: leftPosition,
+      top: defaultTop,
+      duration: const Duration(milliseconds: 200),
+      child: GestureDetector(
+        onScaleStart: (details) {
+          setState(() {
+            leftPosition = cardBoxRect.left + (width / 2);
+          });
+        },
+        onScaleEnd: (details) {
+          setState(() {
+            leftPosition = objectBoxRect.left - (width / 2);
+          });
+        },
+        onScaleUpdate: (details) {
+          final dy = details.localFocalPoint.dy.clamp(0, height);
+          setState(() {
+            _currentValue = widget.min + (widget.max - widget.min) * (1 - (dy / height));
 
-                      // max 값에 도달했을 때의 진동 조건
-                      if (_currentValue == widget.max && !_maxVibrationTriggered) {
-                        HapticFeedback.lightImpact();
-                        _maxVibrationTriggered = true;
-                      } else if (_currentValue < widget.max) {
-                        _maxVibrationTriggered = false;
-                      }
+            // max 값에 도달했을 때의 진동 조건
+            if (_currentValue == widget.max && !_maxVibrationTriggered) {
+              HapticFeedback.lightImpact();
+              _maxVibrationTriggered = true;
+            } else if (_currentValue < widget.max) {
+              _maxVibrationTriggered = false;
+            }
 
-                      // min 값에 도달했을 때의 진동 조건
-                      if (_currentValue == widget.min && !_minVibrationTriggered) {
-                        HapticFeedback.lightImpact();
-                        _minVibrationTriggered = true;
-                      } else if (_currentValue > widget.min) {
-                        _minVibrationTriggered = false;
-                      }
+            // min 값에 도달했을 때의 진동 조건
+            if (_currentValue == widget.min && !_minVibrationTriggered) {
+              HapticFeedback.lightImpact();
+              _minVibrationTriggered = true;
+            } else if (_currentValue > widget.min) {
+              _minVibrationTriggered = false;
+            }
 
-                      widget.onChanged(_currentValue);
-                    });
-                  },
-                  child: SizedBox(
-                    width: width,
-                    height: height,
-                    child: CustomPaint(
-                      painter: _SliderPainter(
-                          _currentValue, widget.min, widget.max, widget.thumbColor, widget.trackColor.withOpacity(0.5)),
-                    ),
-                  ),
-                ),
-              );
-            }),
-      ],
+            widget.onChanged(_currentValue);
+          });
+        },
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: CustomPaint(
+            painter: _SliderPainter(
+                _currentValue, widget.min, widget.max, widget.thumbColor, widget.trackColor.withOpacity(0.5)),
+          ),
+        ),
+      ),
     );
   }
 }
