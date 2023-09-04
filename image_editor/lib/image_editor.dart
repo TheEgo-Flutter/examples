@@ -1,8 +1,9 @@
 import 'dart:async';
 
+import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:du_icons/du_icons.dart';
+import 'package:image_editor/widget/video_container.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
@@ -260,7 +261,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   Widget buildItemArea() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -493,34 +494,31 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             ],
           ),
         ),
+        const SizedBox(
+          height: 16,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 50.0),
           child: Stack(
+            alignment: AlignmentDirectional.centerStart,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: CircleAvatar(
-                  backgroundColor: Colors.grey[850],
-                  foregroundColor: Colors.white,
-                  child: IconButton(
-                    padding: const EdgeInsets.all(4.0),
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      DUIcons.back,
-                    ),
-                    onPressed: () {
-                      Navigator.canPop(context) ? Navigator.pop(context) : null;
-                    },
+              CircleAvatar(
+                backgroundColor: Colors.grey[850],
+                foregroundColor: Colors.white,
+                child: IconButton(
+                  padding: const EdgeInsets.all(4.0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(
+                    DUIcons.back,
                   ),
+                  onPressed: () {
+                    Navigator.canPop(context) ? Navigator.pop(context) : null;
+                  },
                 ),
               ),
               Center(
-                child: CircleAvatar(
-                  foregroundColor: Colors.grey[850],
-                  backgroundColor: Colors.white,
-                  child: IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () async {
+                child: GestureDetector(
+                    onTap: () async {
                       final stream = renderController.captureMotionWithStream(
                         const Duration(seconds: 5),
                         settings: const MotionSettings(
@@ -538,15 +536,11 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
                       if (mounted) Navigator.pop(context, (result as RenderResult).output);
                     },
-                  ),
-                ),
+                    child: const VideoContainer()),
               ),
             ],
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 30.0),
-        )
       ],
     );
   }
