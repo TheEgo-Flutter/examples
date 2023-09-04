@@ -25,3 +25,7 @@ flutter:
     - assets/stickers/
     - assets/backgrounds/
     - assets/frames/
+  fonts:
+  - family: DUIcons
+    fonts:
+      - asset: icon/DUIcons.ttf
