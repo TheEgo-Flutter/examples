@@ -48,7 +48,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom]);
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
   }
@@ -62,7 +61,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   void dispose() {
     layerManager.layers.clear();
     WidgetsBinding.instance.removeObserver(this);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
   }
 
