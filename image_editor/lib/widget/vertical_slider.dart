@@ -32,15 +32,7 @@ class _VerticalSliderState extends State<VerticalSlider> {
 
   double get width => cardBoxRect.width * 0.08;
   double get height => cardBoxRect.height * 0.5;
-  double get defaultTop {
-    double blockedHeight = bottomInsetNotifier.value - cardBoxRect.top - cardBoxRect.height;
-
-    if (blockedHeight > 0.0) {
-      return cardBoxRect.top + (cardBoxRect.height * 0.25) + (blockedHeight / 2);
-    } else {
-      return cardBoxRect.top + (cardBoxRect.height * 0.25);
-    }
-  }
+  double get defaultTop => cardBoxRect.top + ((cardBoxRect.height * 0.25) - (bottomInsetNotifier.value * 0.25));
 
   @override
   void initState() {
