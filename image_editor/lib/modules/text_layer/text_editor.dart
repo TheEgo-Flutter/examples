@@ -3,14 +3,11 @@ import 'dart:developer';
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_editor/ui/rect_clipper.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
-import 'package:image_editor/utils/util.dart';
-import 'package:image_editor/widget/color_button.dart';
 import 'package:image_editor/widget/tool_bar.dart';
 import 'package:image_editor/widget/vertical_slider.dart';
 
-import '../../utils/global.dart';
+import '../../lib.dart';
 import 'constants/constants.dart';
 
 class TextEditor extends StatefulWidget {
@@ -46,8 +43,8 @@ class _TextEditorState extends State<TextEditor> {
     if (renderBox == null) {
       return Rect.zero;
     }
-    log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(cardBoxRect.topLeft)}\t${renderBox.localToGlobal(cardBoxRect.topLeft)}');
-    return renderBox.localToGlobal(Offset.zero) - cardBoxRect.topLeft & renderBox.size;
+    log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(GlobalRect().cardRect.topLeft)}\t${renderBox.localToGlobal(GlobalRect().cardRect.topLeft)}');
+    return renderBox.localToGlobal(Offset.zero) - GlobalRect().cardRect.topLeft & renderBox.size;
   }
 
   TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
@@ -137,8 +134,8 @@ class _TextEditorState extends State<TextEditor> {
             ),
             main: Expanded(
               child: SizedBox(
-                width: cardBoxRect.width,
-                // height: cardBoxRect.height,
+                width: GlobalRect().cardRect.width,
+                // height: GlobalRect().cardRect.height,
                 child: Center(
                   child: Align(
                     alignment: align == TextAlign.center
@@ -161,7 +158,7 @@ class _TextEditorState extends State<TextEditor> {
               ),
             ),
             bottom: SizedBox(
-              width: objectBoxRect.width,
+              width: GlobalRect().objectRect.width,
               // color: Colors.black,
               child: GestureDetector(
                 onTapDown: (_) {
@@ -174,7 +171,7 @@ class _TextEditorState extends State<TextEditor> {
                 },
                 child: Container(
                   color: Colors.transparent,
-                  width: objectBoxRect.width,
+                  width: GlobalRect().objectRect.width,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

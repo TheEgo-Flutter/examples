@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'global.dart';
+import '../lib.dart';
 
 enum LayerType { sticker, text, drawing, selectImage, backgroundImage, backgroundColor, frame }
 
@@ -42,7 +42,7 @@ class LayerItem {
     required this.object,
     Rect? rect,
     this.angle = 0,
-  }) : rect = rect ?? Rect.fromCenter(center: cardBoxRect.center, width: 0, height: 0);
+  }) : rect = rect ?? Rect.fromCenter(center: GlobalRect().cardRect.center, width: 0, height: 0);
 
   LayerItem copyWith({
     Rect? rect,

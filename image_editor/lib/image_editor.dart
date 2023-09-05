@@ -3,23 +3,14 @@ import 'dart:async';
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_editor/widget/video_container.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
 
-import 'modules/modules.dart';
-import 'ui/rect.dart';
-import 'ui/rect_clipper.dart';
-import 'utils/global.dart';
-import 'utils/layer_manager.dart';
-import 'utils/util.dart';
-import 'widget/color_button.dart';
-import 'widget/delete_icon.dart';
-import 'widget/draggable_resizable.dart';
+import 'lib.dart';
 
-class ImageEditor extends StatefulWidget {
+class ImageEditor extends StatelessWidget {
   final List<Uint8List> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
@@ -34,10 +25,50 @@ class ImageEditor extends StatefulWidget {
   });
 
   @override
-  State<ImageEditor> createState() => _ImageEditorState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: theme,
+      builder: (context, child) {
+        return SafeArea(
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: child,
+            ),
+          ),
+        );
+      },
+      home: _ImageEditorView(
+        stickers: stickers,
+        backgrounds: backgrounds,
+        frames: frames,
+        aspectRatio: aspectRatio,
+      ),
+    );
+  }
 }
 
-class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _ImageEditorView extends StatefulWidget {
+  final List<Uint8List> stickers;
+  final List<ImageProvider> backgrounds;
+  final List<ImageProvider> frames;
+  final AspectRatioOption aspectRatio;
+
+  const _ImageEditorView({
+    super.key,
+    this.stickers = const [],
+    this.backgrounds = const [],
+    this.frames = const [],
+    this.aspectRatio = AspectRatioOption.r9x16,
+  });
+
+  @override
+  State<_ImageEditorView> createState() => _ImageEditorViewState();
+}
+
+class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingObserver, TickerProviderStateMixin {
   Size get view => MediaQuery.of(context).size;
   LayerType? _selectedType;
   LayerManager layerManager = LayerManager();
@@ -50,6 +81,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     super.initState();
     gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _captureRects();
+    });
   }
 
   @override
@@ -62,6 +96,13 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     layerManager.layers.clear();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _captureRects() {
+    GlobalRect().cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey);
+    GlobalRect().objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey);
+    // GlobalRect().toolBarRect = GlobalRect().getRect(GlobalRect().toolBarAreaKey);
+    // GlobalRect().deleteRect = GlobalRect().getRect(GlobalRect().deleteAreaKey);
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {
@@ -94,7 +135,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     bool isDragging,
   ) async {
     if (!(selectedLayerItem?.isObject ?? false)) return;
-    if (!deleteAreaRect.contains(currentFingerPosition)) return;
+    if (!GlobalRect().deleteRect.contains(currentFingerPosition)) return;
     if (isDragging) {
       if (await Vibration.hasVibrator() ?? false) {
         Vibration.vibrate(amplitude: 100);
@@ -109,77 +150,72 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: theme,
-      home: Builder(builder: (context) {
-        return WillPopScope(
-            onWillPop: () async => false,
-            child: Scaffold(
-              resizeToAvoidBottomInset: false,
-              key: scaffoldGlobalKey,
-              backgroundColor: Theme.of(context).canvasColor,
-              body: Stack(
-                children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      double space = 8;
-                      int cardFlex = 75;
-                      double maxWidth =
-                          (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        key: scaffoldGlobalKey,
+        backgroundColor: Theme.of(context).canvasColor,
+        body: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                double space = 8;
+                int cardFlex = 75;
+                double maxWidth = (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
-                      return Center(
-                        child: SizedBox(
-                          width: maxWidth,
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                key: toolBarAreaKey,
-                                height: kToolbarHeight,
-                                width: objectBoxRect.width,
+                return Center(
+                  child: SizedBox(
+                    width: maxWidth,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          key: GlobalRect().toolBarAreaKey,
+                          height: kToolbarHeight,
+                          width: GlobalRect().objectRect.width,
+                        ),
+                        Expanded(
+                          flex: cardFlex,
+                          child: Padding(
+                            padding: cardPadding,
+                            child: ClipPath(
+                              key: GlobalRect().cardAreaKey,
+                              clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                              child: Render(
+                                controller: renderController,
+                                child: buildImageLayer(context),
                               ),
-                              Expanded(
-                                flex: cardFlex,
-                                child: Padding(
-                                  padding: cardPadding,
-                                  child: ClipPath(
-                                    key: cardAreaKey,
-                                    clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                                    child: Render(
-                                      controller: renderController,
-                                      child: buildImageLayer(context),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: space),
-                              Expanded(
-                                flex: 100 - cardFlex,
-                                child: SizedBox(
-                                  width: maxWidth,
-                                  child: ClipPath(
-                                    key: objectAreaKey,
-                                    clipper: CardBoxClip(),
-                                    child: buildItemArea(),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    },
+                        SizedBox(height: space),
+                        Expanded(
+                          flex: 100 - cardFlex,
+                          child: SizedBox(
+                            width: maxWidth,
+                            child: ClipPath(
+                              key: GlobalRect().objectAreaKey,
+                              clipper: CardBoxClip(),
+                              child: buildItemArea(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  // Container(
-                  //   //Random colors
-                  //   color: colors[Random().nextInt(colors.length)],
-                  //   width: cardBoxRect.width,
-                  //   height: cardBoxRect.height,
-                  //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
-                  // )
-                ],
-              ),
-            ));
-      }),
+                );
+              },
+            ),
+            // Container(
+            //   //Random colors
+            //   color: colors[Random().nextInt(colors.length)],
+            //   width: GlobalRect().cardRect.width,
+            //   height: GlobalRect().cardRect.height,
+            //   transform: Matrix4.translationValues(GlobalRect().cardRect.left, GlobalRect().cardRect.top, 0),
+            // )
+          ],
+        ),
+      ),
     );
   }
 
@@ -195,6 +231,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         children: [
           ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
           DeleteIconButton(
+            key: GlobalRect().deleteAreaKey,
             visible: selectedLayerItem?.isObject ?? false,
           ),
         ],
@@ -298,7 +335,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                     UniqueKey(),
                                     type: LayerType.backgroundColor,
                                     object: color,
-                                    rect: cardBoxRect.zero,
+                                    rect: GlobalRect().cardRect.zero,
                                   );
                                   layerManager.addLayer(layer);
                                 }
@@ -319,7 +356,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                         UniqueKey(),
                                         type: LayerType.selectImage,
                                         object: Image.memory(loadImage),
-                                        rect: cardBoxRect.zero,
+                                        rect: GlobalRect().cardRect.zero,
                                       );
                                       layerManager.addLayer(imageBackground);
                                     },
@@ -334,7 +371,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                       UniqueKey(),
                                       type: LayerType.backgroundImage,
                                       object: child,
-                                      rect: cardBoxRect.zero,
+                                      rect: GlobalRect().cardRect.zero,
                                     );
                                     layerManager.addLayer(layer);
                                   }
@@ -368,7 +405,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                 UniqueKey(),
                                 type: LayerType.frame,
                                 object: null,
-                                rect: cardBoxRect.zero,
+                                rect: GlobalRect().cardRect.zero,
                               );
                               layerManager.addLayer(layer);
                               setState(() {});
@@ -383,7 +420,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                               UniqueKey(),
                               type: LayerType.frame,
                               object: child,
-                              rect: cardBoxRect.zero,
+                              rect: GlobalRect().cardRect.zero,
                             );
 
                             layerManager.addLayer(layer);
@@ -412,8 +449,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                             if (child == null) return;
 
                             Size size = const Size(150, 150);
-                            Offset offset = Offset(cardBoxRect.size.width / 2 - size.width / 2,
-                                cardBoxRect.size.height / 2 - size.height / 2);
+                            Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
+                                GlobalRect().cardRect.size.height / 2 - size.height / 2);
 
                             LayerItem layer = LayerItem(
                               UniqueKey(),
@@ -482,7 +519,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                           UniqueKey(),
                           type: LayerType.drawing,
                           object: data.$1!,
-                          rect: cardBoxRect.zero,
+                          rect: GlobalRect().cardRect.zero,
                         );
                         layerManager.addLayer(layer);
                       });

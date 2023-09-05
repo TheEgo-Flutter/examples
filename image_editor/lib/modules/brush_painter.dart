@@ -9,6 +9,7 @@ import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/widget/color_button.dart';
 import 'package:image_editor/widget/tool_bar.dart';
 
+import '../lib.dart';
 import '../utils/global.dart';
 import '../widget/vertical_slider.dart';
 
@@ -75,13 +76,13 @@ class _BrushPainterState extends State<BrushPainter> {
       main: ClipPath(
         clipper: CardBoxClip(aspectRatio: ratio),
         child: SizedBox(
-          width: cardBoxRect.width,
-          height: cardBoxRect.height,
+          width: GlobalRect().cardRect.width,
+          height: GlobalRect().cardRect.height,
           child: DrawingBoard(
             controller: _drawingController,
             background: Container(
-              width: cardBoxRect.width,
-              height: cardBoxRect.height,
+              width: GlobalRect().cardRect.width,
+              height: GlobalRect().cardRect.height,
               color: Colors.transparent,
             ),
             boardPanEnabled: false,
@@ -95,7 +96,7 @@ class _BrushPainterState extends State<BrushPainter> {
         child: ClipPath(
           clipper: CardBoxClip(),
           child: Container(
-            width: objectBoxRect.width,
+            width: GlobalRect().objectRect.width,
             color: Colors.black,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,

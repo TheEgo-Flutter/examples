@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:du_icons/du_icons.dart';
-
-import '../utils/global.dart';
+import 'package:flutter/material.dart';
 
 class DeleteIconButton extends StatelessWidget {
   const DeleteIconButton({
@@ -16,7 +14,6 @@ class DeleteIconButton extends StatelessWidget {
       child: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-          key: deleteAreaKey,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,

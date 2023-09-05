@@ -20,6 +20,8 @@ class VerticalSlider extends StatefulWidget {
     this.trackColor = Colors.white,
   }) : super(key: key);
 
+  static double get width => GlobalRect().cardRect.width * 0.08;
+  static double get height => GlobalRect().cardRect.height * 0.5;
   @override
   State<VerticalSlider> createState() => _VerticalSliderState();
 }
@@ -30,15 +32,14 @@ class _VerticalSliderState extends State<VerticalSlider> {
   bool _maxVibrationTriggered = false;
   bool _minVibrationTriggered = false;
 
-  double get width => cardBoxRect.width * 0.08;
-  double get height => cardBoxRect.height * 0.5;
-  double get defaultTop => cardBoxRect.top + ((cardBoxRect.height * 0.25) - (bottomInsetNotifier.value * 0.25));
+  double get defaultTop =>
+      GlobalRect().cardRect.top + ((GlobalRect().cardRect.height * 0.25) - (bottomInsetNotifier.value * 0.25));
 
   @override
   void initState() {
     super.initState();
     _currentValue = widget.value;
-    leftPosition = objectBoxRect.left - (width / 2);
+    leftPosition = GlobalRect().objectRect.left - (VerticalSlider.width / 2);
   }
 
   @override
@@ -50,18 +51,18 @@ class _VerticalSliderState extends State<VerticalSlider> {
       child: GestureDetector(
         onScaleStart: (details) {
           setState(() {
-            leftPosition = cardBoxRect.left + (width / 2);
+            leftPosition = GlobalRect().cardRect.left + (VerticalSlider.width / 2);
           });
         },
         onScaleEnd: (details) {
           setState(() {
-            leftPosition = objectBoxRect.left - (width / 2);
+            leftPosition = GlobalRect().objectRect.left - (VerticalSlider.width / 2);
           });
         },
         onScaleUpdate: (details) {
-          final dy = details.localFocalPoint.dy.clamp(0, height);
+          final dy = details.localFocalPoint.dy.clamp(0, VerticalSlider.height);
           setState(() {
-            _currentValue = widget.min + (widget.max - widget.min) * (1 - (dy / height));
+            _currentValue = widget.min + (widget.max - widget.min) * (1 - (dy / VerticalSlider.height));
 
             // max 값에 도달했을 때의 진동 조건
             if (_currentValue == widget.max && !_maxVibrationTriggered) {
@@ -83,8 +84,8 @@ class _VerticalSliderState extends State<VerticalSlider> {
           });
         },
         child: SizedBox(
-          width: width,
-          height: height,
+          width: VerticalSlider.width,
+          height: VerticalSlider.height,
           child: CustomPaint(
             painter: _SliderPainter(
                 _currentValue, widget.min, widget.max, widget.thumbColor, widget.trackColor.withOpacity(0.5)),

@@ -91,9 +91,9 @@ class _DraggableResizableState extends State<DraggableResizable> {
                         setState(() {
                           _offset = Offset(_offset.dx + d.dx, _offset.dy + d.dy);
                           isCenteredHorizontally =
-                              _checkIfCentered(_offset, _size, cardBoxRect.size.width, Axis.horizontal);
+                              _checkIfCentered(_offset, _size, GlobalRect().cardRect.size.width, Axis.horizontal);
                           isCenteredVertically =
-                              _checkIfCentered(_offset, _size, cardBoxRect.size.height, Axis.vertical);
+                              _checkIfCentered(_offset, _size, GlobalRect().cardRect.size.height, Axis.vertical);
                         });
 
                         currentFingerPosition = startingFingerPositionFromObject + _offset;
@@ -119,7 +119,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
   List<Widget> _buildCenterLine(bool isCenteredHorizontally, bool isCenteredVertically) {
     return [
       Positioned(
-        top: cardBoxRect.size.height / 2,
+        top: GlobalRect().cardRect.size.height / 2,
         left: 0,
         right: 0,
         child: Container(
@@ -128,7 +128,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
         ),
       ),
       Positioned(
-        left: cardBoxRect.size.width / 2,
+        left: GlobalRect().cardRect.size.width / 2,
         top: 0,
         bottom: 0,
         child: Container(

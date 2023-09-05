@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/utils/utils.dart';
 
-import 'rect.dart';
+import '../lib.dart';
 
-class TransformedWidget extends StatelessWidget {
+class TransformedWidget extends StatefulWidget {
   final ThemeData? themeData;
   final Widget? top;
   final Widget main;
   final Widget bottom;
   final Widget? left;
-  final bool useWillPopScope;
 
   const TransformedWidget({
     super.key,
@@ -18,14 +16,23 @@ class TransformedWidget extends StatelessWidget {
     required this.main,
     required this.bottom,
     this.left,
-    this.useWillPopScope = false,
   });
 
   @override
+  State<TransformedWidget> createState() => _TransformedWidgetState();
+}
+
+class _TransformedWidgetState extends State<TransformedWidget> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return themeData != null
+    return widget.themeData != null
         ? Theme(
-            data: themeData!,
+            data: widget.themeData!,
             child: buildBody(context),
           )
         : buildBody(context);
@@ -33,34 +40,33 @@ class TransformedWidget extends StatelessWidget {
 
   Widget buildBody(BuildContext context) {
     Widget body = ClipPath(
-      clipper: CenterWidthClip(width: objectBoxRect.width),
+      clipper: CenterWidthClip(width: GlobalRect().objectRect.width),
       child: Scaffold(
+        backgroundColor: Colors.green.withOpacity(0.4),
         resizeToAvoidBottomInset: true,
         body: Stack(children: [
           Center(
             child: Column(
               children: [
-                if (top != null) top!,
-                main,
-                bottom,
+                if (widget.top != null) widget.top!,
+                widget.main,
+                widget.bottom,
               ],
             ),
           ),
-          if (left != null) left!,
-          // Container(
-          //   //Random colors
-          //   color: colors[math.Random().nextInt(colors.length)],
-          //   width: cardBoxRect.width,
-          //   height: cardBoxRect.height,
-          //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
-          // )
+          if (widget.left != null) widget.left!,
+          Container(
+            //Random colors
+            color: Colors.pink.withOpacity(0.4),
+            width: GlobalRect().cardRect.width,
+            height: GlobalRect().cardRect.height,
+            //status bar height
+            transform: Matrix4.translationValues(GlobalRect().cardRect.left, GlobalRect().cardRect.top, 0),
+          )
         ]),
       ),
     );
 
-    if (useWillPopScope) {
-      return WillPopScope(onWillPop: () async => false, child: body);
-    }
     return body;
   }
 }
@@ -70,8 +76,8 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
     context: context,
     isDismissible: true,
     constraints: BoxConstraints(
-      maxWidth: objectBoxRect.width,
-      maxHeight: objectBoxRect.height,
+      maxWidth: GlobalRect().objectRect.width,
+      maxHeight: GlobalRect().objectRect.height,
     ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
@@ -83,22 +89,6 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
     builder: (BuildContext context) {
       return Padding(
         padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
-        child: child,
-      );
-    },
-  );
-}
-
-Future<T?> customFullSizeDialog<T>({
-  required BuildContext context,
-  required Widget child,
-}) {
-  return showGeneralDialog(
-    context: context,
-    barrierColor: Colors.black.withOpacity(0.2),
-    pageBuilder: (context, animation, secondaryAnimation) {
-      return RectClipper(
-        rect: cardBoxRect.expandToInclude(objectBoxRect),
         child: child,
       );
     },

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/utils/utils.dart';
+
+import '../lib.dart';
 
 /// 사용 예:
 /// CustomSizedBox(
-///   width: objectBoxRect.width,
+///   width: GlobalRect().objectRect.width,
 ///   height: kToolbarHeight,
 ///   onConfirmPressed: () {
 ///     // 원하는 로직 입력
@@ -21,9 +22,14 @@ class GlobalToolBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: objectBoxRect.width,
-      height: kToolbarHeight,
+    return Container(
+      // transform: Matrix4.translationValues(
+      //   GlobalRect().objectRect.left,
+      //   GlobalRect().objectRect.top,
+      //   0.0,
+      // ),
+      width: GlobalRect().toolBarRect.width,
+      height: GlobalRect().toolBarRect.height,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
