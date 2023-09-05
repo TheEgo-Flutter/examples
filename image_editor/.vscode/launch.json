@@ -5,6 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
+        "name": "Flutter: Attach",
+        "request": "attach",
+        "type": "dart",
+        },
+        {
             "name": "image_editor",
             "request": "launch",
             "type": "dart",
