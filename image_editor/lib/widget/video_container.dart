@@ -37,23 +37,10 @@ class _VideoContainerState extends State<VideoContainer> {
   Widget shimmerEffect() {
     return TweenAnimationBuilder(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 500),
       builder: (_, double opacity, __) {
         return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(opacity),
-                Colors.black.withOpacity(opacity),
-                Colors.white.withOpacity(opacity),
-                Colors.black.withOpacity(opacity),
-                Colors.white.withOpacity(opacity),
-              ],
-              stops: [0.0, 0.4, 0.5, 0.6, 1.0],
-              begin: const Alignment(-1, 0),
-              end: const Alignment(2, 0),
-            ),
-          ),
+          color: Colors.grey.withOpacity(opacity),
         );
       },
       onEnd: () {
