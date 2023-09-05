@@ -143,11 +143,11 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                 flex: cardFlex,
                                 child: Padding(
                                   padding: cardPadding,
-                                  child: Render(
-                                    controller: renderController,
-                                    child: ClipPath(
-                                      key: cardAreaKey,
-                                      clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                  child: ClipPath(
+                                    key: cardAreaKey,
+                                    clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                    child: Render(
+                                      controller: renderController,
                                       child: buildImageLayer(context),
                                     ),
                                   ),
