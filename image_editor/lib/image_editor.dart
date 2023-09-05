@@ -184,7 +184,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   }
 
   Widget buildImageLayer(BuildContext context) {
-    Logger().i(layerManager.layers.map((e) => '${e.toString()} \n'));
     return Container(
       decoration: cardColor != null
           ? BoxDecoration(

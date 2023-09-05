@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_editor/utils/utils.dart';
 
+import 'rect.dart';
+
 class TransformedWidget extends StatelessWidget {
   final ThemeData? themeData;
   final Widget? top;
@@ -30,27 +32,30 @@ class TransformedWidget extends StatelessWidget {
   }
 
   Widget buildBody(BuildContext context) {
-    Widget body = Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Stack(children: [
-        Center(
-          child: Column(
-            children: [
-              if (top != null) top!,
-              main,
-              bottom,
-            ],
+    Widget body = ClipPath(
+      clipper: CenterWidthClip(width: objectBoxRect.width),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: Stack(children: [
+          Center(
+            child: Column(
+              children: [
+                if (top != null) top!,
+                main,
+                bottom,
+              ],
+            ),
           ),
-        ),
-        if (left != null) left!,
-        // Container(
-        //   //Random colors
-        //   color: colors[math.Random().nextInt(colors.length)],
-        //   width: cardBoxRect.width,
-        //   height: cardBoxRect.height,
-        //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
-        // )
-      ]),
+          if (left != null) left!,
+          // Container(
+          //   //Random colors
+          //   color: colors[math.Random().nextInt(colors.length)],
+          //   width: cardBoxRect.width,
+          //   height: cardBoxRect.height,
+          //   transform: Matrix4.translationValues(cardBoxRect.left, cardBoxRect.top, 0),
+          // )
+        ]),
+      ),
     );
 
     if (useWillPopScope) {

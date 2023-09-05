@@ -135,85 +135,81 @@ class _TextEditorState extends State<TextEditor> {
                 }
               },
             ),
-            main: Center(
-              child: Expanded(
-                child: SizedBox(
-                  width: cardBoxRect.width,
-                  // height: cardBoxRect.height,
-                  child: Center(
-                    child: Align(
-                      alignment: align == TextAlign.center
-                          ? Alignment.center
-                          : align == TextAlign.left
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                      child: ValueListenableBuilder<String>(
-                          valueListenable: textNotifier,
-                          builder: (context, text, child) {
-                            return TextBox(
-                              key: textBoxKey,
-                              isReadOnly: false,
-                              input: input,
-                              onChanged: (value) => textNotifier.value = value,
-                            );
-                          }),
-                    ),
+            main: Expanded(
+              child: SizedBox(
+                width: cardBoxRect.width,
+                // height: cardBoxRect.height,
+                child: Center(
+                  child: Align(
+                    alignment: align == TextAlign.center
+                        ? Alignment.center
+                        : align == TextAlign.left
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                    child: ValueListenableBuilder<String>(
+                        valueListenable: textNotifier,
+                        builder: (context, text, child) {
+                          return TextBox(
+                            key: textBoxKey,
+                            isReadOnly: false,
+                            input: input,
+                            onChanged: (value) => textNotifier.value = value,
+                          );
+                        }),
                   ),
                 ),
               ),
             ),
-            bottom: Expanded(
-              child: SizedBox(
-                width: objectBoxRect.width,
-                // color: Colors.black,
-                child: GestureDetector(
-                  onTapDown: (_) {
-                    log("onTapDown");
-                    isEditing = true;
-                  },
-                  onTapUp: (_) {
-                    log("onTapUp");
-                    isEditing = false;
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                    width: objectBoxRect.width,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: Icon(icon),
-                              onPressed: _toggleAlign,
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(4),
-                            ),
-                            IconButton(
-                              icon: isFontBarVisible ? rainbowColorButton() : const Icon(DUIcons.text),
-                              onPressed: () {
+            bottom: SizedBox(
+              width: objectBoxRect.width,
+              // color: Colors.black,
+              child: GestureDetector(
+                onTapDown: (_) {
+                  log("onTapDown");
+                  isEditing = true;
+                },
+                onTapUp: (_) {
+                  log("onTapUp");
+                  isEditing = false;
+                },
+                child: Container(
+                  color: Colors.transparent,
+                  width: objectBoxRect.width,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(icon),
+                            onPressed: _toggleAlign,
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(4),
+                          ),
+                          IconButton(
+                            icon: isFontBarVisible ? rainbowColorButton() : const Icon(DUIcons.text),
+                            onPressed: () {
+                              setState(() {
+                                isFontBarVisible = !isFontBarVisible;
+                              });
+                            },
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(4),
+                          ),
+                        ],
+                      ),
+                      isFontBarVisible
+                          ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
+                          : ColorBar(
+                              initialColor: currentColor,
+                              onColorChanged: (value) {
                                 setState(() {
-                                  isFontBarVisible = !isFontBarVisible;
+                                  currentColor = value;
                                 });
                               },
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(4),
                             ),
-                          ],
-                        ),
-                        isFontBarVisible
-                            ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
-                            : ColorBar(
-                                initialColor: currentColor,
-                                onColorChanged: (value) {
-                                  setState(() {
-                                    currentColor = value;
-                                  });
-                                },
-                              ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
