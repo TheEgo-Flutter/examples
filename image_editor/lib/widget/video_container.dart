@@ -29,7 +29,7 @@ class _VideoContainerState extends State<VideoContainer> {
       height: 52,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(27),
-        child: _controller.value.isInitialized ? VideoPlayer(_controller) : shimmerEffect(),
+        child: shimmerEffect(),
       ),
     );
   }
