@@ -1,9 +1,9 @@
+import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
-import 'package:du_icons/du_icons.dart';
 import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/widget/color_button.dart';

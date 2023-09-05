@@ -18,8 +18,8 @@ import 'package:lottie/lottie.dart';
  */
 class ImageSelector extends StatefulWidget {
   final Widget? firstItem;
-  final List<dynamic> items;
-  final ValueChanged<Widget?> onItemSelected;
+  final List<ImageProvider> items;
+  final ValueChanged<ImageProvider?> onItemSelected;
 
   const ImageSelector({
     Key? key,
@@ -60,7 +60,7 @@ class ImageSelectorState extends State<ImageSelector> {
           );
         } else {
           int itemIndex = index - (widget.firstItem == null ? 0 : 1);
-          var child = _getItemWidget(widget.items[itemIndex]);
+          ImageProvider child = widget.items[itemIndex];
 
           item = GestureDetector(
             onTap: () {
@@ -74,11 +74,10 @@ class ImageSelectorState extends State<ImageSelector> {
                 color: const Color(0xff404040),
                 borderRadius: BorderRadius.circular(4),
                 image: DecorationImage(
-                  image: child!.image as ImageProvider,
+                  image: child,
                   fit: BoxFit.cover,
                 ),
               ),
-              child: child,
             ),
           );
         }
@@ -88,29 +87,29 @@ class ImageSelectorState extends State<ImageSelector> {
     );
   }
 
-  _getItemWidget(item) {
-    Widget? child;
-    if (item is Widget) {
-      child = item;
-    } else if (item is Uint8List) {
-      try {
-        json.decode(utf8.decode(item));
+  // _getItemWidget(ImageProvider item) {
+  //   Widget? child;
+  //   if (item is Widget) {
+  //     child = item;
+  //   } else if (item is Uint8List) {
+  //     try {
+  //       json.decode(utf8.decode(item));
 
-        child = LottieBuilder.memory(item);
-      } catch (e) {
-        child = Image.memory(item);
-      }
-    } else if (item is String) {
-      if (item.contains('.json')) {
-        child = Lottie.asset('assets/$item');
-      } else if (item.startsWith('http')) {
-        child = Image.network(item);
-      } else {
-        child = Image.asset('assets/$item');
-      }
-    }
-    return child;
-  }
+  //       child = LottieBuilder.memory(item);
+  //     } catch (e) {
+  //       child = Image.memory(item);
+  //     }
+  //   } else if (item is String) {
+  //     if (item.contains('.json')) {
+  //       child = Lottie.asset('assets/$item');
+  //     } else if (item.startsWith('http')) {
+  //       child = Image.network(item);
+  //     } else {
+  //       child = Image.asset('assets/$item');
+  //     }
+  //   }
+  //   return child;
+  // }
 }
 
 class _ListSelector extends StatefulWidget {
@@ -210,7 +209,7 @@ class StickerSelector extends StatelessWidget {
     required this.items,
     required this.onSelected,
   });
-  final List<dynamic> items;
+  final List<Uint8List> items;
   final ValueChanged<Widget?> onSelected;
 
   @override

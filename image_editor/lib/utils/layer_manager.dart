@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'global.dart';
 
-enum LayerType { sticker, text, drawing, image, background, frame }
+enum LayerType { sticker, text, drawing, selectImage, backgroundImage, backgroundColor, frame }
 
 LayerItem? selectedLayerItem;
 
@@ -14,15 +14,15 @@ class LayerItem {
   final double angle;
 
   bool get isScalable {
-    return type == LayerType.sticker || type == LayerType.image;
+    return type == LayerType.sticker || type == LayerType.selectImage;
   }
 
   bool get isDraggable {
-    return type == LayerType.sticker || type == LayerType.image || type == LayerType.text;
+    return type == LayerType.sticker || type == LayerType.selectImage || type == LayerType.text;
   }
 
   bool get isRotatable {
-    return type == LayerType.sticker || type == LayerType.image || type == LayerType.text;
+    return type == LayerType.sticker || type == LayerType.selectImage || type == LayerType.text;
   }
 
   bool get isObject {
@@ -30,7 +30,10 @@ class LayerItem {
   }
 
   bool get ignorePoint {
-    return type == LayerType.frame || type == LayerType.drawing || type == LayerType.background;
+    return type == LayerType.frame ||
+        type == LayerType.drawing ||
+        type == LayerType.backgroundImage ||
+        type == LayerType.backgroundColor;
   }
 
   LayerItem(
@@ -86,8 +89,9 @@ class LayerManager {
 
   void addLayer(LayerItem item) {
     switch (item.type) {
-      case LayerType.background:
-      case LayerType.image:
+      case LayerType.backgroundImage:
+      case LayerType.backgroundColor:
+      case LayerType.selectImage:
         _backgroundLayer = item;
         break;
       case LayerType.frame:
@@ -142,8 +146,8 @@ class LayerManager {
   void removeLayerByType(LayerType type) {
     LayerItem? layer;
     switch (type) {
-      case LayerType.image:
-      case LayerType.background:
+      case LayerType.selectImage:
+      case LayerType.backgroundImage:
         layer = _backgroundLayer;
         _backgroundLayer = null;
         break;

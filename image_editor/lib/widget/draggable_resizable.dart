@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_editor/utils/utils.dart';
@@ -172,11 +173,29 @@ class _DraggableResizableState extends State<DraggableResizable> {
           isReadOnly: true,
           input: _object,
         );
-      case LayerType.sticker:
-      case LayerType.image:
-      case LayerType.background:
+      case LayerType.backgroundColor:
+        return Container(
+          height: _size.height,
+          width: _size.width,
+          color: widget.layerItem.object as Color,
+        );
       case LayerType.drawing:
+        return Image.memory(
+          widget.layerItem.object as Uint8List,
+          fit: BoxFit.fill,
+          width: _size.width,
+          height: _size.height,
+        );
+      case LayerType.backgroundImage:
       case LayerType.frame:
+        return Image(
+          image: widget.layerItem.object as ImageProvider,
+          fit: BoxFit.fill,
+          width: _size.width,
+          height: _size.height,
+        );
+      case LayerType.selectImage:
+      case LayerType.sticker:
       default:
         return SizedBox(
           height: _size.height,

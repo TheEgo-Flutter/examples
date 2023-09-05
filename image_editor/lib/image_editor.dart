@@ -20,9 +20,9 @@ import 'widget/delete_icon.dart';
 import 'widget/draggable_resizable.dart';
 
 class ImageEditor extends StatefulWidget {
-  final List<dynamic> stickers;
-  final List<dynamic> backgrounds;
-  final List<dynamic> frames;
+  final List<Uint8List> stickers;
+  final List<ImageProvider> backgrounds;
+  final List<ImageProvider> frames;
   final AspectRatioOption aspectRatio;
 
   const ImageEditor({
@@ -277,10 +277,10 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                   icon: const Icon(DUIcons.picture),
                   onPressed: () {
                     setState(() {
-                      _selectedType = LayerType.background;
+                      _selectedType = LayerType.backgroundImage;
                     });
                     LayerItem? background =
-                        layerManager.layers.where((element) => element.type == LayerType.background).firstOrNull;
+                        layerManager.layers.where((element) => element.type == LayerType.backgroundImage).firstOrNull;
                     Color? initialColor = background == null
                         ? Colors.white
                         : background.object.runtimeType == ColoredBox
@@ -297,8 +297,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                   await _loadImageColor(null);
                                   LayerItem layer = LayerItem(
                                     UniqueKey(),
-                                    type: LayerType.background,
-                                    object: ColoredBox(color: color),
+                                    type: LayerType.backgroundColor,
+                                    object: color,
                                     rect: cardBoxRect.zero,
                                   );
                                   layerManager.addLayer(layer);
@@ -318,7 +318,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                       await _loadImageColor(loadImage);
                                       LayerItem imageBackground = LayerItem(
                                         UniqueKey(),
-                                        type: LayerType.image,
+                                        type: LayerType.selectImage,
                                         object: Image.memory(loadImage),
                                         rect: cardBoxRect.zero,
                                       );
@@ -333,7 +333,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                                     await _loadImageColor(null);
                                     LayerItem layer = LayerItem(
                                       UniqueKey(),
-                                      type: LayerType.background,
+                                      type: LayerType.backgroundImage,
                                       object: child,
                                       rect: cardBoxRect.zero,
                                     );
@@ -476,13 +476,13 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
                     setState(() {});
                     if ((data != null && data.$1 != null)) {
-                      var image = Image.memory(data.$1!);
+                      // var image = Image.memory();
 
                       setState(() {
                         var layer = LayerItem(
                           UniqueKey(),
                           type: LayerType.drawing,
-                          object: image,
+                          object: data.$1!,
                           rect: cardBoxRect.zero,
                         );
                         layerManager.addLayer(layer);

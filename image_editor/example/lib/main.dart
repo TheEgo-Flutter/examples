@@ -16,9 +16,7 @@ void main() {
 }
 
 class ImageEditorExample extends StatefulWidget {
-  const ImageEditorExample({
-    super.key,
-  });
+  const ImageEditorExample({super.key});
 
   @override
   createState() => _ImageEditorExampleState();
@@ -28,8 +26,23 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   File? _file;
   VideoPlayerController? controller;
   List<Uint8List> stickerList = [];
-  List<Uint8List> frameList = [];
-  List<Uint8List> backgroundList = [];
+  List<ImageProvider> frameList = [];
+  List<ImageProvider> backgroundList = [];
+
+  Future<List<ImageProvider>> loadImageProvider(List<String> assetPaths) async {
+    List<ImageProvider> stickers = [];
+    for (String path in assetPaths) {
+      try {
+        final ByteData data = await rootBundle.load('assets/$path');
+        final Uint8List bytes = data.buffer.asUint8List();
+        stickers.add(MemoryImage(bytes));
+      } catch (e) {
+        print("스티커를 불러오는 도중 오류가 발생했습니다: $e");
+      }
+    }
+    return stickers;
+  }
+
   Future<List<Uint8List>> loadStickers(List<String> assetPaths) async {
     List<Uint8List> stickers = [];
     for (String path in assetPaths) {
@@ -52,8 +65,8 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
 
   Future<void> callAssets() async {
     stickerList = await loadStickers(stickers);
-    frameList = await loadStickers(frames);
-    backgroundList = await loadStickers(backgrounds);
+    frameList = await loadImageProvider(frames);
+    backgroundList = await loadImageProvider(backgrounds);
   }
 
   @override
@@ -118,10 +131,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
               child: const Text("Save"),
               onPressed: () async {
                 await Gal.putVideo(_file!.path, album: 'dingdongU');
-
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Saved! ✅'),
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved! ✅')));
               },
             ),
           const SizedBox(height: 16),
@@ -138,7 +148,6 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                   ),
                 ),
               );
-
               if (file != null) {
                 _file = file;
                 setState(() {});
