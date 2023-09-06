@@ -32,8 +32,15 @@ class _VerticalSliderState extends State<VerticalSlider> {
   bool _maxVibrationTriggered = false;
   bool _minVibrationTriggered = false;
 
-  double get defaultTop =>
-      GlobalRect().cardRect.top + ((GlobalRect().cardRect.height * 0.25) - (bottomInsetNotifier.value * 0.25));
+  double get defaultTop {
+    double bottomInset = 0.0;
+    double bottomLine = MediaQuery.of(context).size.height - GlobalRect().cardRect.bottom;
+
+    if (bottomInsetNotifier.value > bottomLine) {
+      bottomInset = bottomInsetNotifier.value - bottomLine;
+    }
+    return GlobalRect().cardRect.top + ((GlobalRect().cardRect.height * 0.25) - (bottomInset * 0.5));
+  }
 
   @override
   void initState() {
