@@ -61,6 +61,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   LinearGradient? cardColor;
+  double get statusBarHeight => MediaQuery.of(context).padding.top;
 
   @override
   void initState() {
@@ -87,7 +88,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
     GlobalRect()
       ..cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey)
       ..objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey)
-      ..statusBarSize = MediaQuery.of(context).padding.top;
+      ..statusBarSize = statusBarHeight;
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {
@@ -155,7 +156,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                     child: Column(
                       children: [
                         SizedBox(
-                          height: kToolbarHeight,
+                          height: kToolbarHeight + statusBarHeight,
                           width: GlobalRect().objectRect.width,
                         ),
                         Expanded(
