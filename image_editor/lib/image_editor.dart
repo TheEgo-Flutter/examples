@@ -146,9 +146,9 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
-                double space = 8;
-                int cardFlex = 65;
-                double maxWidth = (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
+                double space = kToolbarHeight / 3;
+                int cardFlex = 70;
+                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
                 return Center(
                   child: SizedBox(
@@ -156,8 +156,13 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                     child: Column(
                       children: [
                         SizedBox(
-                          height: kToolbarHeight + statusBarHeight,
-                          width: GlobalRect().objectRect.width,
+                          height: statusBarHeight,
+                        ),
+                        const SizedBox(
+                          height: kToolbarHeight,
+                        ),
+                        SizedBox(
+                          height: space,
                         ),
                         Expanded(
                           flex: cardFlex,
@@ -173,11 +178,10 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                             ),
                           ),
                         ),
-                        SizedBox(height: space),
                         Expanded(
                           flex: 100 - cardFlex,
-                          child: SizedBox(
-                            width: maxWidth,
+                          child: Container(
+                            padding: EdgeInsets.only(top: space),
                             child: ClipPath(
                               key: GlobalRect().objectAreaKey,
                               clipper: CardBoxClip(),
