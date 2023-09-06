@@ -9,16 +9,12 @@ class GlobalRect {
 
   GlobalRect._internal();
 
-  final GlobalKey toolBarAreaKey = GlobalKey();
+  // final GlobalKey toolBarAreaKey = GlobalKey();
   final GlobalKey cardAreaKey = GlobalKey();
   final GlobalKey objectAreaKey = GlobalKey();
-  final GlobalKey deleteAreaKey = GlobalKey();
+  // final GlobalKey deleteAreaKey = GlobalKey();
 
   Rect get toolBarRect => _toolBarRectDefault;
-  // Rect? _toolBarRect;
-  // set toolBarRect(Rect? value) {
-  //   _toolBarRect = value;
-  // }
 
   Rect get cardRect => _cardRect ?? Rect.zero;
   Rect? _cardRect;
@@ -33,10 +29,7 @@ class GlobalRect {
   }
 
   Rect get deleteRect => _deleteRectDefault;
-  // Rect? _deleteRect;
-  // set deleteRect(Rect? value) {
-  //   _deleteRect = value;
-  // }
+
   double get statusBarSize => _statusBarSize ?? 0;
   double? _statusBarSize;
   set statusBarSize(double? value) {

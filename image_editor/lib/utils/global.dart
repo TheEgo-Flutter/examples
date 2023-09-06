@@ -4,8 +4,9 @@ import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/utils/util.dart';
 
 AspectRatioOption ratio = AspectRatioOption.r9x16;
+
 const Size device = Size(360.0, 800.0);
-// Expanded 내부의 Padding 값
+
 const EdgeInsets cardPadding = EdgeInsets.symmetric(horizontal: 16.0);
 
 ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);

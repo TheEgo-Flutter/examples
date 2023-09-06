@@ -79,7 +79,7 @@ class ColorChip extends StatelessWidget {
     return ChoiceChip(
       visualDensity: const VisualDensity(vertical: -4),
       shape: const CircleBorder(),
-      label: const SizedBox.shrink(), // No label is needed here
+      label: const SizedBox.shrink(),
       selected: isSelected,
       side: const BorderSide(color: Colors.white, width: 1),
       labelPadding: EdgeInsets.zero,
@@ -92,7 +92,6 @@ class ColorChip extends StatelessWidget {
             ? Icon(Icons.check, size: 32 / 2, color: color.computeLuminance() > 0.9 ? Colors.black : Colors.white)
             : null,
       ),
-
       onSelected: onSelected,
     );
   }

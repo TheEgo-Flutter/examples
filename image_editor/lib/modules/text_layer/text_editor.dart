@@ -133,7 +133,6 @@ class _TextEditorState extends State<TextEditor> {
             center: Expanded(
               child: SizedBox(
                 width: GlobalRect().cardRect.width,
-                // height: GlobalRect().cardRect.height,
                 child: Center(
                   child: Align(
                     alignment: align == TextAlign.center
@@ -157,7 +156,6 @@ class _TextEditorState extends State<TextEditor> {
             ),
             bottom: SizedBox(
               width: GlobalRect().objectRect.width,
-              // color: Colors.black,
               child: GestureDetector(
                 onTapDown: (_) {
                   log("onTapDown");

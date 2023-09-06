@@ -86,30 +86,6 @@ class ImageSelectorState extends State<ImageSelector> {
       },
     );
   }
-
-  // _getItemWidget(ImageProvider item) {
-  //   Widget? child;
-  //   if (item is Widget) {
-  //     child = item;
-  //   } else if (item is Uint8List) {
-  //     try {
-  //       json.decode(utf8.decode(item));
-
-  //       child = LottieBuilder.memory(item);
-  //     } catch (e) {
-  //       child = Image.memory(item);
-  //     }
-  //   } else if (item is String) {
-  //     if (item.contains('.json')) {
-  //       child = Lottie.asset('assets/$item');
-  //     } else if (item.startsWith('http')) {
-  //       child = Image.network(item);
-  //     } else {
-  //       child = Image.asset('assets/$item');
-  //     }
-  //   }
-  //   return child;
-  // }
 }
 
 class _ListSelector extends StatefulWidget {

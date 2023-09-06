@@ -158,7 +158,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                     child: Column(
                       children: [
                         SizedBox(
-                          key: GlobalRect().toolBarAreaKey,
                           height: kToolbarHeight,
                           width: GlobalRect().objectRect.width,
                         ),
@@ -194,13 +193,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                 );
               },
             ),
-            // Container(
-            //   //Random colors
-            //   color: colors[Random().nextInt(colors.length)],
-            //   width: GlobalRect().cardRect.width,
-            //   height: GlobalRect().cardRect.height,
-            //   transform: Matrix4.translationValues(GlobalRect().cardRect.left, GlobalRect().cardRect.top, 0),
-            // )
           ],
         ),
       ),
@@ -219,7 +211,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
         children: [
           ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
           DeleteIconButton(
-            key: GlobalRect().deleteAreaKey,
             visible: selectedLayerItem?.isObject ?? false,
           ),
         ],
@@ -500,8 +491,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
 
                     setState(() {});
                     if ((data != null && data.$1 != null)) {
-                      // var image = Image.memory();
-
                       setState(() {
                         var layer = LayerItem(
                           UniqueKey(),

@@ -14,7 +14,8 @@ class _VideoContainerState extends State<VideoContainer> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network('https://github.com/the-ego/samples/raw/main/assets/video/button.mp4')
+    _controller = VideoPlayerController.networkUrl(
+        Uri.parse('https://github.com/the-ego/samples/raw/main/assets/video/button.mp4'))
       ..initialize().then((_) {
         _controller.play();
         _controller.setLooping(true);
