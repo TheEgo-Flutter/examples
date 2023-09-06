@@ -19,7 +19,7 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
     isDismissible: true,
     constraints: BoxConstraints(
       maxWidth: GlobalRect().objectRect.width,
-      maxHeight: GlobalRect().objectRect.height,
+      maxHeight: MediaQuery.of(context).size.height - GlobalRect().cardRect.bottom,
     ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
