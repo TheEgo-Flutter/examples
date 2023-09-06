@@ -9,13 +9,14 @@ class TransformedWidget extends StatefulWidget {
   final Widget center;
   final Widget bottom;
   final Widget? left;
-
+  final bool resizeToAvoidBottomInset;
   const TransformedWidget({
     super.key,
     this.themeData,
     this.top,
     required this.center,
     required this.bottom,
+    required this.resizeToAvoidBottomInset,
     this.left,
   });
 
@@ -43,11 +44,11 @@ class _TransformedWidgetState extends State<TransformedWidget> {
     Widget body = ClipPath(
       clipper: CenterWidthClip(width: GlobalRect().objectRect.width),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         body: Stack(
           children: [
             Transform.translate(
-              offset: Offset(0, GlobalRect().cardRect.top),
+              offset: widget.resizeToAvoidBottomInset ? Offset.zero : Offset(0, GlobalRect().cardRect.top),
               child: Center(
                 child: Column(
                   children: [

@@ -57,6 +57,7 @@ class _BrushPainterState extends State<BrushPainter> {
   @override
   Widget build(BuildContext context) {
     return TransformedWidget(
+      resizeToAvoidBottomInset: false,
       themeData: ThemeData().copyWith(
         scaffoldBackgroundColor: Colors.transparent,
         bottomSheetTheme: const BottomSheetThemeData(

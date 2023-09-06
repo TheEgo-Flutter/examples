@@ -116,6 +116,7 @@ class _TextEditorState extends State<TextEditor> {
           });
 
           return TransformedWidget(
+            resizeToAvoidBottomInset: true,
             themeData: ThemeData().copyWith(
               scaffoldBackgroundColor: Colors.black.withOpacity(0.2),
               bottomSheetTheme: const BottomSheetThemeData(
