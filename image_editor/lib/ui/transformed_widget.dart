@@ -48,11 +48,14 @@ class _TransformedWidgetState extends State<TransformedWidget> {
         body: Stack(
           children: [
             Transform.translate(
-              offset: widget.resizeToAvoidBottomInset ? Offset.zero : Offset(0, GlobalRect().cardRect.top),
+              offset: Offset(0, GlobalRect().cardRect.top),
               child: Center(
                 child: Column(
                   children: [
                     widget.center,
+                    SizedBox(
+                      height: GlobalRect().objectRect.top - GlobalRect().cardRect.bottom,
+                    ),
                     widget.bottom,
                   ],
                 ),

@@ -158,56 +158,46 @@ class _TextEditorState extends State<TextEditor> {
                 ),
               ),
             ),
-            bottom: SizedBox(
-              width: GlobalRect().objectRect.width,
-              child: GestureDetector(
-                onTapDown: (_) {
-                  log("onTapDown");
-                  isEditing = true;
-                },
-                onTapUp: (_) {
-                  log("onTapUp");
-                  isEditing = false;
-                },
-                child: Container(
-                  color: Colors.transparent,
-                  width: GlobalRect().objectRect.width,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: Icon(icon),
-                            onPressed: _toggleAlign,
-                            color: Colors.white,
-                            padding: const EdgeInsets.all(4),
-                          ),
-                          IconButton(
-                            icon: isFontBarVisible ? rainbowColorButton() : const Icon(DUIcons.text),
-                            onPressed: () {
+            bottom: Expanded(
+              child: Container(
+                color: Colors.transparent,
+                width: GlobalRect().objectRect.width,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: Icon(icon),
+                          onPressed: _toggleAlign,
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(4),
+                        ),
+                        IconButton(
+                          icon: isFontBarVisible ? rainbowColorButton() : const Icon(DUIcons.text),
+                          onPressed: () {
+                            setState(() {
+                              isFontBarVisible = !isFontBarVisible;
+                            });
+                          },
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(4),
+                        ),
+                      ],
+                    ),
+                    isFontBarVisible
+                        ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
+                        : ColorBar(
+                            initialColor: currentColor,
+                            onColorChanged: (value) {
                               setState(() {
-                                isFontBarVisible = !isFontBarVisible;
+                                currentColor = value;
                               });
                             },
-                            color: Colors.white,
-                            padding: const EdgeInsets.all(4),
                           ),
-                        ],
-                      ),
-                      isFontBarVisible
-                          ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
-                          : ColorBar(
-                              initialColor: currentColor,
-                              onColorChanged: (value) {
-                                setState(() {
-                                  currentColor = value;
-                                });
-                              },
-                            ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
