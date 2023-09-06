@@ -21,7 +21,7 @@ class ImageEditor extends StatelessWidget {
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
-    this.aspectRatio = AspectRatioOption.r9x16,
+    this.aspectRatio = AspectRatioOption.r5x7,
   });
 
   @override
@@ -49,7 +49,7 @@ class _ImageEditorView extends StatefulWidget {
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
-    this.aspectRatio = AspectRatioOption.r9x16,
+    required this.aspectRatio,
   });
 
   @override
@@ -149,7 +149,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
             LayoutBuilder(
               builder: (context, constraints) {
                 double space = 8;
-                int cardFlex = 75;
+                int cardFlex = 65;
                 double maxWidth = (constraints.maxHeight - space) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
                 return Center(

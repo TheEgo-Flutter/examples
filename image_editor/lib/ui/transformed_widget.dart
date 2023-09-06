@@ -42,7 +42,6 @@ class _TransformedWidgetState extends State<TransformedWidget> {
     Widget body = ClipPath(
       clipper: CenterWidthClip(width: GlobalRect().objectRect.width),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
         resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
