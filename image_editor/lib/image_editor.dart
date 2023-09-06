@@ -58,7 +58,7 @@ class _ImageEditorView extends StatefulWidget {
 
 class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingObserver, TickerProviderStateMixin {
   Size get view => MediaQuery.of(context).size;
-  LayerType? _selectedType;
+
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   List<LinearGradient> gradients = [];
@@ -291,9 +291,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                   constraints: const BoxConstraints(),
                   icon: const Icon(DUIcons.picture),
                   onPressed: () {
-                    setState(() {
-                      _selectedType = LayerType.backgroundImage;
-                    });
                     LayerItem? background =
                         layerManager.layers.where((element) => element.type == LayerType.backgroundImage).firstOrNull;
                     Color? initialColor = background == null
@@ -371,9 +368,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                   constraints: const BoxConstraints(),
                   icon: const Icon(DUIcons.tool_marquee),
                   onPressed: () {
-                    setState(() {
-                      _selectedType = LayerType.frame;
-                    });
                     customObjectBoxSizeDialog(
                         context: context,
                         child: ImageSelector(
@@ -417,9 +411,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                   constraints: const BoxConstraints(),
                   icon: const Icon(DUIcons.sticker),
                   onPressed: () {
-                    setState(() {
-                      _selectedType = LayerType.sticker;
-                    });
                     customObjectBoxSizeDialog(
                         context: context,
                         child: StickerSelector(
