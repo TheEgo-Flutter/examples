@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_editor/utils/global.dart';
+
+import '../lib.dart';
 
 Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
     (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
@@ -10,6 +11,30 @@ Offset getCenterOffset(Rect standardRect, Size size) => Offset(
       standardRect.size.width / 2 - size.width / 2,
       standardRect.size.height / 2 - size.height / 2,
     );
+
+Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required Widget child}) {
+  return showModalBottomSheet(
+    context: context,
+    isDismissible: true,
+    constraints: BoxConstraints(
+      maxWidth: GlobalRect().objectRect.width,
+      maxHeight: GlobalRect().objectRect.height,
+    ),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(10),
+      ),
+    ),
+    barrierColor: Colors.transparent,
+    backgroundColor: const Color(0xff1C1C17),
+    builder: (BuildContext context) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+        child: child,
+      );
+    },
+  );
+}
 
 extension RectExtension on Rect {
   Rect get zero {

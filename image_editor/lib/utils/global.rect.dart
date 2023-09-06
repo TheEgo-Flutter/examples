@@ -37,9 +37,13 @@ class GlobalRect {
   // set deleteRect(Rect? value) {
   //   _deleteRect = value;
   // }
+  double get statusBarSize => _statusBarSize ?? 0;
+  double? _statusBarSize;
+  set statusBarSize(double? value) {
+    _statusBarSize = value;
+  }
 
-  Rect get _toolBarRectDefault =>
-      Rect.fromLTWH(objectRect.left, GlobalRect().cardRect.top - kToolbarHeight, objectRect.width, kToolbarHeight);
+  Rect get _toolBarRectDefault => Rect.fromLTWH(objectRect.left, statusBarSize, objectRect.width, kToolbarHeight);
 
   Rect get _deleteRectDefault => Rect.fromLTWH(
       GlobalRect().cardRect.left + (GlobalRect().cardRect.width * 0.4),

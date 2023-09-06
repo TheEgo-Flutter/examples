@@ -4,8 +4,6 @@ import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
-import 'package:image_editor/widget/tool_bar.dart';
-import 'package:image_editor/widget/vertical_slider.dart';
 
 import '../../lib.dart';
 import 'constants/constants.dart';
@@ -132,7 +130,7 @@ class _TextEditorState extends State<TextEditor> {
                 }
               },
             ),
-            main: Expanded(
+            center: Expanded(
               child: SizedBox(
                 width: GlobalRect().cardRect.width,
                 // height: GlobalRect().cardRect.height,

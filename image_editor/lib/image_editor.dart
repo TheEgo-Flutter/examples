@@ -28,18 +28,6 @@ class ImageEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: theme,
-      builder: (context, child) {
-        return SafeArea(
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: child,
-            ),
-          ),
-        );
-      },
       home: _ImageEditorView(
         stickers: stickers,
         backgrounds: backgrounds,
@@ -99,10 +87,10 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
   }
 
   void _captureRects() {
-    GlobalRect().cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey);
-    GlobalRect().objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey);
-    // GlobalRect().toolBarRect = GlobalRect().getRect(GlobalRect().toolBarAreaKey);
-    // GlobalRect().deleteRect = GlobalRect().getRect(GlobalRect().deleteAreaKey);
+    GlobalRect()
+      ..cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey)
+      ..objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey)
+      ..statusBarSize = MediaQuery.of(context).padding.top;
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {

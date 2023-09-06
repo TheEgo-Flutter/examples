@@ -4,14 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
-import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
-import 'package:image_editor/widget/color_button.dart';
-import 'package:image_editor/widget/tool_bar.dart';
 
 import '../lib.dart';
-import '../utils/global.dart';
-import '../widget/vertical_slider.dart';
 
 List<PaintContent> drawingData = [];
 
@@ -73,7 +68,7 @@ class _BrushPainterState extends State<BrushPainter> {
           _getImageData(context);
         },
       ),
-      main: ClipPath(
+      center: ClipPath(
         clipper: CardBoxClip(aspectRatio: ratio),
         child: SizedBox(
           width: GlobalRect().cardRect.width,
