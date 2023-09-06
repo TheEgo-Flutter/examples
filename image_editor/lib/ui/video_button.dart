@@ -19,18 +19,23 @@ class _VideoContainerState extends State<VideoContainer> {
       ..initialize().then((_) {
         _controller.play();
         _controller.setLooping(true);
-        setState(() {});
       });
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 62,
       height: 52,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(27),
-        child: shimmerEffect(),
+        child: _controller.value.isInitialized ? VideoPlayer(_controller) : shimmerEffect(),
       ),
     );
   }
@@ -38,21 +43,15 @@ class _VideoContainerState extends State<VideoContainer> {
   Widget shimmerEffect() {
     return TweenAnimationBuilder(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1500),
       builder: (_, double opacity, __) {
         return Container(
-          color: Colors.grey.withOpacity(opacity),
+          color: Colors.white.withOpacity(opacity),
         );
       },
       onEnd: () {
         setState(() {});
       },
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../lib.dart';
+import '../utils/global.rect.dart';
+import 'clipper/center_clipper.dart';
 
 class TransformedWidget extends StatefulWidget {
   final ThemeData? themeData;

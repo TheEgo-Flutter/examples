@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../lib.dart';
+import 'global.rect.dart';
 
 enum LayerType { sticker, text, drawing, selectImage, backgroundImage, backgroundColor, frame }
 

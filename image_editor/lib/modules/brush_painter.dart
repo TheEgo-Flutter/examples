@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
+import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
+import 'package:image_editor/utils/global.dart';
 
-import '../lib.dart';
+import '../utils/global.rect.dart';
 
 List<PaintContent> drawingData = [];
 
@@ -46,10 +48,10 @@ class _BrushPainterState extends State<BrushPainter> {
     });
   }
 
-  Future<void> _getImageData(BuildContext context) async {
+  Future<(Uint8List, Size)?> _getImageData(BuildContext context) async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
     Size? size = _drawingController.drawConfig.value.size; // same as cardRect.size
-    Navigator.pop(context, (data, size));
+    return data == null || size == null ? null : (data, size);
   }
 
   @override
@@ -63,9 +65,10 @@ class _BrushPainterState extends State<BrushPainter> {
         inputDecorationTheme: inputDecorationTheme,
       ),
       top: GlobalToolBar(
-        onConfirmPressed: () {
+        onConfirmPressed: () async {
           drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
-          _getImageData(context);
+
+          Navigator.pop(context, await _getImageData(context));
         },
       ),
       center: ClipPath(

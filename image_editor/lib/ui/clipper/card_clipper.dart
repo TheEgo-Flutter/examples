@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
-import 'package:image_editor/utils/utils.dart';
+
+import '../../utils/util.dart';
 
 class CardBoxClip extends CustomClipper<Path> {
   final AspectRatioOption aspectRatio;
@@ -25,28 +26,6 @@ class CardBoxClip extends CustomClipper<Path> {
     }
 
     Rect rect = Rect.fromLTWH((size.width - w) / 2, (size.height - h) / 2, w, h);
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)))
-      ..close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
-}
-
-class CenterWidthClip extends CustomClipper<Path> {
-  final double width;
-
-  CenterWidthClip({
-    this.width = double.infinity,
-  });
-
-  @override
-  Path getClip(Size size) {
-    Rect rect = Rect.fromLTWH((size.width - width) / 2, 0, width, size.height);
 
     final path = Path()
       ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)))

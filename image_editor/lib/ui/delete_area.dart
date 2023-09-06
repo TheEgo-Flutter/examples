@@ -1,8 +1,8 @@
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 
-class DeleteIconButton extends StatelessWidget {
-  const DeleteIconButton({
+class DeleteArea extends StatelessWidget {
+  const DeleteArea({
     super.key,
     required this.visible,
   });

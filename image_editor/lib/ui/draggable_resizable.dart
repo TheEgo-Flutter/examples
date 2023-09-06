@@ -2,17 +2,10 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_editor/utils/utils.dart';
 
-import '../modules/text_layer/text_editor.dart';
-
-enum LayerItemStatus {
-  touched,
-  dragging,
-  resizing,
-  rotating,
-  completed,
-}
+import '../modules/text_editor.dart';
+import '../utils/global.rect.dart';
+import '../utils/layer_manager.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({

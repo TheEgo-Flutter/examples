@@ -8,7 +8,9 @@ import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:vibration/vibration.dart';
 
-import 'lib.dart';
+import 'modules/modules.dart';
+import 'ui/ui.dart';
+import 'utils/utils.dart';
 
 class ImageEditor extends StatelessWidget {
   final List<Uint8List> stickers;
@@ -45,7 +47,6 @@ class _ImageEditorView extends StatefulWidget {
   final AspectRatioOption aspectRatio;
 
   const _ImageEditorView({
-    super.key,
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
@@ -57,20 +58,16 @@ class _ImageEditorView extends StatefulWidget {
 }
 
 class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingObserver, TickerProviderStateMixin {
-  Size get view => MediaQuery.of(context).size;
-
   LayerManager layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
-  List<LinearGradient> gradients = [];
   LinearGradient? cardColor;
 
   @override
   void initState() {
     super.initState();
-    gradients = RandomGradientContainers().buildRandomGradientContainer(10);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _captureRects();
+      _captureRect();
     });
   }
 
@@ -86,7 +83,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
     super.dispose();
   }
 
-  void _captureRects() {
+  void _captureRect() {
     GlobalRect()
       ..cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey)
       ..objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey)
@@ -210,7 +207,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
         fit: StackFit.expand,
         children: [
           ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-          DeleteIconButton(
+          DeleteArea(
             visible: selectedLayerItem?.isObject ?? false,
           ),
         ],

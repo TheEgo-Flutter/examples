@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../lib.dart';
+import '../utils/global.rect.dart';
 
 class GlobalToolBar extends StatelessWidget {
   final VoidCallback onConfirmPressed;

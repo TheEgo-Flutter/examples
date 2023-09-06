@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_editor/utils/global.dart';
 
-import '../lib.dart';
+import 'global.rect.dart';
 
 Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
     (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))

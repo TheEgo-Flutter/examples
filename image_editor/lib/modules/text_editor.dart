@@ -3,9 +3,12 @@ import 'dart:developer';
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_editor/ui/ui.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
 
-import '../../lib.dart';
+import '../utils/global.dart';
+import '../utils/global.rect.dart';
+import '../utils/util.dart';
 import 'constants/constants.dart';
 
 class TextEditor extends StatefulWidget {

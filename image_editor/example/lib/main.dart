@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:example/data.dart';
@@ -37,7 +38,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
         final Uint8List bytes = data.buffer.asUint8List();
         stickers.add(MemoryImage(bytes));
       } catch (e) {
-        print("스티커를 불러오는 도중 오류가 발생했습니다: $e");
+        log("이미지를 불러오는 도중 오류가 발생했습니다: $e");
       }
     }
     return stickers;
@@ -51,7 +52,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
         final List<int> bytes = data.buffer.asUint8List();
         stickers.add(Uint8List.fromList(bytes));
       } catch (e) {
-        print("스티커를 불러오는 도중 오류가 발생했습니다: $e");
+        log("이미지를 불러오는 도중 오류가 발생했습니다: $e");
       }
     }
     return stickers;
