@@ -71,6 +71,7 @@ extension RectExtension on Rect {
 
 enum AspectRatioOption {
   rFree('Free', null),
+  photoCard('photoCard', 300 / 464),
   r1x1('1:1', 1),
   r3x4('3:4', 3 / 4),
   r4x5('4:5', 4 / 5),

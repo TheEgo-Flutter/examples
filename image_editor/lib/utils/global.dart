@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/utils/util.dart';
 
-AspectRatioOption ratio = AspectRatioOption.r9x16;
+AspectRatioOption ratio = AspectRatioOption.photoCard;
 
 const Size device = Size(360.0, 800.0);
 

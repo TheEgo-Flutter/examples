@@ -23,7 +23,7 @@ class ImageEditor extends StatelessWidget {
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
-    this.aspectRatio = AspectRatioOption.r5x7,
+    this.aspectRatio = AspectRatioOption.photoCard,
   });
 
   @override
