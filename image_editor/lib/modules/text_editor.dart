@@ -108,8 +108,8 @@ class _TextEditorState extends State<TextEditor> {
             if (!isInitialBuild && bottomInset == 0.0 && !isEditing) {
               /*
                 키보드 내려가면 뒤로가기 
+                Navigator.canPop(context) ? Navigator.pop(context) : null;
               */
-              Navigator.canPop(context) ? Navigator.pop(context) : null;
             } else {
               isInitialBuild = false;
             }
@@ -126,7 +126,7 @@ class _TextEditorState extends State<TextEditor> {
             ),
             top: GlobalToolBar(
               onConfirmPressed: () {
-                if (textNotifier.value.isEmpty) {
+                if (textNotifier.value.trim().isEmpty) {
                   Navigator.pop(context);
                 } else {
                   TextBoxInput result = input.copyWith(size: textBoxRect.size);
