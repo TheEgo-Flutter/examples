@@ -94,10 +94,9 @@ class _BrushPainterState extends State<BrushPainter> {
       bottom: Expanded(
         child: ClipPath(
           clipper: CardBoxClip(),
-          child: Container(
+          child: SizedBox(
             width: GlobalRect().objectRect.width,
             height: GlobalRect().objectRect.height,
-            color: Colors.black,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,

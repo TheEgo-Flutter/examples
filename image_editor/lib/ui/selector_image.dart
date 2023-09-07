@@ -33,6 +33,7 @@ class ImageSelectorState extends State<ImageSelector> {
         crossAxisSpacing: 4.0,
         childAspectRatio: ratio.ratio ?? 1,
       ),
+      padding: const EdgeInsets.all(8.0),
       itemCount: widget.items.length,
       itemBuilder: (context, index) {
         Widget? item;

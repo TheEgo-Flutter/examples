@@ -24,7 +24,7 @@ ThemeData theme = ThemeData().copyWith(
     titleTextStyle: TextStyle(color: customColors.label),
   ),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-    backgroundColor: Colors.transparent,
+    backgroundColor: Color(0xff353535),
   ),
   iconButtonTheme: const IconButtonThemeData(
       style: ButtonStyle(

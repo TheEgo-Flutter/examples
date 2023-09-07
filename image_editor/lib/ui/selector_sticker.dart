@@ -19,6 +19,7 @@ class StickerSelector extends StatelessWidget {
       shrinkWrap: false,
       physics: const ClampingScrollPhysics(),
       scrollDirection: Axis.vertical,
+      padding: const EdgeInsets.all(8.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5,
         mainAxisSpacing: 8.0,

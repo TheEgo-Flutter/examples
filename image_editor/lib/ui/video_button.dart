@@ -2,32 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoContainer extends StatefulWidget {
-  const VideoContainer({super.key});
-
+  const VideoContainer({super.key, required this.videoController});
+  final VideoPlayerController videoController;
   @override
   State<VideoContainer> createState() => _VideoContainerState();
 }
 
 class _VideoContainerState extends State<VideoContainer> {
-  late final VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.networkUrl(
-        Uri.parse('https://github.com/the-ego/samples/raw/main/assets/video/button.mp4'))
-      ..initialize().then((_) {
-        _controller.play();
-        _controller.setLooping(true);
-      });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -35,7 +16,7 @@ class _VideoContainerState extends State<VideoContainer> {
       height: 52,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(27),
-        child: _controller.value.isInitialized ? VideoPlayer(_controller) : shimmerEffect(),
+        child: widget.videoController.value.isInitialized ? VideoPlayer(widget.videoController) : shimmerEffect(),
       ),
     );
   }
