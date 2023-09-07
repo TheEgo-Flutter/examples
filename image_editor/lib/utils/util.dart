@@ -27,7 +27,6 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
       ),
     ),
     barrierColor: Colors.transparent,
-    backgroundColor: const Color(0xff1C1C17),
     builder: (BuildContext context) {
       return Padding(
         padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),

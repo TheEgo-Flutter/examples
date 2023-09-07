@@ -38,7 +38,7 @@ class _TransformedWidgetState extends State<TransformedWidget> {
 
   Widget buildBody(BuildContext context) {
     Widget body = CustomPaint(
-      painter: RectBlurPainter(GlobalRect().cardRect, MediaQuery.sizeOf(context), widget.themeData.canvasColor),
+      painter: RectBlurPainter(GlobalRect().cardRect, MediaQuery.sizeOf(context), background),
       child: Scaffold(
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         body: ClipPath(

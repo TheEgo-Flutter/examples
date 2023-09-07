@@ -141,7 +141,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
     bool isDragging,
   ) async {
     if (!(selectedLayerItem?.isObject ?? false)) return;
-    if (!GlobalRect().deleteRect.contains(currentFingerPosition)) return;
+    if (!CardRect().deleteRect.contains(currentFingerPosition)) return;
     if (isDragging) {
       if (await Vibration.hasVibrator() ?? false) {
         Vibration.vibrate(amplitude: 100);
@@ -164,7 +164,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
           GestureDetector(
             onTap: () => swapWidget(null),
             child: Container(
-              color: Theme.of(context).cardColor,
+              color: background,
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
             ),
@@ -516,7 +516,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
       case LayerType.selectImage:
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xff353535),
+            color: bottomSheet,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(16),
             ),
@@ -603,7 +603,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
       case LayerType.frame:
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xff353535),
+            color: bottomSheet,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(16),
             ),
@@ -635,7 +635,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
       case LayerType.sticker:
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xff353535),
+            color: bottomSheet,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(16),
             ),

@@ -1,5 +1,23 @@
 import 'package:flutter/material.dart';
 
+class CardRect {
+  static final CardRect _instance = CardRect._internal();
+
+  factory CardRect() {
+    return _instance;
+  }
+
+  CardRect._internal();
+  Rect get deleteRect => _deleteRectDefault;
+  double get width => GlobalRect().cardRect.width * 0.15;
+  Rect get _deleteRectDefault => Rect.fromLTWH(
+        GlobalRect().cardRect.bottomCenter.dx - (width / 2),
+        GlobalRect().cardRect.bottomCenter.dy - (width * 1.2),
+        width,
+        width,
+      ).shift(-GlobalRect().cardRect.topLeft);
+}
+
 class GlobalRect {
   static final GlobalRect _instance = GlobalRect._internal();
 
@@ -15,7 +33,6 @@ class GlobalRect {
   final GlobalKey objectAreaKey = GlobalKey();
 
   Rect get toolBarRect => _toolBarRectDefault;
-  Rect get deleteRect => _deleteRectDefault;
 
   double get statusBarSize => _statusBarSize ?? 0;
   double? _statusBarSize;
@@ -36,12 +53,6 @@ class GlobalRect {
   }
 
   Rect get _toolBarRectDefault => Rect.fromLTWH(objectRect.left, statusBarSize, objectRect.width, kToolbarHeight);
-
-  Rect get _deleteRectDefault => Rect.fromLTWH(
-      GlobalRect().cardRect.left + (GlobalRect().cardRect.width * 0.4),
-      GlobalRect().cardRect.bottom - (GlobalRect().cardRect.width * 0.2),
-      GlobalRect().cardRect.width * 0.2,
-      GlobalRect().cardRect.width * 0.2);
 
   Rect getRect(GlobalKey key) {
     final RenderBox renderBox = key.currentContext!.findRenderObject() as RenderBox;

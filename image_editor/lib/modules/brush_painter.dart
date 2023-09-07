@@ -5,7 +5,6 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:image_editor/ui/ui.dart';
-import 'package:image_editor/utils/custom_color.g.dart';
 import 'package:image_editor/utils/global.dart';
 
 import '../utils/global.rect.dart';
@@ -134,7 +133,7 @@ class _BrushPainterState extends State<BrushPainter> {
             min: min,
             max: max,
             value: dc.strokeWidth,
-            thumbColor: customColors.accent!,
+            thumbColor: accent,
             onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
           );
         },

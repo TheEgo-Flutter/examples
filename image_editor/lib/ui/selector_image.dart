@@ -40,7 +40,7 @@ class ImageSelectorState extends State<ImageSelector> {
         if (index == 0 && widget.firstItem != null) {
           item = Container(
             decoration: BoxDecoration(
-              color: const Color(0xff404040),
+              color: bottomItem,
               borderRadius: BorderRadius.circular(4),
             ),
             child: widget.firstItem,
@@ -58,7 +58,7 @@ class ImageSelectorState extends State<ImageSelector> {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xff404040),
+                color: bottomItem,
                 borderRadius: BorderRadius.circular(4),
                 image: DecorationImage(
                   image: child,
