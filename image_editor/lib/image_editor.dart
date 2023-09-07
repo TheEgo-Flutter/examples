@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:render/render.dart';
-import 'package:vibration/vibration.dart';
 import 'package:video_player/video_player.dart';
 
 import 'modules/modules.dart';
@@ -135,19 +134,24 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
     return image;
   }
 
+  bool isInDeleteArea = false;
+
   void _handleDeleteAction(
     Offset currentFingerPosition,
     LayerItem layerItem,
     bool isDragging,
   ) async {
     if (!(selectedLayerItem?.isObject ?? false)) return;
-    if (!CardRect().deleteRect.contains(currentFingerPosition)) return;
-    if (isDragging) {
-      if (await Vibration.hasVibrator() ?? false) {
-        Vibration.vibrate(amplitude: 100);
-      }
+    if (!CardRect().deleteRect.contains(currentFingerPosition)) {
+      isInDeleteArea = false;
+      return;
     } else {
-      layerManager.removeLayerByKey(layerItem.key);
+      if (isDragging) {
+        if (!isInDeleteArea) HapticFeedback.lightImpact();
+        isInDeleteArea = true;
+      } else {
+        layerManager.removeLayerByKey(layerItem.key);
+      }
     }
   }
 
@@ -292,7 +296,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
           }
         }
         setState(() {
-          selectedLayerItem = item;
           if (item.isObject) {
             layerManager.moveLayerToFront(item);
           }

@@ -135,7 +135,7 @@ class LayerManager {
       layer = _drawingLayer;
       _drawingLayer = null;
     } else {
-      layer = _otherLayers.firstWhere((item) => item.key == key);
+      layer = _otherLayers.where((item) => item.key == key).firstOrNull;
       _otherLayers.remove(layer);
     }
     if (layer != null) {
