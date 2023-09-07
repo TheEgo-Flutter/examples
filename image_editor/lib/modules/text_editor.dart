@@ -190,7 +190,7 @@ class _TextEditorState extends State<TextEditor> {
                     isFontBarVisible
                         ? Container(margin: const EdgeInsets.symmetric(vertical: 8), child: _fontBar(context))
                         : ColorBar(
-                            initialColor: currentColor,
+                            value: currentColor,
                             onColorChanged: (value) {
                               setState(() {
                                 currentColor = value;

@@ -14,12 +14,12 @@ const List<Color> colors = [
 ];
 
 class ColorBar extends StatefulWidget {
-  final Color? initialColor;
+  final Color? value;
   final List<Color> colorList;
   final ValueChanged<Color> onColorChanged;
   const ColorBar({
     Key? key,
-    this.initialColor,
+    this.value,
     required this.onColorChanged,
     this.colorList = colors,
   }) : super(key: key);
@@ -29,12 +29,7 @@ class ColorBar extends StatefulWidget {
 }
 
 class _ColorBarState extends State<ColorBar> {
-  Color? selectedColor;
-  @override
-  void initState() {
-    super.initState();
-    widget.initialColor != null ? selectedColor = widget.initialColor : selectedColor = null;
-  }
+  Color? get value => widget.value;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +42,9 @@ class _ColorBarState extends State<ColorBar> {
         itemBuilder: (context, index) {
           return ColorChip(
             color: widget.colorList[index],
-            isSelected: selectedColor == widget.colorList[index],
+            isSelected: value == widget.colorList[index],
             onSelected: (bool selected) {
               if (selected) {
-                setState(() {
-                  selectedColor = widget.colorList[index];
-                });
                 widget.onColorChanged(widget.colorList[index]);
               }
             },

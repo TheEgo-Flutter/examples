@@ -120,7 +120,7 @@ class _BrushPainterState extends State<BrushPainter> {
                 ),
                 ColorBar(
                   onColorChanged: changeColor,
-                  initialColor: _drawingController.getColor,
+                  value: _drawingController.getColor,
                 ),
               ],
             ),

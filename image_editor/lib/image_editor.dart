@@ -295,28 +295,30 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                   onPressed: () {
                     LayerItem? background =
                         layerManager.layers.where((element) => element.type == LayerType.backgroundImage).firstOrNull;
-                    Color? initialColor = background == null
+                    Color? value = background == null
                         ? Colors.white
                         : background.object.runtimeType == ColoredBox
                             ? (background.object as ColoredBox).color
                             : null;
                     customObjectBoxSizeDialog(
-                        context: context,
-                        child: Column(
+                      context: context,
+                      child: StatefulBuilder(builder: (context, dialogSetState) {
+                        return Column(
                           children: [
                             ColorBar(
-                              initialColor: initialColor,
+                              value: value,
                               onColorChanged: (color) async {
-                                {
-                                  await _loadImageColor(null);
-                                  LayerItem layer = LayerItem(
-                                    UniqueKey(),
-                                    type: LayerType.backgroundColor,
-                                    object: color,
-                                    rect: GlobalRect().cardRect.zero,
-                                  );
-                                  layerManager.addLayer(layer);
-                                }
+                                await _loadImageColor(null);
+                                LayerItem layer = LayerItem(
+                                  UniqueKey(),
+                                  type: LayerType.backgroundColor,
+                                  object: color,
+                                  rect: GlobalRect().cardRect.zero,
+                                );
+                                layerManager.addLayer(layer);
+                                dialogSetState(() {
+                                  value = color; // <-- Update the local color here
+                                });
                                 setState(() {});
                               },
                             ),
@@ -336,6 +338,12 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                                         object: Image.memory(loadImage),
                                         rect: GlobalRect().cardRect.zero,
                                       );
+                                      dialogSetState(
+                                        () {
+                                          value = null; // <-- Reset the local color here
+                                        },
+                                      );
+                                      setState(() {});
                                       layerManager.addLayer(imageBackground);
                                     },
                                     child: const Icon(
@@ -343,22 +351,27 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                                       color: Colors.white,
                                     )),
                                 onItemSelected: (child) async {
-                                  {
-                                    await _loadImageColor(null);
-                                    LayerItem layer = LayerItem(
-                                      UniqueKey(),
-                                      type: LayerType.backgroundImage,
-                                      object: child,
-                                      rect: GlobalRect().cardRect.zero,
-                                    );
-                                    layerManager.addLayer(layer);
-                                  }
+                                  await _loadImageColor(null);
+                                  LayerItem layer = LayerItem(
+                                    UniqueKey(),
+                                    type: LayerType.backgroundImage,
+                                    object: child,
+                                    rect: GlobalRect().cardRect.zero,
+                                  );
+                                  dialogSetState(
+                                    () {
+                                      value = null; // <-- Reset the local color here
+                                    },
+                                  );
                                   setState(() {});
+                                  layerManager.addLayer(layer);
                                 },
                               ),
                             ),
                           ],
-                        ));
+                        );
+                      }),
+                    );
                   },
                 ),
               ),
