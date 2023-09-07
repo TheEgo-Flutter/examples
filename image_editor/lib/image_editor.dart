@@ -375,14 +375,8 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                         child: ImageSelector(
                           items: widget.frames,
                           firstItem: GestureDetector(
-                            onTap: () async {
-                              LayerItem layer = LayerItem(
-                                UniqueKey(),
-                                type: LayerType.frame,
-                                object: null,
-                                rect: GlobalRect().cardRect.zero,
-                              );
-                              layerManager.addLayer(layer);
+                            onTap: () {
+                              layerManager.removeLayerByType(LayerType.frame);
                               setState(() {});
                             },
                             child: const Icon(
@@ -397,7 +391,6 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
                               object: child,
                               rect: GlobalRect().cardRect.zero,
                             );
-
                             layerManager.addLayer(layer);
                             setState(() {});
                           },
