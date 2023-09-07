@@ -58,7 +58,7 @@ class _ImageEditorView extends StatefulWidget {
 }
 
 class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingObserver, TickerProviderStateMixin {
-  LayerManager layerManager = LayerManager();
+  var layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   LinearGradient? cardColor;
   late final VideoPlayerController videoController;
@@ -148,6 +148,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
     } else {
       if (isDragging) {
         if (!isInDeleteArea) HapticFeedback.lightImpact();
+
         isInDeleteArea = true;
       } else {
         layerManager.removeLayerByKey(layerItem.key);

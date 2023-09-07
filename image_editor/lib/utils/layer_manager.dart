@@ -71,7 +71,13 @@ class LayerManager {
   LayerItem? _frameLayer;
   LayerItem? _drawingLayer;
   List<LayerItem> _otherLayers = [];
+  static final LayerManager _singleton = LayerManager._internal();
 
+  factory LayerManager() {
+    return _singleton;
+  }
+
+  LayerManager._internal();
   List<LayerItem> get layers {
     List<LayerItem> layers = [];
     if (_backgroundLayer != null) {
