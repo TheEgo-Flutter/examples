@@ -5,15 +5,34 @@ import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_editor/image_editor.dart';
 import 'package:video_player/video_player.dart';
 
-void main() {
+void main() async {
+  if (Platform.isIOS) {
+    for (var fontName in fontUrls.keys) {
+      var fontLoader = FontLoader(fontName);
+      fontLoader.addFont(fetchFont(fontUrls[fontName] ?? ''));
+      await fontLoader.load();
+    }
+  }
+
   runApp(
     const MaterialApp(
       home: ImageEditorExample(),
     ),
   );
+}
+
+Future<ByteData> fetchFont(String url) async {
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    return ByteData.view(response.bodyBytes.buffer);
+  } else {
+    throw Exception('Failed to load font');
+  }
 }
 
 class ImageEditorExample extends StatefulWidget {
@@ -146,6 +165,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                     stickers: stickerList,
                     backgrounds: backgroundList,
                     frames: frameList,
+                    fonts: fontUrls.keys.toList(),
                   ),
                 ),
               );

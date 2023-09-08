@@ -1,3 +1,12 @@
+var fontUrls = {
+  'GmarketSansBold': 'https://dingdongu.s3.ap-northeast-2.amazonaws.com/dev/fonts/gmarket/GmarketSansBold.otf',
+  'GmarketSansLight': 'https://dingdongu.s3.ap-northeast-2.amazonaws.com/dev/fonts/gmarket/GmarketSansLight.otf',
+  'GmarketSansMedium': 'https://dingdongu.s3.ap-northeast-2.amazonaws.com/dev/fonts/gmarket/GmarketSansMedium.otf',
+  'Cafe24Ssurround':
+      'https://dingdongu.s3.ap-northeast-2.amazonaws.com/dev/fonts/cafe24s-surround/Cafe24Ssurround-v2.0.ttf',
+  'MaruBuri-Bold': 'https://dingdongu.s3.ap-northeast-2.amazonaws.com/dev/fonts/maruburi/MaruBuri-Bold.ttf',
+  'Montserrat': 'https://github.com/google/fonts/raw/main/ofl/meddon/Meddon.ttf',
+};
 List<String> stickers = [
   'stickers/sticker_01.png',
   'stickers/sticker_02.png',

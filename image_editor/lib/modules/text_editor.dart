@@ -2,13 +2,13 @@ import 'dart:developer';
 
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_editor/ui/ui.dart';
 
 import '../utils/global.dart';
 import '../utils/global.rect.dart';
 import '../utils/util.dart';
-import 'constants/constants.dart';
+
+List<String> fontFamilies = [];
 
 class TextEditor extends StatefulWidget {
   final TextBoxInput? textEditorStyle;
@@ -25,10 +25,6 @@ class _TextEditorState extends State<TextEditor> {
   Color currentColor = Colors.white;
   Color textBackgroundColor = Colors.transparent;
   TextAlign align = TextAlign.center;
-  List<String> koreanFonts = googleFontsDetails.entries
-      .where((entry) => (entry.value['subsets'] as String).contains('korean'))
-      .map((entry) => entry.key)
-      .toList();
 
   bool isFontBarVisible = true;
 
@@ -47,10 +43,8 @@ class _TextEditorState extends State<TextEditor> {
     return renderBox.localToGlobal(Offset.zero) - GlobalRect().cardRect.topLeft & renderBox.size;
   }
 
-  TextStyle get currentTextStyle => GoogleFonts.getFont(koreanFonts[selectedFontIndex]).copyWith(
-        color: currentColor,
-        fontSize: fontSize.toDouble(),
-      );
+  TextStyle get currentTextStyle =>
+      TextStyle(color: currentColor, fontSize: fontSize.toDouble(), fontFamily: fontFamilies[selectedFontIndex]);
 
   Size get textFieldSize => addSizes(
       _textSize,
@@ -257,16 +251,19 @@ text effects
       child: SizedBox(
         height: 32,
         child: ListView.builder(
+          shrinkWrap: true,
           scrollDirection: Axis.horizontal,
-          itemCount: koreanFonts.length,
+          itemCount: fontFamilies.length,
           itemBuilder: (context, index) {
-            String fontFamily = koreanFonts[index];
+            String fontFamily = fontFamilies[index];
             bool isSelected = selectedFontIndex == index;
             return ChoiceChip(
-              label: Text(
-                'Aa',
-                style: GoogleFonts.getFont(fontFamily).copyWith(color: isSelected ? Colors.purple[900] : Colors.white),
-              ),
+              label: Text('Aa',
+                  style: TextStyle(
+                    color: isSelected ? Colors.purple[900] : Colors.white,
+                    fontFamily: fontFamily,
+                    fontSize: (ChipTheme.of(context).labelStyle?.fontSize ?? 12) * 0.8,
+                  )),
               shape: const CircleBorder(),
               selected: isSelected,
               selectedColor: Colors.white,
@@ -290,7 +287,7 @@ text effects
   }
 
   int getFontIndex() {
-    int index = koreanFonts.indexWhere((element) {
+    int index = fontFamilies.indexWhere((element) {
       return widget.textEditorStyle!.style.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
     });
     if (index < 0) {

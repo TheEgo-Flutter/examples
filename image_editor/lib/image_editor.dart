@@ -12,52 +12,25 @@ import 'modules/modules.dart';
 import 'ui/ui.dart';
 import 'utils/utils.dart';
 
-class ImageEditor extends StatelessWidget {
+class ImageEditor extends StatefulWidget {
   final List<Uint8List> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
   final AspectRatioOption aspectRatio;
-
+  final List<String> fonts;
   const ImageEditor({
     super.key,
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
+    this.fonts = const [],
     this.aspectRatio = AspectRatioOption.photoCard,
   });
-
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: theme,
-      home: _ImageEditorView(
-        stickers: stickers,
-        backgrounds: backgrounds,
-        frames: frames,
-        aspectRatio: aspectRatio,
-      ),
-    );
-  }
+  State<ImageEditor> createState() => _ImageEditorState();
 }
 
-class _ImageEditorView extends StatefulWidget {
-  final List<Uint8List> stickers;
-  final List<ImageProvider> backgrounds;
-  final List<ImageProvider> frames;
-  final AspectRatioOption aspectRatio;
-
-  const _ImageEditorView({
-    this.stickers = const [],
-    this.backgrounds = const [],
-    this.frames = const [],
-    required this.aspectRatio,
-  });
-
-  @override
-  State<_ImageEditorView> createState() => _ImageEditorViewState();
-}
-
-class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   var layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   LinearGradient? cardColor;
@@ -69,6 +42,7 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
   @override
   void initState() {
     super.initState();
+    fontFamilies = widget.fonts;
     videoController = VideoPlayerController.networkUrl(
         Uri.parse('https://github.com/the-ego/samples/raw/main/assets/video/button.mp4'))
       ..initialize().then((_) {
@@ -147,88 +121,91 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      key: scaffoldGlobalKey,
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: () => swapWidget(null),
-            child: Container(
-              color: background,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
+    return MaterialApp(
+      theme: theme,
+      home: Scaffold(
+        resizeToAvoidBottomInset: false,
+        key: scaffoldGlobalKey,
+        body: Stack(
+          children: [
+            GestureDetector(
+              onTap: () => swapWidget(null),
+              child: Container(
+                color: background,
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+              ),
             ),
-          ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              double space = kToolbarHeight / 3;
-              int cardFlex = 70;
-              double maxWidth = (constraints.maxHeight) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
+            LayoutBuilder(
+              builder: (context, constraints) {
+                double space = kToolbarHeight / 3;
+                int cardFlex = 70;
+                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
 
-              return Center(
-                child: SizedBox(
-                  width: maxWidth,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: statusBarHeight,
-                      ),
-                      const SizedBox(
-                        height: kToolbarHeight,
-                      ),
-                      SizedBox(
-                        height: space,
-                      ),
-                      Expanded(
-                        flex: cardFlex,
-                        child: GestureDetector(
-                          onTap: () => swapWidget(null),
-                          child: Padding(
-                            padding: cardPadding,
-                            child: ClipPath(
-                              key: GlobalRect().cardAreaKey,
-                              clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                              child: Render(
-                                controller: renderController,
-                                child: buildImageLayer(context),
+                return Center(
+                  child: SizedBox(
+                    width: maxWidth,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: statusBarHeight,
+                        ),
+                        const SizedBox(
+                          height: kToolbarHeight,
+                        ),
+                        SizedBox(
+                          height: space,
+                        ),
+                        Expanded(
+                          flex: cardFlex,
+                          child: GestureDetector(
+                            onTap: () => swapWidget(null),
+                            child: Padding(
+                              padding: cardPadding,
+                              child: ClipPath(
+                                key: GlobalRect().cardAreaKey,
+                                clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                child: Render(
+                                  controller: renderController,
+                                  child: buildImageLayer(context),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 100 - cardFlex,
-                        child: Container(
-                          padding: EdgeInsets.only(top: space),
-                          child: ClipPath(
-                            key: GlobalRect().objectAreaKey,
-                            clipper: CardBoxClip(),
-                            child: Stack(
-                              children: [
-                                IgnorePointer(
-                                  ignoring: _animationController.isAnimating,
-                                  child: buildItemArea(),
-                                ),
-                                AnimatedSwitcher(
-                                  duration: const Duration(microseconds: 100),
-                                  child: SlideTransition(
-                                    position: _offsetAnimation,
-                                    child: switchingWidget(),
+                        Expanded(
+                          flex: 100 - cardFlex,
+                          child: Container(
+                            padding: EdgeInsets.only(top: space),
+                            child: ClipPath(
+                              key: GlobalRect().objectAreaKey,
+                              clipper: CardBoxClip(),
+                              child: Stack(
+                                children: [
+                                  IgnorePointer(
+                                    ignoring: _animationController.isAnimating,
+                                    child: buildItemArea(),
                                   ),
-                                ),
-                              ],
+                                  AnimatedSwitcher(
+                                    duration: const Duration(microseconds: 100),
+                                    child: SlideTransition(
+                                      position: _offsetAnimation,
+                                      child: switchingWidget(),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
