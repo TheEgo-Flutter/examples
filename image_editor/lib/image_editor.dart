@@ -204,6 +204,15 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 );
               },
             ),
+            if (renderStream?.isBroadcast ?? false)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.5), // semi-transparent black
+                  child: const Center(
+                    child: CircularProgressIndicator(), // or any custom loader you prefer
+                  ),
+                ),
+              ),
           ],
         ),
       ),
