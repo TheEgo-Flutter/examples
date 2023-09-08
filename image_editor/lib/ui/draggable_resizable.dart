@@ -1,7 +1,7 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../modules/text_editor.dart';
 import '../utils/global.rect.dart';
@@ -19,7 +19,7 @@ class DraggableResizable extends StatefulWidget {
   }) : super(key: key);
 
   final ValueChanged<LayerItem>? onLayerTapped;
-  final void Function(Offset offset, LayerItem layerItem, bool isDragging)? onDelete;
+  final ValueChanged<LayerItem>? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
   final bool isFocus;
@@ -57,6 +57,25 @@ class _DraggableResizableState extends State<DraggableResizable> {
     _offset = item.rect.topLeft;
   }
 
+  bool isInDeleteArea = false;
+
+  void _handleDeleteAction(
+    bool isDragging,
+  ) async {
+    if (!(selectedLayerItem?.isObject ?? false)) return;
+    if (!CardRect().deleteRect.contains(currentFingerPosition)) {
+      isInDeleteArea = false;
+      return;
+    } else {
+      if (isDragging) {
+        if (!isInDeleteArea) HapticFeedback.lightImpact();
+        isInDeleteArea = true;
+      } else {
+        widget.onDelete?.call(layerItem);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -76,7 +95,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                   startingFingerPositionFromObject = d;
                 },
                 onDragEnd: () {
-                  widget.onDelete?.call(currentFingerPosition, layerItem, false);
+                  _handleDeleteAction(false);
                   widget.onDragEnd?.call(layerItem);
                 },
                 onDrag: widget.layerItem.isDraggable && widget.isFocus
@@ -90,7 +109,7 @@ class _DraggableResizableState extends State<DraggableResizable> {
                         });
 
                         currentFingerPosition = startingFingerPositionFromObject + _offset;
-                        widget.onDelete?.call(currentFingerPosition, layerItem, true);
+                        _handleDeleteAction(true);
                       }
                     : null,
                 onScale: widget.layerItem.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,

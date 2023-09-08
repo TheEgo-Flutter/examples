@@ -137,23 +137,9 @@ class _ImageEditorViewState extends State<_ImageEditorView> with WidgetsBindingO
   bool isInDeleteArea = false;
 
   void _handleDeleteAction(
-    Offset currentFingerPosition,
     LayerItem layerItem,
-    bool isDragging,
   ) async {
-    if (!(selectedLayerItem?.isObject ?? false)) return;
-    if (!CardRect().deleteRect.contains(currentFingerPosition)) {
-      isInDeleteArea = false;
-      return;
-    } else {
-      if (isDragging) {
-        if (!isInDeleteArea) HapticFeedback.lightImpact();
-
-        isInDeleteArea = true;
-      } else {
-        layerManager.removeLayerByKey(layerItem.key);
-      }
-    }
+    layerManager.removeLayerByKey(layerItem.key);
   }
 
   Stream<RenderNotifier>? renderStream;
