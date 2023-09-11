@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../modules/text_editor.dart';
 import '../utils/global.rect.dart';
 import '../utils/layer_manager.dart';
+import 'delete_area.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
@@ -94,7 +95,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   void _handleDeleteAction(
     bool isDragging,
   ) async {
-    if (!(selectedLayerItem?.isObject ?? false)) return;
+    if (!(widget.layerItem.isObject)) return;
     if (!CardRect().deleteRect.contains(currentFingerPosition)) {
       isInDeleteArea = false;
 
@@ -151,7 +152,11 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
               ),
             ),
           ),
-        )
+        ),
+        if (widget.isFocus)
+          DeleteArea(
+            visible: widget.layerItem.isObject,
+          ),
       ],
     );
   }

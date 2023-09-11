@@ -9,6 +9,7 @@ import 'package:render/render.dart';
 import 'package:video_player/video_player.dart';
 
 import 'modules/modules.dart';
+import 'ui/icon_button.dart';
 import 'ui/ui.dart';
 import 'utils/utils.dart';
 
@@ -31,14 +32,14 @@ class ImageEditor extends StatefulWidget {
 }
 
 class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
-  var layerManager = LayerManager();
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
+  var layerManager = LayerManager();
+  LayerType? _selectedLayer;
   LinearGradient? cardColor;
   late final VideoPlayerController videoController;
-  double get statusBarHeight => MediaQuery.of(context).padding.top;
-  LayerType? _selectedLayer;
   late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
+  double get statusBarHeight => MediaQuery.of(context).padding.top;
   @override
   void initState() {
     super.initState();
@@ -106,14 +107,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     if (imageFile is Uint8List) return imageFile;
     final image = await (imageFile as dynamic).readAsBytes();
     return image;
-  }
-
-  bool isInDeleteArea = false;
-
-  void _handleDeleteAction(
-    LayerItem layerItem,
-  ) async {
-    layerManager.removeLayerByKey(layerItem.key);
   }
 
   Stream<RenderNotifier>? renderStream;
@@ -230,9 +223,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         fit: StackFit.expand,
         children: [
           ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-          DeleteArea(
-            visible: selectedLayerItem?.isObject ?? false,
-          ),
         ],
       ),
     );
@@ -240,8 +230,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   Widget buildLayerWidgets(LayerItem layer) {
     return DraggableResizable(
-      key: Key('${layer.key}_draggableResizable_asset'),
-      isFocus: selectedLayerItem?.key == layer.key ? true : false,
+      key: Key('${layer.key}_draggableResizable'),
+      isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
         if (item.type == LayerType.text) {
           Logger().e(item.toString());
@@ -276,7 +266,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       },
       onDragStart: (LayerItem item) {
         setState(() {
-          selectedLayerItem = item;
+          layerManager.selectedLayerItem = item;
           if (item.isObject) {
             layerManager.moveLayerToFront(item);
           }
@@ -285,10 +275,10 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       onDragEnd: (LayerItem item) {
         layerManager.updateLayer(item);
         setState(() {
-          selectedLayerItem = null;
+          layerManager.selectedLayerItem = null;
         });
       },
-      onDelete: _handleDeleteAction,
+      onDelete: (layerItem) => layerManager.removeLayerByKey(layerItem.key),
       layerItem: layer,
     );
   }
@@ -302,65 +292,35 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(DUIcons.picture),
-                  onPressed: () {
-                    swapWidget(LayerType.backgroundImage);
-                  },
-                ),
+              CircleIconButton(
+                iconData: DUIcons.picture,
+                onPressed: () {
+                  swapWidget(LayerType.backgroundImage);
+                },
               ),
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(DUIcons.tool_marquee),
-                  onPressed: () {
-                    swapWidget(LayerType.frame);
-                  },
-                ),
+              CircleIconButton(
+                iconData: DUIcons.tool_marquee,
+                onPressed: () {
+                  swapWidget(LayerType.frame);
+                },
               ),
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(DUIcons.sticker),
-                  onPressed: () {
-                    swapWidget(LayerType.sticker);
-                  },
-                ),
+              CircleIconButton(
+                iconData: DUIcons.sticker,
+                onPressed: () {
+                  swapWidget(LayerType.sticker);
+                },
               ),
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(DUIcons.letter_case),
-                  onPressed: () {
-                    switchingDialog(LayerType.text, context);
-                  },
-                ),
+              CircleIconButton(
+                iconData: DUIcons.letter_case,
+                onPressed: () {
+                  switchingDialog(LayerType.text, context);
+                },
               ),
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(DUIcons.paint_brush),
-                  onPressed: () {
-                    switchingDialog(LayerType.drawing, context);
-                  },
-                ),
+              CircleIconButton(
+                iconData: DUIcons.paint_brush,
+                onPressed: () {
+                  switchingDialog(LayerType.drawing, context);
+                },
               ),
             ],
           ),
@@ -368,53 +328,53 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         const SizedBox(
           height: 16,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 50.0),
-          child: Stack(
-            alignment: AlignmentDirectional.centerStart,
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey[850],
-                foregroundColor: Colors.white,
-                child: IconButton(
-                  padding: const EdgeInsets.all(4.0),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(
-                    DUIcons.back,
-                  ),
-                  onPressed: () {
-                    Navigator.canPop(context) ? Navigator.pop(context) : null;
-                  },
-                ),
-              ),
-              Center(
-                child: GestureDetector(
-                    onTap: () async {
-                      final stream = renderController.captureMotionWithStream(
-                        const Duration(seconds: 5),
-                        settings: const MotionSettings(
-                          pixelRatio: 5,
-                          frameRate: 80,
-                          simultaneousCaptureHandlers: 10,
-                        ),
-                        logInConsole: true,
-                      );
-                      setState(() {
-                        renderStream = stream;
-                      });
-                      final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
-                      if (result.isFatalError) return;
-
-                      if (mounted) Navigator.pop(context, (result as RenderResult).output);
-                    },
-                    child: VideoContainer(
-                      videoController: videoController,
-                    )),
-              ),
-            ],
-          ),
-        ),
+        bottomButtons(),
       ],
+    );
+  }
+
+  Padding bottomButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 50.0),
+      child: Stack(
+        alignment: AlignmentDirectional.centerStart,
+        children: [
+          CircleIconButton(
+            iconData: DUIcons.back,
+            onPressed: () {
+              Navigator.canPop(context) ? Navigator.pop(context) : null;
+            },
+          ),
+          renderButton(),
+        ],
+      ),
+    );
+  }
+
+  Center renderButton() {
+    return Center(
+      child: GestureDetector(
+          onTap: () async {
+            final stream = renderController.captureMotionWithStream(
+              const Duration(seconds: 5),
+              settings: const MotionSettings(
+                pixelRatio: 5,
+                frameRate: 80,
+                simultaneousCaptureHandlers: 10,
+              ),
+              logInConsole: true,
+            );
+            setState(() {
+              renderStream = stream;
+            });
+            final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
+            if (result.isFatalError) return;
+
+            if (mounted) Navigator.pop(context, (result as RenderResult).output);
+          },
+          child: VideoContainer(
+            videoController: videoController,
+          )),
     );
   }
 

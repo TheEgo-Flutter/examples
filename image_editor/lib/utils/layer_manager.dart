@@ -4,8 +4,6 @@ import 'global.rect.dart';
 
 enum LayerType { sticker, text, drawing, selectImage, backgroundImage, backgroundColor, frame }
 
-LayerItem? selectedLayerItem;
-
 class LayerItem {
   final Key key;
   final LayerType type;
@@ -65,17 +63,20 @@ class LayerItem {
 }
 
 class LayerManager {
+  static final LayerManager _singleton = LayerManager._internal();
+
+  factory LayerManager() {
+    return _singleton;
+  }
+
   List<LayerItem> undoLayers = [];
   List<LayerItem> removedLayers = [];
   LayerItem? _backgroundLayer;
   LayerItem? _frameLayer;
   LayerItem? _drawingLayer;
   List<LayerItem> _otherLayers = [];
-  static final LayerManager _singleton = LayerManager._internal();
 
-  factory LayerManager() {
-    return _singleton;
-  }
+  LayerItem? selectedLayerItem;
 
   LayerManager._internal();
   List<LayerItem> get layers {
