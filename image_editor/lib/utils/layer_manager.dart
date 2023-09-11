@@ -95,7 +95,6 @@ class LayerManager {
     return _singleton;
   }
 
-  List<LayerItem> removedLayers = [];
   LayerItem? _backgroundLayer;
   LayerItem? _frameLayer;
   LayerItem? _drawingLayer;
@@ -103,6 +102,7 @@ class LayerManager {
 
   LayerItem? selectedLayerItem;
 
+  List<LayerItem> removedLayers = [];
   LayerManager._internal();
   List<LayerItem> get layers {
     List<LayerItem> layers = [];
@@ -137,8 +137,8 @@ class LayerManager {
     }
   }
 
-  void moveLayerToFront(LayerItem layer) {
-    int index = _otherLayers.indexOf(layer);
+  void swap(LayerItem layer) {
+    int index = _otherLayers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
       _otherLayers.removeAt(index);
       _otherLayers.add(layer);

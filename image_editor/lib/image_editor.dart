@@ -234,7 +234,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
         if (item.type is TextType) {
-          Logger().e(item.toString());
           setState(() {
             layerManager.removeLayerByKey(item.key);
           });
@@ -260,7 +259,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         }
         setState(() {
           if (item.isObject) {
-            layerManager.moveLayerToFront(item);
+            layerManager.swap(item);
           }
         });
       },
@@ -268,8 +267,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         setState(() {
           layerManager.selectedLayerItem = item;
           if (item.isObject) {
-            layerManager.moveLayerToFront(item);
-            Logger().e(layerManager.layers);
+            layerManager.swap(item);
           }
         });
       },
