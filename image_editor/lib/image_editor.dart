@@ -455,13 +455,12 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           ),
           child: StatefulBuilder(
             builder: (context, dialogSetState) {
-              LayerItem? background = layerManager.layers
-                  .where((element) => element.type is BackgroundType && element.type.background == Background.image)
-                  .firstOrNull;
+              LayerItem? background =
+                  layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
               Color? value = background == null
                   ? Colors.white
-                  : background.object.runtimeType == ColoredBox
-                      ? (background.object as ColoredBox).color
+                  : background.type.background == Background.color
+                      ? (background.object as Color)
                       : null;
               return Column(
                 children: [
