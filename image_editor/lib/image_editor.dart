@@ -4,7 +4,6 @@ import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:logger/logger.dart';
 import 'package:render/render.dart';
 import 'package:video_player/video_player.dart';
 
@@ -258,7 +257,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           }
         }
         setState(() {
-          if (item.isObject) {
+          if (item.type.isObject) {
             layerManager.swap(item);
           }
         });
@@ -266,7 +265,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       onDragStart: (LayerItem item) {
         setState(() {
           layerManager.selectedLayerItem = item;
-          if (item.isObject) {
+          if (item.type.isObject) {
             layerManager.swap(item);
           }
         });
@@ -294,7 +293,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               CircleIconButton(
                 iconData: DUIcons.picture,
                 onPressed: () {
-                  swapWidget(BackgroundType(Background.color));
+                  swapWidget(const BackgroundType());
                 },
               ),
               CircleIconButton(
@@ -472,7 +471,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                       await _loadImageColor(null);
                       LayerItem layer = LayerItem(
                         UniqueKey(),
-                        type: BackgroundType(Background.color),
+                        type: const BackgroundType.color(),
                         object: color,
                         rect: GlobalRect().cardRect.zero,
                       );
@@ -495,7 +494,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                             await _loadImageColor(loadImage);
                             LayerItem imageBackground = LayerItem(
                               UniqueKey(),
-                              type: BackgroundType(Background.gallery),
+                              type: const BackgroundType.gallery(),
                               object: Image.memory(loadImage),
                               rect: GlobalRect().cardRect.zero,
                             );
@@ -515,7 +514,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                         await _loadImageColor(null);
                         LayerItem layer = LayerItem(
                           UniqueKey(),
-                          type: BackgroundType(Background.image),
+                          type: const BackgroundType.image(),
                           object: child,
                           rect: GlobalRect().cardRect.zero,
                         );

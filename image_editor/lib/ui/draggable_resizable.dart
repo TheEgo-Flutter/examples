@@ -95,7 +95,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   void _handleDeleteAction(
     bool isDragging,
   ) async {
-    if (!(widget.layerItem.isObject)) return;
+    if (!(widget.layerItem.type.isObject)) return;
     if (!CardRect().deleteRect.contains(currentFingerPosition)) {
       isInDeleteArea = false;
 
@@ -120,7 +120,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
           top: offset.dy,
           left: offset.dx,
           child: IgnorePointer(
-            ignoring: widget.layerItem.ignorePoint,
+            ignoring: widget.layerItem.type.ignorePoint,
             child: _DraggablePoint(
               onLayerTapped: () {
                 widget.onLayerTapped?.call(layerItem);
@@ -133,7 +133,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                 _handleDeleteAction(false);
                 widget.onDragEnd?.call(layerItem);
               },
-              onDrag: widget.layerItem.isDraggable && widget.isFocus
+              onDrag: widget.layerItem.type.isDraggable && widget.isFocus
                   ? (d, focalPoint) async {
                       offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
                       isCenteredHorizontally =
@@ -144,8 +144,8 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                       _handleDeleteAction(true);
                     }
                   : null,
-              onScale: widget.layerItem.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
-              onRotate: widget.layerItem.isRotatable && widget.isFocus ? (a) => angle = a : null,
+              onScale: widget.layerItem.type.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
+              onRotate: widget.layerItem.type.isRotatable && widget.isFocus ? (a) => angle = a : null,
               child: Transform.rotate(
                 angle: angle,
                 child: buildChild(),
@@ -155,7 +155,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
         ),
         if (widget.isFocus)
           DeleteArea(
-            visible: widget.layerItem.isObject,
+            visible: widget.layerItem.type.isObject,
           ),
       ],
     );
