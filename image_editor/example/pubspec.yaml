@@ -35,4 +35,4 @@ flutter:
   fonts:
     - family: DUIcons
       fonts:
-        - asset: assets/DUIcons.ttf
+        - asset: assets/DIYIcons.ttf
