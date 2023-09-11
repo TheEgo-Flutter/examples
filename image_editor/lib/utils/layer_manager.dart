@@ -19,7 +19,6 @@ class LayerManager {
 
   LayerItem? selectedLayerItem;
 
-  List<LayerItem> removedLayers = [];
   LayerManager._internal();
   List<LayerItem> get layers {
     List<LayerItem> layers = [];
@@ -65,7 +64,6 @@ class LayerManager {
   void _removeLayer(LayerItem layer) {
     int index = layers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
-      removedLayers.add(layers[index]);
       layers.removeAt(index);
     }
   }
