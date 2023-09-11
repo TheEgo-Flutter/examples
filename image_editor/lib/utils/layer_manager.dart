@@ -2,7 +2,33 @@ import 'package:flutter/widgets.dart';
 
 import 'global.rect.dart';
 
-enum LayerType { sticker, text, drawing, selectImage, backgroundImage, backgroundColor, frame }
+sealed class LayerType {
+  final Background? background;
+
+  const LayerType(this.background);
+}
+
+class StickerType extends LayerType {
+  StickerType() : super(null);
+}
+
+class TextType extends LayerType {
+  TextType() : super(null);
+}
+
+class DrawingType extends LayerType {
+  DrawingType() : super(null);
+}
+
+class BackgroundType extends LayerType {
+  BackgroundType(Background backgroundType) : super(backgroundType);
+}
+
+class FrameType extends LayerType {
+  FrameType() : super(null);
+}
+
+enum Background { gallery, image, color }
 
 class LayerItem {
   final Key key;
@@ -12,26 +38,26 @@ class LayerItem {
   final double angle;
 
   bool get isScalable {
-    return type == LayerType.sticker || type == LayerType.selectImage;
+    return type is StickerType || (type is BackgroundType && type.background == Background.gallery);
   }
 
   bool get isDraggable {
-    return type == LayerType.sticker || type == LayerType.selectImage || type == LayerType.text;
+    return type is StickerType || (type is BackgroundType && type.background == Background.gallery) || type is TextType;
   }
 
   bool get isRotatable {
-    return type == LayerType.sticker || type == LayerType.selectImage || type == LayerType.text;
+    return type is StickerType || (type is BackgroundType && type.background == Background.gallery) || type is TextType;
   }
 
   bool get isObject {
-    return type == LayerType.sticker || type == LayerType.text;
+    return type is StickerType || type is TextType;
   }
 
   bool get ignorePoint {
-    return type == LayerType.frame ||
-        type == LayerType.drawing ||
-        type == LayerType.backgroundImage ||
-        type == LayerType.backgroundColor;
+    return type is FrameType ||
+        type is DrawingType ||
+        (type is BackgroundType && type.background == Background.image) ||
+        (type is BackgroundType && type.background == Background.color);
   }
 
   LayerItem(
@@ -69,7 +95,6 @@ class LayerManager {
     return _singleton;
   }
 
-  List<LayerItem> undoLayers = [];
   List<LayerItem> removedLayers = [];
   LayerItem? _backgroundLayer;
   LayerItem? _frameLayer;
@@ -96,19 +121,17 @@ class LayerManager {
 
   void addLayer(LayerItem item) {
     switch (item.type) {
-      case LayerType.backgroundImage:
-      case LayerType.backgroundColor:
-      case LayerType.selectImage:
+      case BackgroundType():
         _backgroundLayer = item;
         break;
-      case LayerType.frame:
+      case FrameType():
         _frameLayer = item;
         break;
-      case LayerType.drawing:
+      case DrawingType():
         _drawingLayer = item;
         break;
-      case LayerType.text:
-      case LayerType.sticker:
+      case TextType():
+      case StickerType():
         _otherLayers.add(item);
         break;
     }
@@ -153,16 +176,15 @@ class LayerManager {
   void removeLayerByType(LayerType type) {
     LayerItem? layer;
     switch (type) {
-      case LayerType.selectImage:
-      case LayerType.backgroundImage:
+      case BackgroundType():
         layer = _backgroundLayer;
         _backgroundLayer = null;
         break;
-      case LayerType.frame:
+      case FrameType():
         layer = _frameLayer;
         _frameLayer = null;
         break;
-      case LayerType.drawing:
+      case DrawingType():
         layer = _drawingLayer;
         _drawingLayer = null;
         break;
@@ -178,20 +200,6 @@ class LayerManager {
     int index = _otherLayers.indexWhere((item) => item.key == layer.key);
     if (index != -1) {
       _otherLayers[index] = layer;
-    }
-  }
-
-  void undo() {
-    if (removedLayers.isNotEmpty) {
-      layers.add(removedLayers.removeLast());
-    } else if (layers.isNotEmpty) {
-      undoLayers.add(layers.removeLast());
-    }
-  }
-
-  void redo() {
-    if (undoLayers.isNotEmpty) {
-      layers.add(undoLayers.removeLast());
     }
   }
 }

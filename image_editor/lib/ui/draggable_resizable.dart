@@ -181,36 +181,54 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   Widget buildChild() {
     try {
       switch (widget.layerItem.type) {
-        case LayerType.text:
+        case TextType():
           object as TextBoxInput;
 
           return TextBox(
             isReadOnly: true,
             input: object,
           );
-        case LayerType.backgroundColor:
-          return Container(
-            height: size.height,
-            width: size.width,
-            color: widget.layerItem.object as Color,
-          );
-        case LayerType.drawing:
+
+        case DrawingType():
           return Image.memory(
             widget.layerItem.object as Uint8List,
             fit: BoxFit.fill,
             width: size.width,
             height: size.height,
           );
-        case LayerType.backgroundImage:
-        case LayerType.frame:
+        case BackgroundType():
+          switch (widget.layerItem.type.background) {
+            case Background.gallery:
+              return SizedBox(
+                height: size.height,
+                width: size.width,
+                child: widget.layerItem.object,
+              );
+            case Background.image:
+              return Image(
+                image: widget.layerItem.object as ImageProvider,
+                fit: BoxFit.fill,
+                width: size.width,
+                height: size.height,
+              );
+            case Background.color:
+              return Container(
+                height: size.height,
+                width: size.width,
+                color: widget.layerItem.object as Color,
+              );
+            default:
+              return const SizedBox.shrink();
+          }
+        case FrameType():
           return Image(
             image: widget.layerItem.object as ImageProvider,
             fit: BoxFit.fill,
             width: size.width,
             height: size.height,
           );
-        case LayerType.selectImage:
-        case LayerType.sticker:
+
+        case StickerType():
         default:
           return SizedBox(
             height: size.height,

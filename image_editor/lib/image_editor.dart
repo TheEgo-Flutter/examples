@@ -233,7 +233,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       key: Key('${layer.key}_draggableResizable'),
       isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
       onLayerTapped: (LayerItem item) async {
-        if (item.type == LayerType.text) {
+        if (item.type is TextType) {
           Logger().e(item.toString());
           setState(() {
             layerManager.removeLayerByKey(item.key);
@@ -269,6 +269,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           layerManager.selectedLayerItem = item;
           if (item.isObject) {
             layerManager.moveLayerToFront(item);
+            Logger().e(layerManager.layers);
           }
         });
       },
@@ -295,31 +296,31 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
               CircleIconButton(
                 iconData: DUIcons.picture,
                 onPressed: () {
-                  swapWidget(LayerType.backgroundImage);
+                  swapWidget(BackgroundType(Background.color));
                 },
               ),
               CircleIconButton(
                 iconData: DUIcons.tool_marquee,
                 onPressed: () {
-                  swapWidget(LayerType.frame);
+                  swapWidget(FrameType());
                 },
               ),
               CircleIconButton(
                 iconData: DUIcons.sticker,
                 onPressed: () {
-                  swapWidget(LayerType.sticker);
+                  swapWidget(StickerType());
                 },
               ),
               CircleIconButton(
                 iconData: DUIcons.letter_case,
                 onPressed: () {
-                  switchingDialog(LayerType.text, context);
+                  switchingDialog(TextType(), context);
                 },
               ),
               CircleIconButton(
                 iconData: DUIcons.paint_brush,
                 onPressed: () {
-                  switchingDialog(LayerType.drawing, context);
+                  switchingDialog(DrawingType(), context);
                 },
               ),
             ],
@@ -398,7 +399,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
       _selectedLayer = type;
     });
     switch (type) {
-      case LayerType.text:
+      case TextType():
         (TextBoxInput, Offset)? result = await showGeneralDialog(
           context: context,
           barrierColor: Colors.transparent,
@@ -412,14 +413,14 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         if (result == null) break;
         var layer = LayerItem(
           UniqueKey(),
-          type: LayerType.text,
+          type: TextType(),
           object: result.$1,
           rect: result.$2 & result.$1.size,
         );
         layerManager.addLayer(layer);
         setState(() {});
         break;
-      case LayerType.drawing:
+      case DrawingType():
         (Uint8List?, Size?)? data = await showGeneralDialog(
           context: context,
           barrierColor: Colors.transparent,
@@ -432,7 +433,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           setState(() {
             var layer = LayerItem(
               UniqueKey(),
-              type: LayerType.drawing,
+              type: DrawingType(),
               object: data.$1!,
               rect: GlobalRect().cardRect.zero,
             );
@@ -447,9 +448,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   Widget switchingWidget() {
     switch (_selectedLayer) {
-      case LayerType.backgroundColor:
-      case LayerType.backgroundImage:
-      case LayerType.selectImage:
+      case BackgroundType():
         return Container(
           decoration: const BoxDecoration(
             color: bottomSheet,
@@ -459,8 +458,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
           ),
           child: StatefulBuilder(
             builder: (context, dialogSetState) {
-              LayerItem? background =
-                  layerManager.layers.where((element) => element.type == LayerType.backgroundImage).firstOrNull;
+              LayerItem? background = layerManager.layers
+                  .where((element) => element.type is BackgroundType && element.type.background == Background.image)
+                  .firstOrNull;
               Color? value = background == null
                   ? Colors.white
                   : background.object.runtimeType == ColoredBox
@@ -474,7 +474,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                       await _loadImageColor(null);
                       LayerItem layer = LayerItem(
                         UniqueKey(),
-                        type: LayerType.backgroundColor,
+                        type: BackgroundType(Background.color),
                         object: color,
                         rect: GlobalRect().cardRect.zero,
                       );
@@ -497,7 +497,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                             await _loadImageColor(loadImage);
                             LayerItem imageBackground = LayerItem(
                               UniqueKey(),
-                              type: LayerType.selectImage,
+                              type: BackgroundType(Background.gallery),
                               object: Image.memory(loadImage),
                               rect: GlobalRect().cardRect.zero,
                             );
@@ -517,7 +517,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                         await _loadImageColor(null);
                         LayerItem layer = LayerItem(
                           UniqueKey(),
-                          type: LayerType.backgroundImage,
+                          type: BackgroundType(Background.image),
                           object: child,
                           rect: GlobalRect().cardRect.zero,
                         );
@@ -536,7 +536,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             },
           ),
         );
-      case LayerType.frame:
+      case FrameType():
         return Container(
           decoration: const BoxDecoration(
             color: bottomSheet,
@@ -548,7 +548,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             items: widget.frames,
             firstItem: GestureDetector(
               onTap: () {
-                layerManager.removeLayerByType(LayerType.frame);
+                layerManager.removeLayerByType(FrameType());
                 setState(() {});
               },
               child: const Icon(
@@ -559,7 +559,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             onItemSelected: (child) {
               LayerItem layer = LayerItem(
                 UniqueKey(),
-                type: LayerType.frame,
+                type: FrameType(),
                 object: child,
                 rect: GlobalRect().cardRect.zero,
               );
@@ -568,7 +568,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
             },
           ),
         );
-      case LayerType.sticker:
+      case StickerType():
         return Container(
           decoration: const BoxDecoration(
             color: bottomSheet,
@@ -587,7 +587,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
               LayerItem layer = LayerItem(
                 UniqueKey(),
-                type: LayerType.sticker,
+                type: StickerType(),
                 object: child,
                 rect: (offset & size),
               );
