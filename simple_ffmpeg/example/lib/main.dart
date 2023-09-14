@@ -3,8 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:simple_ffmpeg/ffmpeg_controller.dart';
-import 'package:simple_ffmpeg/ffmpeg_widget.dart';
+import 'package:simple_ffmpeg/src.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
