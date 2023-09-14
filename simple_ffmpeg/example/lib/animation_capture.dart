@@ -6,6 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simple_ffmpeg/lib.dart';
 
+const int _DURATION = 1;
+const int _TOTAL_FRAME = _DURATION * 60;
+const double _RATIO = 3.0;
+const String _FILE_NAME = 'capture_';
+const double _SIZE = 200.0;
+const String _SCALE = '${_SIZE * _RATIO}:${_SIZE * _RATIO}';
 void main() {
   runApp(const MyApp());
 }
@@ -101,14 +107,14 @@ class _CaptureWidgetState extends State<CaptureWidget> with SingleTickerProvider
     _capturedImages = [];
     final directory = await getTemporaryDirectory();
 
-    Duration delay = const Duration(seconds: DURATION) ~/ TOTAL_FRAME;
-    for (int i = 0; i < TOTAL_FRAME; i++) {
-      _animationController.value = i / (TOTAL_FRAME - 1);
+    Duration delay = const Duration(seconds: _DURATION) ~/ _TOTAL_FRAME;
+    for (int i = 0; i < _TOTAL_FRAME; i++) {
+      _animationController.value = i / (_TOTAL_FRAME - 1);
 
-      Uint8List? byte = await _renderer.capture(pixelRatio: RATIO, delay: delay);
+      Uint8List? byte = await _renderer.capture(pixelRatio: _RATIO, delay: delay);
 
       if (byte == null) continue;
-      final imagePath = '${directory.path}/$FILE_NAME${(i + 1).toString()}.png';
+      final imagePath = '${directory.path}/$_FILE_NAME${(i + 1).toString()}.png';
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(byte);
       _capturedImages.add(imagePath); // 경로를 리스트에 추가

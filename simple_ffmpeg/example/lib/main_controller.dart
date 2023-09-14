@@ -1,12 +1,19 @@
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:simple_ffmpeg/ffmpeg_controller.dart';
-import 'package:simple_ffmpeg/ffmpeg_widget.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:simple_ffmpeg/lib.dart';
 import 'package:video_player/video_player.dart';
 
+const int DURATION = 1;
+const int TOTAL_FRAME = DURATION * 60;
+const double RATIO = 3.0;
+const String FILE_NAME = 'capture_';
+const double SIZE = 200.0;
+const String SCALE = '${SIZE * RATIO}:${SIZE * RATIO}';
 void main() {
   runApp(MyApp());
 }
@@ -30,19 +37,23 @@ class EncoderPage extends StatefulWidget {
 }
 
 class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStateMixin {
-  late FFMpegController ffMpegController;
+  final GlobalKey _containerKey = GlobalKey();
+  late final Renderer _renderer;
+  late final VideoEncoder _videoEncoder;
+
   VideoPlayerController? _videoPlayerController;
   String _videoPath = '';
-  List<String> capturedImages = [];
+
   late AnimationController _animationController;
   late Animation<Color?> _colorAnimation;
 
   @override
   void initState() {
     super.initState();
-    ffMpegController = FFMpegController();
+    _renderer = Renderer(containerKey: _containerKey);
+    _videoEncoder = VideoEncoder(fileName: FILE_NAME, totalFrame: TOTAL_FRAME, duration: DURATION, scale: SCALE);
     _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: DURATION),
       vsync: this,
     );
     _colorAnimation = ColorTween(
@@ -54,7 +65,6 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
   @override
   void dispose() {
     super.dispose();
-
     _animationController.dispose();
     _videoPlayerController?.dispose();
   }
@@ -69,23 +79,20 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               InkWell(
-                onDoubleTap: () async {
-                  capturedImages =
-                      await ffMpegController.captureAnimation(controller: _animationController, framerate: 30);
-                },
-                child: FFmpegWidget(
-                  controller: ffMpegController,
+                onDoubleTap: _captureAnimation,
+                child: RepaintBoundary(
+                  key: _containerKey,
                   child: AnimatedBuilder(
                     animation: _colorAnimation,
                     builder: (context, child) {
                       return SizedBox(
-                        width: 300,
-                        height: 200,
+                        width: SIZE,
+                        height: SIZE,
                         child: Stack(
                           children: [
                             Container(
-                              width: 300,
-                              height: 200,
+                              width: SIZE,
+                              height: SIZE,
                               color: _colorAnimation.value,
                             ),
                             const Center(child: Text('애니메이션'))
@@ -114,7 +121,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                   ElevatedButton(
                     child: const Text('to Video'),
                     onPressed: () async {
-                      File? video = await ffMpegController.fileToVideo(controller: _animationController, framerate: 30);
+                      File? video = await _videoEncoder.fileToVideo(capturedImages);
                       _videoPath = video?.path ?? '';
                       if (!(await File(_videoPath).exists())) {
                         developer.log("파일이 존재하지 않습니다.");
@@ -133,20 +140,23 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                 ],
               ),
               Container(
-                width: 300,
                 child: _videoPlayerController?.value.isInitialized ?? false
                     ? GestureDetector(
                         onDoubleTap: () => _videoPlayerController?.play(),
-                        child: AspectRatio(
-                          aspectRatio: _videoPlayerController!.value.aspectRatio,
-                          child: VideoPlayer(_videoPlayerController!),
+                        child: SizedBox(
+                          height: 200,
+                          width: 200,
+                          child: AspectRatio(
+                            aspectRatio: _videoPlayerController!.value.aspectRatio,
+                            child: VideoPlayer(_videoPlayerController!),
+                          ),
                         ),
                       )
                     : const SizedBox.shrink(),
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: 200,
+                height: 400,
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -173,5 +183,26 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
         ),
       ),
     );
+  }
+
+  List<String> capturedImages = [];
+  void _captureAnimation() async {
+    capturedImages = [];
+    final directory = await getTemporaryDirectory();
+
+    Duration duration = const Duration(seconds: DURATION) ~/ TOTAL_FRAME;
+    for (int i = 0; i < TOTAL_FRAME; i++) {
+      _animationController.value = i / (TOTAL_FRAME - 1);
+
+      Uint8List? byte = await _renderer.capture(pixelRatio: RATIO, delay: duration);
+
+      if (byte == null) continue;
+      final imagePath = '${directory.path}/$FILE_NAME${(i + 1).toString()}.png';
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(byte);
+      capturedImages.add(imagePath); // 경로를 리스트에 추가
+    }
+
+    setState(() {});
   }
 }

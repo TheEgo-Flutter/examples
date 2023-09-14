@@ -10,6 +10,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simple_ffmpeg/lib.dart';
 import 'package:video_player/video_player.dart';
 
+const int _DURATION = 1;
+const int _TOTAL_FRAME = _DURATION * 60;
+const double _RATIO = 3.0;
+const String _FILE_NAME = 'capture_';
+const double _SIZE = 200.0;
+const String _SCALE = '${_SIZE * _RATIO}:${_SIZE * _RATIO}';
 void main() {
   runApp(const MyApp());
 }
@@ -81,10 +87,10 @@ class _RenderPageState extends State<RenderPage> with SingleTickerProviderStateM
     super.initState();
 
     _videoEncoder = VideoEncoder(
-      fileName: FILE_NAME,
-      totalFrame: TOTAL_FRAME,
-      duration: DURATION, // Assuming 1 second per frame
-      scale: SCALE, // Example pixel ratio
+      fileName: _FILE_NAME,
+      totalFrame: _TOTAL_FRAME,
+      duration: _DURATION, // Assuming 1 second per frame
+      scale: _SCALE, // Example pixel ratio
     );
   }
 
