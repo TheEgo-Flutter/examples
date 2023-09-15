@@ -2,9 +2,8 @@ part of 'photo_card.dart';
 
 class _PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
-  final Size size;
-
-  const _PhotoCard({required this.tempSavedLayers, required this.size});
+  final AspectRatioEnum aspectRatio;
+  const _PhotoCard({required this.tempSavedLayers, required this.aspectRatio});
 
   @override
   State<_PhotoCard> createState() => _PhotoCardViewerState();
@@ -22,25 +21,23 @@ class _PhotoCardViewerState extends State<_PhotoCard> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size.width,
-      height: widget.size.height,
-      child: ClipPath(
-        clipper: CardBoxClip(aspectRatio: AspectRatioEnum.photoCard),
-        child: Stack(
-          children: [
-            ...layerManager.layers.map((layer) {
-              log(layer.rect.topLeft.toString());
-              return Positioned(
-                top: layer.rect.topLeft.dy,
-                left: layer.rect.topLeft.dx,
-                child: Transform.rotate(
-                  angle: layer.angle,
-                  child: buildChild(layer),
-                ),
-              );
-            }),
-          ],
+    return AspectRatio(
+      aspectRatio: widget.aspectRatio.ratio ?? 1,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(CARD_RADIUS),
+        child: Container(
+          color: layerManager.backgroundLayer?.type.background == Background.color
+              ? layerManager.backgroundLayer?.object as Color
+              : Colors.transparent,
+          child: Stack(
+              children: layerManager.layers.map((layer) {
+            return Transform(
+              transform: Matrix4.identity()
+                ..translate(layer.rect.topLeft.dx, layer.rect.topLeft.dy)
+                ..rotateZ(layer.angle),
+              child: buildChild(layer),
+            );
+          }).toList()),
         ),
       ),
     );
@@ -49,21 +46,6 @@ class _PhotoCardViewerState extends State<_PhotoCard> {
   Widget buildChild(LayerItem layerItem) {
     try {
       switch (layerItem.type) {
-        case TextType():
-          layerItem.object as TextBoxInput;
-
-          return TextBox(
-            isReadOnly: true,
-            input: layerItem.object,
-          );
-
-        case DrawingType():
-          return Image.memory(
-            layerItem.object as Uint8List,
-            fit: BoxFit.fill,
-            width: layerItem.rect.size.width,
-            height: layerItem.rect.size.height,
-          );
         case BackgroundType():
           switch (layerItem.type.background) {
             case Background.gallery:
@@ -76,26 +58,27 @@ class _PhotoCardViewerState extends State<_PhotoCard> {
               return Image(
                 image: layerItem.object as ImageProvider,
                 fit: BoxFit.fill,
-                width: layerItem.rect.size.width,
-                height: layerItem.rect.size.height,
               );
             case Background.color:
-              return Container(
-                height: layerItem.rect.size.height,
-                width: layerItem.rect.size.width,
-                color: layerItem.object as Color,
-              );
             default:
               return const SizedBox.shrink();
           }
+        case DrawingType():
+          return Image.memory(
+            layerItem.object as Uint8List,
+            fit: BoxFit.fill,
+          );
         case FrameType():
           return Image(
             image: layerItem.object as ImageProvider,
             fit: BoxFit.fill,
-            width: layerItem.rect.size.width,
-            height: layerItem.rect.size.height,
           );
-
+        case TextType():
+          layerItem.object as TextBoxInput;
+          return TextBox(
+            isReadOnly: true,
+            input: layerItem.object,
+          );
         case StickerType():
         default:
           return SizedBox(

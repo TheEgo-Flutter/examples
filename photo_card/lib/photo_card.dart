@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:du_icons/du_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,27 +21,23 @@ enum ImageEditorType {
 }
 
 class PhotoCard extends StatelessWidget {
+  final List<LayerItem> tempSavedLayers;
+  final AspectRatioEnum aspectRatio;
+
   late final ImageEditorType _type;
   late final Widget _widget;
 
-  final List<Uint8List> stickers;
-  final List<ImageProvider> backgrounds;
-  final List<ImageProvider> frames;
-  final AspectRatioEnum aspectRatio;
-  final List<String> fonts;
-  final List<LayerItem> tempSavedLayers;
-  final Widget completedButton;
-  final Function(List<LayerItem>)? onReturnLayers;
   PhotoCard({
     super.key,
-    this.completedButton = const Text('Complete'),
-    this.stickers = const [],
-    this.backgrounds = const [],
-    this.frames = const [],
-    this.fonts = const [],
-    this.aspectRatio = AspectRatioEnum.photoCard,
     this.tempSavedLayers = const [],
-    this.onReturnLayers,
+    this.aspectRatio = AspectRatioEnum.photoCard,
+    Widget completedButton = const Text('Complete'),
+    required List<Uint8List> stickers,
+    required List<ImageProvider> backgrounds,
+    required List<ImageProvider> frames,
+    required List<String> fonts,
+    Function(List<LayerItem>)? onReturnLayers,
+    AsyncValueGetter<bool>? onDialog,
   }) {
     _type = ImageEditorType.edit;
     _widget = _PhotoEditor(
@@ -52,24 +49,18 @@ class PhotoCard extends StatelessWidget {
       tempSavedLayers: tempSavedLayers,
       completedButton: completedButton,
       onReturnLayers: onReturnLayers,
+      onDialog: onDialog,
     );
   }
 
   PhotoCard.view({
     super.key,
-    required Size size,
     required this.tempSavedLayers,
-    this.completedButton = const SizedBox.shrink(),
-    this.stickers = const [],
-    this.backgrounds = const [],
-    this.frames = const [],
-    this.fonts = const [],
     this.aspectRatio = AspectRatioEnum.photoCard,
-    this.onReturnLayers,
   }) {
     _type = ImageEditorType.view;
     _widget = _PhotoCard(
-      size: size,
+      aspectRatio: aspectRatio,
       tempSavedLayers: tempSavedLayers,
     );
   }

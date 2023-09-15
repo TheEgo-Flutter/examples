@@ -2,6 +2,8 @@ import 'package:flutter/rendering.dart';
 
 import '../../utils/util.dart';
 
+const Radius CARD_RADIUS = Radius.circular(8);
+
 class CardBoxClip extends CustomClipper<Path> {
   final AspectRatioEnum aspectRatio;
 
@@ -28,7 +30,7 @@ class CardBoxClip extends CustomClipper<Path> {
     Rect rect = Rect.fromLTWH((size.width - w) / 2, (size.height - h) / 2, w, h);
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(8)))
+      ..addRRect(RRect.fromRectAndRadius(rect, CARD_RADIUS))
       ..close();
 
     return path;

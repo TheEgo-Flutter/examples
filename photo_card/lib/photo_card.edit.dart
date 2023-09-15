@@ -1,14 +1,23 @@
 part of 'photo_card.dart';
 
+class DialogValue {
+  final Widget dialog;
+  final Widget no;
+  final Widget yes;
+
+  DialogValue({required this.dialog, required this.no, required this.yes});
+}
+
 class _PhotoEditor extends StatefulWidget {
   final List<Uint8List> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
-  final AspectRatioEnum aspectRatio;
   final List<String> fonts;
+  final AspectRatioEnum aspectRatio;
   final List<LayerItem> tempSavedLayers;
   final Widget completedButton;
   final Function(List<LayerItem>)? onReturnLayers;
+  final AsyncValueGetter<bool?>? onDialog;
   const _PhotoEditor({
     Key? key,
     this.stickers = const [],
@@ -17,8 +26,9 @@ class _PhotoEditor extends StatefulWidget {
     this.aspectRatio = AspectRatioEnum.photoCard,
     this.fonts = const [],
     this.tempSavedLayers = const [],
-    this.completedButton = const Text('Complete'),
+    this.completedButton = const Text('저장'),
     this.onReturnLayers,
+    this.onDialog,
   }) : super(key: key);
   @override
   State<_PhotoEditor> createState() => _ImageEditorState();
@@ -98,7 +108,6 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
 
   @override
   Widget build(BuildContext context) {
-    log(layerManager.layers.toString());
     return MaterialApp(
       theme: theme,
       home: Scaffold(
@@ -215,14 +224,13 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
                   textEditorStyle: item.object as TextBoxInput,
                 );
               });
-
           if (result != null) {
-            layerManager.addLayer(
-              item.copyWith(
-                object: result.$1,
-                rect: (item.rect.topLeft & result.$1.size),
-              ),
-            );
+            LayerItem newItem = item.copyWith(
+              object: result.$1,
+              rect: (item.rect.topLeft & result.$1.size),
+            )..newKey();
+            log((newItem.object as TextBoxInput).text.toString());
+            layerManager.addLayer(newItem);
           } else {
             layerManager.addLayer(item);
           }
@@ -311,42 +319,21 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
           CircleIconButton(
             iconData: DUIcons.back,
             onPressed: () async {
-              await showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Save Changes?'),
-                    content: const Text('Do you want to save your changes temporarily?'),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('NO'),
-                        onPressed: () {
-                          widget.onReturnLayers?.call([]);
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: const Text('YES'),
-                        onPressed: () {
-                          widget.onReturnLayers?.call(layerManager.layers);
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-              Navigator.canPop(context) ? Navigator.pop(context) : null;
+              bool? result = await widget.onDialog?.call();
+
+              if (result ?? false) {
+                widget.onReturnLayers?.call(layerManager.layers);
+              } else {
+                widget.onReturnLayers?.call([]);
+              }
+              Navigator.of(context).pop();
             },
           ),
-          InkWell(
-            onTap: () {
-              widget.onReturnLayers?.call(layerManager.layers);
-              Navigator.canPop(context) ? Navigator.pop(context) : null;
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () => {widget.onReturnLayers?.call(layerManager.layers), Navigator.pop(context)},
                 child: widget.completedButton,
               ),
             ),
