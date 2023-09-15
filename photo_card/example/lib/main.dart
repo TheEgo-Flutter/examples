@@ -106,12 +106,9 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
                   Expanded(
                     flex: cardFlex,
                     child: returnedLayers.isNotEmpty
-                        ? ClipPath(
-                            clipper: CardBoxClip(aspectRatio: AspectRatioEnum.photoCard),
-                            child: PhotoCard.view(
-                              width: returnedLayers.first.rect.width,
-                              tempSavedLayers: returnedLayers,
-                            ),
+                        ? PhotoCard.view(
+                            size: returnedLayers.first.rect.size,
+                            tempSavedLayers: returnedLayers,
                           )
                         : const Center(child: Text('photo card is null')),
                   ),

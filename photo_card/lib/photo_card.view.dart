@@ -2,8 +2,9 @@ part of 'photo_card.dart';
 
 class _PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
-  final double width;
-  const _PhotoCard({required this.tempSavedLayers, required this.width});
+  final Size size;
+
+  const _PhotoCard({required this.tempSavedLayers, required this.size});
 
   @override
   State<_PhotoCard> createState() => _PhotoCardViewerState();
@@ -21,8 +22,9 @@ class _PhotoCardViewerState extends State<_PhotoCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.width,
+    return SizedBox(
+      width: widget.size.width,
+      height: widget.size.height,
       child: ClipPath(
         clipper: CardBoxClip(aspectRatio: AspectRatioEnum.photoCard),
         child: Stack(

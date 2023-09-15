@@ -57,7 +57,7 @@ class PhotoCard extends StatelessWidget {
 
   PhotoCard.view({
     super.key,
-    required double width,
+    required Size size,
     required this.tempSavedLayers,
     this.completedButton = const SizedBox.shrink(),
     this.stickers = const [],
@@ -69,7 +69,7 @@ class PhotoCard extends StatelessWidget {
   }) {
     _type = ImageEditorType.view;
     _widget = _PhotoCard(
-      width: width,
+      size: size,
       tempSavedLayers: tempSavedLayers,
     );
   }

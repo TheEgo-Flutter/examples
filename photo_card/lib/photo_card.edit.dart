@@ -138,13 +138,10 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
                           flex: cardFlex,
                           child: GestureDetector(
                             onTap: () => swapWidget(null),
-                            child: Padding(
-                              padding: cardPadding,
-                              child: ClipPath(
-                                key: GlobalRect().cardAreaKey,
-                                clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                                child: buildImageLayer(context),
-                              ),
+                            child: ClipPath(
+                              key: GlobalRect().cardAreaKey,
+                              clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                              child: buildImageLayer(context),
                             ),
                           ),
                         ),
