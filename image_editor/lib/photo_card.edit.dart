@@ -1,41 +1,34 @@
-import 'dart:async';
+part of 'photo_card.dart';
 
-import 'package:du_icons/du_icons.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:render/render.dart';
-import 'package:video_player/video_player.dart';
-
-import 'modules/modules.dart';
-import 'ui/icon_button.dart';
-import 'ui/ui.dart';
-import 'utils/utils.dart';
-
-class ImageEditor extends StatefulWidget {
+class _PhotoEditor extends StatefulWidget {
   final List<Uint8List> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
-  final AspectRatioOption aspectRatio;
+  final AspectRatioEnum aspectRatio;
   final List<String> fonts;
-  const ImageEditor({
-    super.key,
+  final List<LayerItem> tempSavedLayers;
+  final Widget completedButton;
+  final Function(List<LayerItem>)? onReturnLayers;
+  const _PhotoEditor({
+    Key? key,
     this.stickers = const [],
     this.backgrounds = const [],
     this.frames = const [],
+    this.aspectRatio = AspectRatioEnum.photoCard,
     this.fonts = const [],
-    this.aspectRatio = AspectRatioOption.photoCard,
-  });
+    this.tempSavedLayers = const [],
+    this.completedButton = const Text('Complete'),
+    this.onReturnLayers,
+  }) : super(key: key);
   @override
-  State<ImageEditor> createState() => _ImageEditorState();
+  State<_PhotoEditor> createState() => _ImageEditorState();
 }
 
-class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   var layerManager = LayerManager();
   LayerType? _selectedLayer;
   LinearGradient? cardColor;
-  late final VideoPlayerController videoController;
   late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
   double get statusBarHeight => MediaQuery.of(context).padding.top;
@@ -43,12 +36,8 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
   void initState() {
     super.initState();
     fontFamilies = widget.fonts;
-    videoController = VideoPlayerController.networkUrl(
-        Uri.parse('https://github.com/the-ego/samples/raw/main/assets/video/button.mp4'))
-      ..initialize().then((_) {
-        videoController.play();
-        videoController.setLooping(true);
-      });
+    layerManager.loadLayers(widget.tempSavedLayers);
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -71,8 +60,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
 
   @override
   void dispose() {
-    videoController.dispose();
-    layerManager.layers.clear();
+    layerManager.clearLayers();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -108,11 +96,9 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
     return image;
   }
 
-  Stream<RenderNotifier>? renderStream;
-  final RenderController renderController = RenderController(logLevel: LogLevel.debug);
-
   @override
   Widget build(BuildContext context) {
+    log(layerManager.layers.toString());
     return MaterialApp(
       theme: theme,
       home: Scaffold(
@@ -157,10 +143,7 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                               child: ClipPath(
                                 key: GlobalRect().cardAreaKey,
                                 clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                                child: Render(
-                                  controller: renderController,
-                                  child: buildImageLayer(context),
-                                ),
+                                child: buildImageLayer(context),
                               ),
                             ),
                           ),
@@ -196,15 +179,6 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
                 );
               },
             ),
-            if (renderStream?.isBroadcast ?? false)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.5), // semi-transparent black
-                  child: const Center(
-                    child: CircularProgressIndicator(), // or any custom loader you prefer
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -339,40 +313,49 @@ class _ImageEditorState extends State<ImageEditor> with WidgetsBindingObserver, 
         children: [
           CircleIconButton(
             iconData: DUIcons.back,
-            onPressed: () {
+            onPressed: () async {
+              await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Save Changes?'),
+                    content: const Text('Do you want to save your changes temporarily?'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('NO'),
+                        onPressed: () {
+                          widget.onReturnLayers?.call([]);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('YES'),
+                        onPressed: () {
+                          widget.onReturnLayers?.call(layerManager.layers);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
               Navigator.canPop(context) ? Navigator.pop(context) : null;
             },
           ),
-          renderButton(),
+          InkWell(
+            onTap: () {
+              widget.onReturnLayers?.call(layerManager.layers);
+              Navigator.canPop(context) ? Navigator.pop(context) : null;
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: widget.completedButton,
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Center renderButton() {
-    return Center(
-      child: GestureDetector(
-          onTap: () async {
-            final stream = renderController.captureMotionWithStream(
-              const Duration(seconds: 5),
-              settings: const MotionSettings(
-                pixelRatio: 5,
-                frameRate: 80,
-                simultaneousCaptureHandlers: 10,
-              ),
-              logInConsole: true,
-            );
-            setState(() {
-              renderStream = stream;
-            });
-            final result = await stream.firstWhere((event) => event.isResult || event.isFatalError);
-            if (result.isFatalError) return;
-
-            if (mounted) Navigator.pop(context, (result as RenderResult).output);
-          },
-          child: VideoContainer(
-            videoController: videoController,
-          )),
     );
   }
 

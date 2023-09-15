@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_editor/utils/util.dart';
 
-AspectRatioOption ratio = AspectRatioOption.photoCard;
+AspectRatioEnum ratio = AspectRatioEnum.photoCard;
 
 const Size device = Size(360.0, 800.0);
 

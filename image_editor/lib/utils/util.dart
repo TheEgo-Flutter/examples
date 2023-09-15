@@ -68,7 +68,7 @@ extension RectExtension on Rect {
   }
 }
 
-enum AspectRatioOption {
+enum AspectRatioEnum {
   rFree('Free', null),
   photoCard('photoCard', 300 / 464),
   r1x1('1:1', 1),
@@ -77,7 +77,7 @@ enum AspectRatioOption {
   r5x7('5:7', 5 / 7),
   r9x16('9:16', 9 / 16);
 
-  const AspectRatioOption(this.title, this.ratio);
+  const AspectRatioEnum(this.title, this.ratio);
   final String title;
   final double? ratio;
 }

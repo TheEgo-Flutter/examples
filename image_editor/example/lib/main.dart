@@ -4,9 +4,8 @@ import 'dart:io';
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_editor/image_editor.dart';
+import 'package:image_editor/lib.dart';
 import 'package:video_player/video_player.dart';
 
 void main() async {
@@ -43,11 +42,11 @@ class ImageEditorExample extends StatefulWidget {
 }
 
 class _ImageEditorExampleState extends State<ImageEditorExample> {
-  File? _file;
   VideoPlayerController? controller;
   List<Uint8List> stickerList = [];
   List<ImageProvider> frameList = [];
   List<ImageProvider> backgroundList = [];
+  List<LayerItem> returnedLayers = [];
 
   Future<List<ImageProvider>> loadImageProvider(List<String> assetPaths) async {
     List<ImageProvider> stickers = [];
@@ -96,87 +95,59 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
         title: const Text("ImageEditor Example"),
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          if (_file != null)
-            Expanded(
-              child: FutureBuilder(future: () async {
-                controller = VideoPlayerController.file(_file!);
-                await controller!.initialize();
-                await controller!.setLooping(true);
-                controller!.play();
-                return controller;
-              }(), builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: SizedBox(
-                            width: snapshot.data?.value.size.width ?? 0,
-                            height: snapshot.data?.value.size.height ?? 0,
-                            child: VideoPlayer(snapshot.data!),
-                          ),
-                        ),
-                      ),
-                      VideoProgressIndicator(
-                        snapshot.data!,
-                        allowScrubbing: true,
-                        colors: const VideoProgressColors(
-                          backgroundColor: Colors.green,
-                          bufferedColor: Colors.white,
-                          playedColor: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return Center(
-                    child: Text(
-                      "Error loading file: ${snapshot.error}",
-                      style: const TextStyle(
-                        color: Colors.red,
+      body: LayoutBuilder(builder: (context, constraints) {
+        int cardFlex = 70;
+        double maxWidth = (constraints.maxHeight) * cardFlex / 100 * (AspectRatioEnum.photoCard.ratio ?? 1);
+        return Stack(
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: cardFlex,
+                    child: returnedLayers.isNotEmpty
+                        ? ClipPath(
+                            clipper: CardBoxClip(aspectRatio: AspectRatioEnum.photoCard),
+                            child: PhotoCard.view(
+                              width: maxWidth,
+                              tempSavedLayers: returnedLayers,
+                            ),
+                          )
+                        : const Center(child: Text('photo card is null')),
+                  ),
+                  Expanded(
+                    flex: 100 - cardFlex,
+                    child: SizedBox(
+                      height: 40,
+                      child: ElevatedButton(
+                        child: const Text("Single image editor"),
+                        onPressed: () async {
+                          var result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PhotoCard(
+                                stickers: stickerList,
+                                backgrounds: backgroundList,
+                                frames: frameList,
+                                fonts: fontUrls.keys.toList(),
+                                tempSavedLayers: returnedLayers, // you can pass any previously saved layers here
+                                onReturnLayers: (layers) {
+                                  returnedLayers = layers;
+                                  setState(() {});
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                }
-              }),
-            ),
-          const SizedBox(height: 16),
-          if (_file != null)
-            ElevatedButton(
-              child: const Text("Save"),
-              onPressed: () async {
-                await Gal.putVideo(_file!.path, album: 'dingdongU');
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved! ✅')));
-              },
-            ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            child: const Text("Single image editor"),
-            onPressed: () async {
-              var file = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ImageEditor(
-                    stickers: stickerList,
-                    backgrounds: backgroundList,
-                    frames: frameList,
-                    fonts: fontUrls.keys.toList(),
                   ),
-                ),
-              );
-              if (file != null) {
-                _file = file;
-                setState(() {});
-              }
-            },
-          ),
-        ]),
-      ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }
