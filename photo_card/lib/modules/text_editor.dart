@@ -228,24 +228,11 @@ class _TextEditorState extends State<TextEditor> {
           ),
         ),
       );
-/*
-text effects
-    IconButton(
-      icon: const Icon(DUIcons.format_color_text_sharp),
-      onPressed: () {
-        setState(() {
-          textBackgroundColor = textBackgroundColor == Colors.transparent
-              ? Colors.black45
-              : textBackgroundColor == Colors.black45
-                  ? Colors.white54
-                  : Colors.transparent;
-        });
-      },
-      color: Colors.white,
-      padding: const EdgeInsets.all(15),
-    ),
- */
+
   Widget _fontBar(BuildContext context) {
+    if (fontFamilies.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Theme(
       data: ThemeData(canvasColor: Colors.transparent),
       child: SizedBox(

@@ -4,6 +4,7 @@ import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_card/lib.dart';
+import 'package:photo_card/utils/diy_resources.dart';
 import 'package:video_player/video_player.dart';
 
 void main() async {
@@ -60,10 +61,12 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
               context,
               MaterialPageRoute(
                 builder: (context) => PhotoCard(
-                  stickers: stickerList,
-                  backgrounds: backgroundList,
-                  frames: frameList,
-                  fonts: fontUrls.keys.toList(),
+                  resources: DiyResources(
+                      stickers: stickerList,
+                      backgrounds: backgroundList,
+                      frames: frameList,
+                      fonts: fontUrls.keys.toList()),
+
                   tempSavedLayers: returnedLayers, // you can pass any previously saved layers here
                   onReturnLayers: (layers) {
                     returnedLayers = layers;

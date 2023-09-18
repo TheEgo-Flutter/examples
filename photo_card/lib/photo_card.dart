@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'modules/modules.dart';
 import 'ui/icon_button.dart';
 import 'ui/ui.dart';
+import 'utils/diy_resources.dart';
 import 'utils/utils.dart';
 
 part 'photo_card.edit.dart';
@@ -32,19 +33,13 @@ class PhotoCard extends StatelessWidget {
     this.tempSavedLayers = const [],
     this.aspectRatio = AspectRatioEnum.photoCard,
     Widget completed = const Text('Complete'),
-    required List<Uint8List> stickers,
-    required List<ImageProvider> backgrounds,
-    required List<ImageProvider> frames,
-    required List<String> fonts,
+    required DiyResources resources,
     Function(List<LayerItem>)? onReturnLayers,
     AsyncValueGetter<bool>? onDialog,
   }) {
     _type = ImageEditorType.edit;
     _widget = _PhotoEditor(
-      stickers: stickers,
-      backgrounds: backgrounds,
-      frames: frames,
-      fonts: fonts,
+      resources: resources,
       aspectRatio: aspectRatio,
       tempSavedLayers: tempSavedLayers,
       completed: completed,

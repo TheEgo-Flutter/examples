@@ -9,10 +9,7 @@ class DialogValue {
 }
 
 class _PhotoEditor extends StatefulWidget {
-  final List<Uint8List> stickers;
-  final List<ImageProvider> backgrounds;
-  final List<ImageProvider> frames;
-  final List<String> fonts;
+  final DiyResources resources;
   final AspectRatioEnum aspectRatio;
   final List<LayerItem> tempSavedLayers;
   final Widget completed;
@@ -20,11 +17,8 @@ class _PhotoEditor extends StatefulWidget {
   final AsyncValueGetter<bool?>? onDialog;
   const _PhotoEditor({
     Key? key,
-    this.stickers = const [],
-    this.backgrounds = const [],
-    this.frames = const [],
+    required this.resources,
     this.aspectRatio = AspectRatioEnum.photoCard,
-    this.fonts = const [],
     this.tempSavedLayers = const [],
     this.completed = const Text('저장'),
     this.onReturnLayers,
@@ -45,7 +39,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
   @override
   void initState() {
     super.initState();
-    fontFamilies = widget.fonts;
+    fontFamilies = widget.resources.fonts;
     layerManager.loadLayers(widget.tempSavedLayers);
 
     _animationController = AnimationController(
@@ -450,7 +444,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
                   ),
                   Expanded(
                     child: ImageSelector(
-                      items: widget.backgrounds,
+                      items: widget.resources.backgrounds,
                       firstItem: GestureDetector(
                           onTap: () async {
                             final picker = ImagePicker();
@@ -508,7 +502,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
             ),
           ),
           child: ImageSelector(
-            items: widget.frames,
+            items: widget.resources.frames,
             firstItem: GestureDetector(
               onTap: () {
                 layerManager.removeLayerByType(FrameType());
@@ -540,7 +534,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
             ),
           ),
           child: StickerSelector(
-            items: widget.stickers,
+            items: widget.resources.stickers,
             onSelected: (child) {
               if (child == null) return;
 
