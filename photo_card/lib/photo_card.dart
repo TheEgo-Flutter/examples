@@ -31,7 +31,7 @@ class PhotoCard extends StatelessWidget {
     super.key,
     this.tempSavedLayers = const [],
     this.aspectRatio = AspectRatioEnum.photoCard,
-    Widget completedButton = const Text('Complete'),
+    Widget completed = const Text('Complete'),
     required List<Uint8List> stickers,
     required List<ImageProvider> backgrounds,
     required List<ImageProvider> frames,
@@ -47,7 +47,7 @@ class PhotoCard extends StatelessWidget {
       fonts: fonts,
       aspectRatio: aspectRatio,
       tempSavedLayers: tempSavedLayers,
-      completedButton: completedButton,
+      completed: completed,
       onReturnLayers: onReturnLayers,
       onDialog: onDialog,
     );

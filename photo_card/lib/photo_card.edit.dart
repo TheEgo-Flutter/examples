@@ -15,7 +15,7 @@ class _PhotoEditor extends StatefulWidget {
   final List<String> fonts;
   final AspectRatioEnum aspectRatio;
   final List<LayerItem> tempSavedLayers;
-  final Widget completedButton;
+  final Widget completed;
   final Function(List<LayerItem>)? onReturnLayers;
   final AsyncValueGetter<bool?>? onDialog;
   const _PhotoEditor({
@@ -26,7 +26,7 @@ class _PhotoEditor extends StatefulWidget {
     this.aspectRatio = AspectRatioEnum.photoCard,
     this.fonts = const [],
     this.tempSavedLayers = const [],
-    this.completedButton = const Text('저장'),
+    this.completed = const Text('저장'),
     this.onReturnLayers,
     this.onDialog,
   }) : super(key: key);
@@ -334,7 +334,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
             child: Center(
               child: ElevatedButton(
                 onPressed: () => {widget.onReturnLayers?.call(layerManager.layers), Navigator.pop(context)},
-                child: widget.completedButton,
+                child: widget.completed,
               ),
             ),
           ),
