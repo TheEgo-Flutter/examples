@@ -326,8 +326,9 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Center(
-              child: ElevatedButton(
-                onPressed: () => {widget.onReturnLayers?.call(layerManager.layers), Navigator.pop(context)},
+              child: InkWell(
+                splashFactory: NoSplash.splashFactory,
+                onTap: () => {widget.onReturnLayers?.call(layerManager.layers), Navigator.pop(context)},
                 child: widget.completed,
               ),
             ),
