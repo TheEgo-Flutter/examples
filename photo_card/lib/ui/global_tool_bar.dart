@@ -17,56 +17,59 @@ class GlobalToolBar extends StatelessWidget {
     return SizedBox(
       width: GlobalRect().toolBarRect.width,
       height: GlobalRect().toolBarRect.height,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            child: const SizedBox(
-              height: kToolbarHeight,
-              child: Center(
-                child: Text(
-                  '취소',
-                  style: TextStyle(
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(2.0, 2.0),
-                        blurRadius: 3.0,
-                        color: Colors.black38,
-                      ),
-                    ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const SizedBox(
+                height: kToolbarHeight,
+                child: Center(
+                  child: Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(2.0, 2.0),
+                          blurRadius: 3.0,
+                          color: Colors.black38,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: onConfirmPressed,
-            child: SizedBox(
-              height: kToolbarHeight,
-              child: Center(
-                child: Text(
-                  confirmButtonText,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(2.0, 2.0),
-                        blurRadius: 3.0,
-                        color: Colors.black38,
-                      ),
-                    ],
+            GestureDetector(
+              onTap: onConfirmPressed,
+              child: SizedBox(
+                height: kToolbarHeight,
+                child: Center(
+                  child: Text(
+                    confirmButtonText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(2.0, 2.0),
+                          blurRadius: 3.0,
+                          color: Colors.black38,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
