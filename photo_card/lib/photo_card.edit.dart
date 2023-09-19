@@ -11,17 +11,17 @@ class DialogValue {
 class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
   final AspectRatioEnum aspectRatio;
-  final List<LayerItem> tempSavedLayers;
   final Widget completed;
   final Function(List<LayerItem>)? onReturnLayers;
+  final AsyncValueGetter<List<LayerItem>?>? onStartDialog;
   final AsyncValueGetter<bool?>? onEndDialog;
   const PhotoEditor({
     Key? key,
     required this.resources,
     this.aspectRatio = AspectRatioEnum.photoCard,
-    this.tempSavedLayers = const [],
     this.completed = const Text('저장'),
     this.onReturnLayers,
+    this.onStartDialog,
     this.onEndDialog,
   }) : super(key: key);
   @override
@@ -41,7 +41,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     super.initState();
     fontFamilies = widget.resources.fonts;
     drawingData = [];
-    layerManager.loadLayers(widget.tempSavedLayers);
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -55,6 +54,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _captureRect();
+      _startDialog();
     });
   }
 
@@ -68,6 +68,14 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     layerManager.clearLayers();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _startDialog() async {
+    List<LayerItem>? result = await widget.onStartDialog?.call();
+    if (result != null && result.isNotEmpty) {
+      layerManager.loadLayers(result);
+      setState(() {});
+    }
   }
 
   void _captureRect() {
