@@ -111,9 +111,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: theme,
-      home: Scaffold(
+    return Theme(
+      data: theme,
+      child: Scaffold(
         resizeToAvoidBottomInset: false,
         key: scaffoldGlobalKey,
         body: Stack(
