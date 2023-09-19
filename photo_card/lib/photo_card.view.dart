@@ -15,8 +15,43 @@ class _PhotoCardViewerState extends State<PhotoCard> {
   void initState() {
     layerManager.loadLayers(widget.tempSavedLayers);
     layerManager.newKeyLayers();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      boxDecoration = await loadBackgroundColor();
+      setState(() {});
+    });
 
     super.initState();
+  }
+
+  BoxDecoration boxDecoration = const BoxDecoration(color: Colors.white);
+  Future<BoxDecoration> loadBackgroundColor() async {
+    if (layerManager.backgroundLayer?.type.background == Background.gallery) {
+      var gradient = await loadImageColor(layerManager.backgroundLayer?.object as Image);
+      if (gradient != null) {
+        return BoxDecoration(gradient: gradient);
+      } else {
+        return const BoxDecoration(color: Colors.white);
+      }
+    } else if (layerManager.backgroundLayer?.type.background == Background.color) {
+      return BoxDecoration(color: layerManager.backgroundLayer?.object as Color);
+    } else {
+      return const BoxDecoration(color: Colors.white);
+    }
+  }
+
+  Future<LinearGradient?> loadImageColor(Image image) async {
+    if (image != null) {
+      ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: image.image);
+      return LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomCenter,
+        colors: [
+          newScheme.primaryContainer,
+          newScheme.primary,
+        ],
+      );
+    }
+    return null;
   }
 
   @override
@@ -26,18 +61,27 @@ class _PhotoCardViewerState extends State<PhotoCard> {
       child: ClipRRect(
         borderRadius: const BorderRadius.all(CARD_RADIUS),
         child: Container(
-          color: layerManager.backgroundLayer?.type.background == Background.color
-              ? layerManager.backgroundLayer?.object as Color
-              : Colors.transparent,
-          child: Stack(
-              children: layerManager.layers.map((layer) {
-            return Transform(
-              transform: Matrix4.identity()
-                ..translate(layer.rect.topLeft.dx, layer.rect.topLeft.dy)
-                ..rotateZ(layer.angle),
-              child: buildChild(layer),
-            );
-          }).toList()),
+          decoration: boxDecoration,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(children: [
+                ...layerManager.layers.map(
+                  (layer) {
+                    return Transform(
+                      transform: Matrix4.identity()
+                        ..translate(layer.rect.topLeft.dx, layer.rect.topLeft.dy)
+                        ..rotateZ(layer.angle),
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        child: buildChild(layer),
+                      ),
+                    );
+                  },
+                ).toList(),
+              ]);
+            },
+          ),
         ),
       ),
     );
