@@ -8,27 +8,27 @@ class DialogValue {
   DialogValue({required this.dialog, required this.no, required this.yes});
 }
 
-class _PhotoEditor extends StatefulWidget {
+class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
   final AspectRatioEnum aspectRatio;
   final List<LayerItem> tempSavedLayers;
   final Widget completed;
   final Function(List<LayerItem>)? onReturnLayers;
-  final AsyncValueGetter<bool?>? onDialog;
-  const _PhotoEditor({
+  final AsyncValueGetter<bool?>? onEndDialog;
+  const PhotoEditor({
     Key? key,
     required this.resources,
     this.aspectRatio = AspectRatioEnum.photoCard,
     this.tempSavedLayers = const [],
     this.completed = const Text('저장'),
     this.onReturnLayers,
-    this.onDialog,
+    this.onEndDialog,
   }) : super(key: key);
   @override
-  State<_PhotoEditor> createState() => _ImageEditorState();
+  State<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   var layerManager = LayerManager();
   LayerType? _selectedLayer;
@@ -314,7 +314,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
           CircleIconButton(
             iconData: DUIcons.back,
             onPressed: () async {
-              bool? result = await widget.onDialog?.call();
+              bool? result = await widget.onEndDialog?.call();
 
               if (result ?? false) {
                 widget.onReturnLayers?.call(layerManager.layers);
