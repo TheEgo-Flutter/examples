@@ -9,7 +9,7 @@ import 'package:photo_card/utils/global.dart';
 
 import '../utils/global.rect.dart';
 
-List<PaintContent> drawingData = [];
+
 
 class BrushPainter extends StatefulWidget {
   const BrushPainter({super.key});

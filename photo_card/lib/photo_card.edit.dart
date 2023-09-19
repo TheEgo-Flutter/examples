@@ -40,6 +40,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
   void initState() {
     super.initState();
     fontFamilies = widget.resources.fonts;
+    drawingData = [];
     layerManager.loadLayers(widget.tempSavedLayers);
 
     _animationController = AnimationController(
