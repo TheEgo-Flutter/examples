@@ -10,7 +10,7 @@ class StickerSelector extends StatelessWidget {
     required this.items,
     required this.onSelected,
   });
-  final List<Uint8List> items;
+  final List<ImageProvider> items;
   final ValueChanged<Widget?> onSelected;
 
   @override
@@ -27,11 +27,13 @@ class StickerSelector extends StatelessWidget {
       ),
       itemCount: items.length,
       itemBuilder: (BuildContext context, int index) {
-        var item = items[index];
-        Widget? child = _getItemChild(item);
+        Widget item = Image(
+          image: items[index],
+          fit: BoxFit.contain,
+        );
         return GestureDetector(
-          onTap: () => onSelected(child),
-          child: child,
+          onTap: () => onSelected(item),
+          child: item,
         );
       },
     );

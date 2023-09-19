@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 class DiyResources {
-  final List<Uint8List> stickers;
+  final List<ImageProvider> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
   final List<String> fonts;
@@ -17,7 +17,7 @@ class DiyResources {
   });
 
   DiyResources copyWith({
-    List<Uint8List>? stickers,
+    List<ImageProvider>? stickers,
     List<ImageProvider>? backgrounds,
     List<ImageProvider>? frames,
     List<String>? fonts,
@@ -41,7 +41,7 @@ class DiyResources {
 
   factory DiyResources.fromMap(Map<String, dynamic> map) {
     return DiyResources(
-      stickers: List<Uint8List>.from(map['stickers']),
+      stickers: List<ImageProvider>.from(map['stickers']),
       backgrounds: List<ImageProvider>.from(map['backgrounds']),
       frames: List<ImageProvider>.from(map['frames']),
       fonts: List<String>.from(map['fonts']),

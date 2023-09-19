@@ -32,7 +32,7 @@ class ImageEditorExample extends StatefulWidget {
 
 class _ImageEditorExampleState extends State<ImageEditorExample> {
   VideoPlayerController? controller;
-  List<Uint8List> stickerList = [];
+  List<ImageProvider> stickerList = [];
   List<ImageProvider> frameList = [];
   List<ImageProvider> backgroundList = [];
   List<LayerItem> returnedLayers = [];
@@ -44,7 +44,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   }
 
   Future<void> callAssets() async {
-    stickerList = await loadStickers(stickers);
+    stickerList = await loadImageProvider(stickers);
     frameList = await loadImageProvider(frames);
     backgroundList = await loadImageProvider(backgrounds);
   }
