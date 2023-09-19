@@ -63,7 +63,7 @@ List<String> stickers = [
   'stickers/sticker_09.png',
   'stickers/sticker_10.png',
   'stickers/sticker_11.png',
-  'stickers/sticker_12.json',
+  'stickers/sticker_12.png',
   'stickers/sticker_13.png',
   'stickers/sticker_14.png',
   'stickers/sticker_15.png',
