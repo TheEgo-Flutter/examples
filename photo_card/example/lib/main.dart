@@ -60,19 +60,19 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
             var result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PhotoCard(
+                builder: (context) => PhotoEditor(
                   resources: DiyResources(
                       stickers: stickerList,
                       backgrounds: backgroundList,
                       frames: frameList,
                       fonts: fontUrls.keys.toList()),
 
-                  tempSavedLayers: returnedLayers, // you can pass any previously saved layers here
+                  // tempSavedLayers: returnedLayers, // you can pass any previously saved layers here
                   onReturnLayers: (layers) {
                     returnedLayers = layers;
                     setState(() {});
                   },
-                  onDialog: () async {
+                  onEndDialog: () async {
                     bool? result = await showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -101,7 +101,7 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
       ),
       body: returnedLayers.isNotEmpty
           ? Center(
-              child: PhotoCard.view(
+              child: PhotoCard(
                 tempSavedLayers: returnedLayers,
               ),
             )

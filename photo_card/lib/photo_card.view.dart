@@ -1,15 +1,15 @@
 part of 'photo_card.dart';
 
-class _PhotoCard extends StatefulWidget {
+class PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
   final AspectRatioEnum aspectRatio;
-  const _PhotoCard({required this.tempSavedLayers, required this.aspectRatio});
+  const PhotoCard({required this.tempSavedLayers, this.aspectRatio = AspectRatioEnum.photoCard});
 
   @override
-  State<_PhotoCard> createState() => _PhotoCardViewerState();
+  State<PhotoCard> createState() => _PhotoCardViewerState();
 }
 
-class _PhotoCardViewerState extends State<_PhotoCard> {
+class _PhotoCardViewerState extends State<PhotoCard> {
   LayerManager layerManager = LayerManager();
   @override
   void initState() {

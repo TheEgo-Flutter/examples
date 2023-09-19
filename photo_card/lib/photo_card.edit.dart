@@ -8,27 +8,27 @@ class DialogValue {
   DialogValue({required this.dialog, required this.no, required this.yes});
 }
 
-class _PhotoEditor extends StatefulWidget {
+class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
   final AspectRatioEnum aspectRatio;
-  final List<LayerItem> tempSavedLayers;
   final Widget completed;
   final Function(List<LayerItem>)? onReturnLayers;
-  final AsyncValueGetter<bool?>? onDialog;
-  const _PhotoEditor({
+  final AsyncValueGetter<List<LayerItem>?>? onStartDialog;
+  final AsyncValueGetter<bool?>? onEndDialog;
+  const PhotoEditor({
     Key? key,
     required this.resources,
     this.aspectRatio = AspectRatioEnum.photoCard,
-    this.tempSavedLayers = const [],
     this.completed = const Text('저장'),
     this.onReturnLayers,
-    this.onDialog,
+    this.onStartDialog,
+    this.onEndDialog,
   }) : super(key: key);
   @override
-  State<_PhotoEditor> createState() => _ImageEditorState();
+  State<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
   var layerManager = LayerManager();
   LayerType? _selectedLayer;
@@ -41,7 +41,6 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
     super.initState();
     fontFamilies = widget.resources.fonts;
     drawingData = [];
-    layerManager.loadLayers(widget.tempSavedLayers);
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -55,6 +54,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _captureRect();
+      _startDialog();
     });
   }
 
@@ -68,6 +68,14 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
     layerManager.clearLayers();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _startDialog() async {
+    List<LayerItem>? result = await widget.onStartDialog?.call();
+    if (result != null && result.isNotEmpty) {
+      layerManager.loadLayers(result);
+      setState(() {});
+    }
   }
 
   void _captureRect() {
@@ -314,7 +322,7 @@ class _ImageEditorState extends State<_PhotoEditor> with WidgetsBindingObserver,
           CircleIconButton(
             iconData: DUIcons.back,
             onPressed: () async {
-              bool? result = await widget.onDialog?.call();
+              bool? result = await widget.onEndDialog?.call();
 
               if (result ?? false) {
                 widget.onReturnLayers?.call(layerManager.layers);
