@@ -6,14 +6,6 @@ part 'layer_manager.item.dart';
 part 'layer_manager.type.dart';
 
 class LayerManager {
-  static final LayerManager _singleton = LayerManager._internal();
-
-  LayerManager._internal();
-
-  factory LayerManager() {
-    return _singleton;
-  }
-
   LayerItem? backgroundLayer;
   LayerItem? frameLayer;
   LayerItem? drawingLayer;

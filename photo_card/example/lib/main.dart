@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_card/lib.dart';
 import 'package:photo_card/utils/diy_resources.dart';
-import 'package:video_player/video_player.dart';
 
 void main() async {
   if (Platform.isIOS) {
@@ -18,20 +17,33 @@ void main() async {
 
   runApp(
     const MaterialApp(
-      home: ImageEditorExample(),
+      home: Home(),
     ),
   );
 }
 
-class ImageEditorExample extends StatefulWidget {
-  const ImageEditorExample({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  createState() => _ImageEditorExampleState();
+  State<Home> createState() => _HomeState();
 }
 
-class _ImageEditorExampleState extends State<ImageEditorExample> {
-  VideoPlayerController? controller;
+class _HomeState extends State<Home> {
+  @override
+  Widget build(BuildContext context) {
+    return const ImageEditor();
+  }
+}
+
+class ImageEditor extends StatefulWidget {
+  const ImageEditor({super.key});
+
+  @override
+  createState() => _ImageEditorState();
+}
+
+class _ImageEditorState extends State<ImageEditor> {
   List<ImageProvider> stickerList = [];
   List<ImageProvider> frameList = [];
   List<ImageProvider> backgroundList = [];
@@ -40,7 +52,6 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   @override
   void initState() {
     super.initState();
-    callAssets();
   }
 
   Future<void> callAssets() async {
@@ -50,62 +61,79 @@ class _ImageEditorExampleState extends State<ImageEditorExample> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext mainContext) {
     int cardFlex = 70;
     return Scaffold(
-      appBar: AppBar(
-        title: ElevatedButton(
-          child: const Text("Single image editor"),
-          onPressed: () async {
-            var result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PhotoEditor(
-                  resources: DiyResources(
-                      stickers: stickerList,
-                      backgrounds: backgroundList,
-                      frames: frameList,
-                      fonts: fontUrls.keys.toList()),
+      body: FutureBuilder(
+        future: callAssets(),
+        builder: (futureContext, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Column(
+              children: [
+                TextButton(
+                    onPressed: () {
+                      try {
+                        Navigator.push(
+                          mainContext,
+                          MaterialPageRoute(
+                            builder: (context) => CardViewPage(returnedLayers: returnedLayers),
+                          ),
+                        );
+                      } catch (e) {
+                        print("Navigator.push error: $e");
+                      }
+                    },
+                    child: const Text('Go to CardViewPage')),
+                Expanded(
+                  child: PhotoEditor(
+                    resources: DiyResources(
+                        stickers: stickerList,
+                        backgrounds: backgroundList,
+                        frames: frameList,
+                        fonts: fontUrls.keys.toList()),
+                    completed: const Text('완료오'),
+                    onComplete: (layers) {
+                      returnedLayers = layers;
 
-                  // tempSavedLayers: returnedLayers, // you can pass any previously saved layers here
-                  onReturnLayers: (layers) {
-                    returnedLayers = layers;
-                    setState(() {});
-                  },
-                  onEndDialog: () async {
-                    bool? result = await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Are you sure?'),
-                        content: const Text('You will lose all your changes.'),
-                        actions: [
-                          TextButton(
-                            child: const Text('Cancel'),
-                            onPressed: () => Navigator.pop(context, false),
+                      try {
+                        print(returnedLayers.length);
+                        Navigator.push(
+                          mainContext,
+                          MaterialPageRoute(
+                            builder: (context) => CardViewPage(returnedLayers: returnedLayers),
                           ),
-                          TextButton(
-                            child: const Text('OK'),
-                            onPressed: () => Navigator.pop(context, true),
-                          ),
-                        ],
-                      ),
-                    );
-                    return result ?? false;
-                  },
+                        );
+                      } catch (e) {
+                        print("Navigator.push error: $e");
+                      }
+                    },
+                  ),
                 ),
-              ),
+              ],
             );
-          },
-        ),
-        centerTitle: true,
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
       ),
-      body: returnedLayers.isNotEmpty
-          ? Center(
-              child: PhotoCard(
-                tempSavedLayers: returnedLayers,
-              ),
-            )
-          : const SizedBox.shrink(),
+    );
+
+    ;
+  }
+}
+
+class CardViewPage extends StatelessWidget {
+  final List<LayerItem> returnedLayers;
+
+  const CardViewPage({super.key, required this.returnedLayers});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Card View Page')),
+      body: PhotoCard(
+        tempSavedLayers: returnedLayers,
+      ),
     );
   }
 }

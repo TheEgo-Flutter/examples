@@ -12,7 +12,7 @@ class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
   final AspectRatioEnum aspectRatio;
   final Widget completed;
-  final Function(List<LayerItem>)? onReturnLayers;
+  final Function(List<LayerItem>)? onComplete;
   final AsyncValueGetter<List<LayerItem>?>? onStartDialog;
   final AsyncValueGetter<bool?>? onEndDialog;
   const PhotoEditor({
@@ -20,7 +20,7 @@ class PhotoEditor extends StatefulWidget {
     required this.resources,
     this.aspectRatio = AspectRatioEnum.photoCard,
     this.completed = const Text('저장'),
-    this.onReturnLayers,
+    this.onComplete,
     this.onStartDialog,
     this.onEndDialog,
   }) : super(key: key);
@@ -325,9 +325,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               bool? result = await widget.onEndDialog?.call();
 
               if (result ?? false) {
-                widget.onReturnLayers?.call(layerManager.layers);
+                widget.onComplete?.call(layerManager.layers);
               } else {
-                widget.onReturnLayers?.call([]);
+                widget.onComplete?.call([]);
               }
               Navigator.of(context).pop();
             },
@@ -337,7 +337,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             child: Center(
               child: InkWell(
                 splashFactory: NoSplash.splashFactory,
-                onTap: () => {widget.onReturnLayers?.call(layerManager.layers), Navigator.pop(context)},
+                onTap: () {
+                  widget.onComplete?.call(layerManager.layers);
+                },
                 child: widget.completed,
               ),
             ),
