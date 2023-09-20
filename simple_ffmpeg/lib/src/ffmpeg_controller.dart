@@ -1,15 +1,4 @@
-import 'dart:async';
-import 'dart:developer' as developer;
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter/return_code.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
+part of 'src.dart';
 
 const String _FILE_NAME = 'capture_';
 const double _RATIO = 3;
@@ -19,24 +8,24 @@ class FFMpegController {
 
   String get SCALE => '${size.width * _RATIO}:${size.height * _RATIO}';
 
-  int get TOTAL_FRAME => fps * duration.inSeconds;
+  int get TOTAL_FRAME => (fps * duration.inSeconds).toInt();
 
   Size get size => _size;
   Size _size = Size.zero;
   set size(Size value) => _size = value;
 
-  Duration _duration = Duration.zero;
   Duration get duration => _duration;
+  Duration _duration = Duration.zero;
   set duration(Duration value) => _duration = value;
 
   int get fps => _fps;
-  int _fps = 0;
+  int _fps = 60;
   set fps(int value) => _fps = value;
 
   FFMpegController();
 
   // Renderer 기능
-  Future<List<String>> captureAnimation({required AnimationController controller, required int framerate}) async {
+  Future<List<String>> _captureAnimation({required AnimationController controller, required int framerate}) async {
     List<String> capturedImages = [];
     final directory = await getTemporaryDirectory();
     if (key == null) {
@@ -46,7 +35,8 @@ class FFMpegController {
     size = renderObject?.size ?? Size.zero;
     fps = framerate;
     duration = controller.duration ?? Duration.zero;
-    Duration captureDuration = duration ~/ TOTAL_FRAME;
+    Duration captureDuration = Duration(milliseconds: (1000 / fps).round());
+
     for (int i = 0; i < TOTAL_FRAME; i++) {
       controller.value = i / (TOTAL_FRAME - 1);
       Uint8List? byte = await Future<Uint8List?>.delayed(captureDuration, () async {
@@ -70,24 +60,7 @@ class FFMpegController {
     return capturedImages;
   }
 
-  ui.Image _captureContext(GlobalKey key) {
-    try {
-      final renderObject = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (renderObject == null) {
-        throw Exception(
-          "Capturing frame context unsuccessful as context is null."
-          " Trying next frame.",
-        );
-      }
-      return renderObject.toImageSync(pixelRatio: _RATIO);
-    } catch (e) {
-      throw Exception(
-        "Unknown error while capturing frame context. Trying next frame.",
-      );
-    }
-  }
-
-  Future<File?> fileToVideo({required AnimationController controller, required int framerate}) async {
+  Future<File?> animationToVideo({required AnimationController controller, required int framerate}) async {
     final completer = Completer<bool>();
     final directory = await getTemporaryDirectory();
     if (Platform.isAndroid || Platform.isIOS) {
@@ -95,7 +68,7 @@ class FFMpegController {
         await FFmpegKitConfig.init();
       }
     }
-    await captureAnimation(controller: controller, framerate: framerate);
+    await _captureAnimation(controller: controller, framerate: framerate);
     final videoFile = await _getVideoFile();
     await _deleteFile(videoFile);
     final ffmpegCommand = _generateEncodeVideoScript(videoFile.path, directory);
@@ -118,6 +91,90 @@ class FFMpegController {
     await completer.future; // completer가 완료될 때까지 기다림
 
     return videoFile;
+  }
+
+  // 주어진 duration 동안 위젯을 캡처하는 메서드
+  Future<List<String>> _captureDuration({required Duration duration, required int framerate}) async {
+    List<String> capturedImages = [];
+    final directory = await getTemporaryDirectory();
+    if (key == null) {
+      return capturedImages;
+    }
+    final renderObject = key!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    size = renderObject?.size ?? Size.zero;
+    fps = framerate;
+    this.duration = duration;
+    Duration captureDuration = Duration(milliseconds: (1000 / fps).round());
+
+    for (int i = 0; i < TOTAL_FRAME; i++) {
+      Uint8List? byte = await Future<Uint8List?>.delayed(captureDuration, () async {
+        try {
+          ui.Image? image = _captureContext(key!);
+          ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+          image.dispose();
+          return byteData?.buffer.asUint8List();
+        } catch (e) {
+          throw Exception("Capture Failed: $e");
+        }
+      });
+
+      if (byte == null) continue;
+      final imagePath = '${directory.path}/$_FILE_NAME${(i + 1).toString()}.png';
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(byte);
+      capturedImages.add(imagePath); // 경로를 리스트에 추가
+    }
+
+    return capturedImages;
+  }
+
+  Future<File?> captureDurationToVideo({required int framerate}) async {
+    final completer = Completer<bool>();
+    final directory = await getTemporaryDirectory();
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (await FFmpegKitConfig.getFFmpegVersion() == null) {
+        await FFmpegKitConfig.init();
+      }
+    }
+    await _captureDuration(duration: duration, framerate: framerate);
+    final videoFile = await _getVideoFile();
+    await _deleteFile(videoFile);
+    final ffmpegCommand = _generateEncodeVideoScript(videoFile.path, directory);
+
+    await FFmpegKit.executeAsync(ffmpegCommand, (session) async {
+      final state = FFmpegKitConfig.sessionStateToString(await session.getState());
+      final failStackTrace = await session.getFailStackTrace();
+      final returnCode = await session.getReturnCode();
+
+      if (ReturnCode.isSuccess(returnCode)) {
+        developer.log("성공: $state");
+        completer.complete(true);
+      } else {
+        developer.log("실패: $state, $failStackTrace");
+        completer.completeError('변환 실패');
+      }
+    }, (_log) => developer.log(_log.getMessage()), (statistics) {});
+
+    await completer.future; // completer가 완료될 때까지 기다림
+
+    return videoFile;
+  }
+
+  ui.Image _captureContext(GlobalKey key) {
+    try {
+      final renderObject = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (renderObject == null) {
+        throw Exception(
+          "Capturing frame context unsuccessful as context is null."
+          " Trying next frame.",
+        );
+      }
+      return renderObject.toImageSync(pixelRatio: _RATIO);
+    } catch (e) {
+      throw Exception(
+        "Unknown error while capturing frame context. Trying next frame.",
+      );
+    }
   }
 
   Future<File> _getVideoFile() async {

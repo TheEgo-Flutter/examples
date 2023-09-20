@@ -1,2 +1,3 @@
-export 'src/ffmpeg_controller.dart';
-export 'src/ffmpeg_widget.dart';
+library simple_ffmpeg;
+
+export 'src/src.dart';

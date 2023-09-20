@@ -39,9 +39,9 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    ffMpegController = FFMpegController();
+    ffMpegController = FFMpegController()..duration = const Duration(seconds: 2);
     _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: ffMpegController.duration,
       vsync: this,
     );
     _colorAnimation = ColorTween(
@@ -67,32 +67,46 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              InkWell(
-                onDoubleTap: () async {
-                  capturedImages =
-                      await ffMpegController.captureAnimation(controller: _animationController, framerate: 30);
+              ElevatedButton(
+                child: const Text('Duration to Video'),
+                onPressed: () async {
+                  File? video = await ffMpegController.captureDurationToVideo(framerate: 20);
+                  _videoPath = video?.path ?? '';
+                  if (!(await File(_videoPath).exists())) {
+                    developer.log("파일이 존재하지 않습니다.");
+                    return;
+                  }
+                  _videoPlayerController = VideoPlayerController.file(File(_videoPath))
+                    ..initialize().then((_) {
+                      setState(() {
+                        _videoPlayerController?.play();
+                      });
+                    }, onError: (error) {
+                      developer.log("Error initializing video player: $error");
+                    });
                 },
-                child: FFmpegWidget(
-                  controller: ffMpegController,
-                  child: AnimatedBuilder(
-                    animation: _colorAnimation,
-                    builder: (context, child) {
-                      return SizedBox(
-                        width: 300,
-                        height: 200,
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: 300,
-                              height: 200,
-                              color: _colorAnimation.value,
-                            ),
-                            const Center(child: Text('애니메이션'))
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+              ),
+              FFmpegWidget(
+                controller: ffMpegController,
+                child: AnimatedBuilder(
+                  animation: _colorAnimation,
+                  builder: (context, child) {
+                    return SizedBox(
+                      width: 300,
+                      height: 200,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 300,
+                            height: 200,
+                            color: _colorAnimation.value,
+                          ),
+                          const Align(alignment: Alignment.topRight, child: Text('애니메이션')),
+                          Image.asset('assets/elephant.png')
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
               Row(
@@ -113,7 +127,14 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                   ElevatedButton(
                     child: const Text('to Video'),
                     onPressed: () async {
-                      File? video = await ffMpegController.fileToVideo(controller: _animationController, framerate: 30);
+                      for (int i = 0; i < ffMpegController.TOTAL_FRAME; i++) {
+                        _animationController.value = i / (ffMpegController.TOTAL_FRAME - 1);
+                        await Future.delayed(ffMpegController.duration ~/ ffMpegController.TOTAL_FRAME);
+                      }
+
+                      // 이미지를 비디오로 변환
+                      File? video =
+                          await ffMpegController.animationToVideo(controller: _animationController, framerate: 30);
                       _videoPath = video?.path ?? '';
                       if (!(await File(_videoPath).exists())) {
                         developer.log("파일이 존재하지 않습니다.");

@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'ffmpeg_controller.dart';
+part of 'src.dart';
 
 class FFmpegWidget extends StatefulWidget {
   final FFMpegController? controller;
