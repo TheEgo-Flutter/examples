@@ -7,7 +7,7 @@ import 'package:simple_ffmpeg/src.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -70,7 +70,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
               ElevatedButton(
                 child: const Text('Duration to Video'),
                 onPressed: () async {
-                  File? video = await ffMpegController.captureDurationToVideo(framerate: 20);
+                  File? video = await ffMpegController.captureDurationToVideo(framerate: 10);
                   _videoPath = video?.path ?? '';
                   if (!(await File(_videoPath).exists())) {
                     developer.log("파일이 존재하지 않습니다.");
@@ -127,14 +127,9 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                   ElevatedButton(
                     child: const Text('to Video'),
                     onPressed: () async {
-                      for (int i = 0; i < ffMpegController.TOTAL_FRAME; i++) {
-                        _animationController.value = i / (ffMpegController.TOTAL_FRAME - 1);
-                        await Future.delayed(ffMpegController.duration ~/ ffMpegController.TOTAL_FRAME);
-                      }
-
-                      // 이미지를 비디오로 변환
                       File? video =
-                          await ffMpegController.animationToVideo(controller: _animationController, framerate: 30);
+                          await ffMpegController.animationToVideo(controller: _animationController, framerate: 10);
+
                       _videoPath = video?.path ?? '';
                       if (!(await File(_videoPath).exists())) {
                         developer.log("파일이 존재하지 않습니다.");
