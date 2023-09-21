@@ -22,14 +22,33 @@ class FFMpegController {
   int _fps = 60;
   set fps(int value) => _fps = value;
 
-  FFMpegController();
+  String get firstFrame => _firstFrame;
+  String _firstFrame = '';
+  set firstFrame(String value) => _firstFrame = value;
 
-  Future<List<String>> _captureFrames({AnimationController? controller}) async {
-    List<String> capturedImages = [];
+  FFMpegController();
+  Future<void> _captureFrames({AnimationController? controller}) async {
     final directory = await getTemporaryDirectory();
-    if (key == null) {
-      return capturedImages;
+
+    // 임시 디렉터리에서 _FILE_NAME 접미사를 가진 모든 파일 삭제
+    final files = directory.listSync();
+    for (var file in files) {
+      if (file is File && file.path.contains(_FILE_NAME)) {
+        try {
+          await file.delete();
+        } catch (e) {
+          developer.log("파일 삭제 실패: ${file.path}, 오류: $e");
+        }
+      }
     }
+
+    if (key == null) {
+      return;
+    }
+
+    // firstFrame 초기화
+    firstFrame = '';
+
     final renderObject = key!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     size = renderObject?.size ?? Size.zero;
 
@@ -45,18 +64,22 @@ class FFMpegController {
           image.dispose();
           return byteData?.buffer.asUint8List();
         } catch (e) {
-          developer.log("Capture Failed: $e");
+          developer.log("캡처 실패: $e");
         }
         return null;
       });
 
+      // byte가 null이 아니고 firstFrame이 비어있을 경우 firstFrame에 저장
+
       if (byte == null) continue;
+
       final imagePath = '${directory.path}/$_FILE_NAME${(i + 1).toString()}.png';
+      if (firstFrame.isEmpty) {
+        firstFrame = imagePath;
+      }
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(byte);
-      capturedImages.add(imagePath); // 경로를 리스트에 추가
     }
-    return capturedImages;
   }
 
   Future<File?> _convertFramesToVideo() async {
