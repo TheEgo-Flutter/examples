@@ -172,7 +172,6 @@ class FFMpegController {
     } else {
       command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v h264 -b:v 3000k $videoFilePath";
     }
-    print(command);
     return command;
   }
 }
