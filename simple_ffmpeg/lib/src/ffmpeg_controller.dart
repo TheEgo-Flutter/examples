@@ -166,7 +166,7 @@ class FFMpegController {
     Directory directory,
   ) {
     print(
-        "FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -vf: scale=$SCALE -b:v 3000k -c:a pcm_s16le -b:a 192k $videoFilePath");
-    return "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k -c:a pcm_s16le -b:a 192k  $videoFilePath";
+        "FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath");
+    return "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v libx264 -b:v 3000k $videoFilePath";
   }
 }
