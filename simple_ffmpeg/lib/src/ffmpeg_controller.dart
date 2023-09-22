@@ -165,8 +165,14 @@ class FFMpegController {
     String videoFilePath,
     Directory directory,
   ) {
-    print(
-        "FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath");
-    return "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v libx264 -b:v 3000k $videoFilePath";
+    print("FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n");
+    String command = '';
+    if (Platform.isAndroid) {
+      command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
+    } else {
+      command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v h264 -b:v 3000k $videoFilePath";
+    }
+    print(command);
+    return command;
   }
 }
