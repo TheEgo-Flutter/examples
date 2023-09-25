@@ -64,6 +64,7 @@ class _ImageEditorState extends State<ImageEditor> {
   Widget build(BuildContext mainContext) {
     int cardFlex = 70;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: FutureBuilder(
         future: callAssets(),
         builder: (futureContext, snapshot) {

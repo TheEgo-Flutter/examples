@@ -150,10 +150,12 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                           flex: cardFlex,
                           child: GestureDetector(
                             onTap: () => swapWidget(null),
-                            child: ClipPath(
-                              key: GlobalRect().cardAreaKey,
-                              clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
-                              child: buildImageLayer(context),
+                            child: AspectRatio(
+                              aspectRatio: widget.aspectRatio.ratio ?? 1,
+                              child: ClipPath(
+                                clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                                child: buildImageLayer(context),
+                              ),
                             ),
                           ),
                         ),
@@ -196,6 +198,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   Widget buildImageLayer(BuildContext context) {
     return Container(
+      key: GlobalRect().cardAreaKey,
       decoration: cardColor != null
           ? BoxDecoration(
               gradient: cardColor,

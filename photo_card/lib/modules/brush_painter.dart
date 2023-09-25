@@ -9,8 +9,6 @@ import 'package:photo_card/utils/global.dart';
 
 import '../utils/global.rect.dart';
 
-
-
 class BrushPainter extends StatefulWidget {
   const BrushPainter({super.key});
 
