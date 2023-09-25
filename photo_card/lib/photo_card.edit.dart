@@ -54,6 +54,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _captureRect();
+      _initialBackground();
       _startDialog();
     });
   }
@@ -83,6 +84,16 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       ..cardRect = GlobalRect().getRect(GlobalRect().cardAreaKey)
       ..objectRect = GlobalRect().getRect(GlobalRect().objectAreaKey)
       ..statusBarSize = statusBarHeight;
+  }
+
+  void _initialBackground() {
+    LayerItem layer = LayerItem(
+      UniqueKey(),
+      type: const BackgroundType.color(),
+      object: Colors.white,
+      rect: GlobalRect().cardRect.zero,
+    );
+    layerManager.addLayer(layer);
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {
