@@ -181,14 +181,6 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   Widget buildChild() {
     try {
       switch (widget.layerItem.type) {
-        case TextType():
-          object as TextBoxInput;
-
-          return TextBox(
-            isReadOnly: true,
-            input: object,
-          );
-
         case DrawingType():
           return Image.memory(
             widget.layerItem.object as Uint8List,
@@ -229,11 +221,18 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
           );
 
         case StickerType():
-        default:
-          return SizedBox(
-            height: size.height,
+          return Image(
             width: size.width,
-            child: widget.layerItem.object,
+            height: size.height,
+            image: widget.layerItem.object as ImageProvider,
+          );
+
+        case TextType():
+          object as TextBoxInput;
+
+          return TextBox(
+            isReadOnly: true,
+            input: object,
           );
       }
     } catch (e) {

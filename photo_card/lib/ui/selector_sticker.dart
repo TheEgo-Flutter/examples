@@ -6,12 +6,13 @@ import 'package:lottie/lottie.dart';
 
 class StickerSelector extends StatelessWidget {
   const StickerSelector({
-    super.key,
+    Key? key,
     required this.items,
     required this.onSelected,
-  });
+  }) : super(key: key);
+
   final List<ImageProvider> items;
-  final ValueChanged<Widget?> onSelected;
+  final ValueChanged<ImageProvider?> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +28,13 @@ class StickerSelector extends StatelessWidget {
       ),
       itemCount: items.length,
       itemBuilder: (BuildContext context, int index) {
-        Widget item = Image(
-          image: items[index],
-          fit: BoxFit.contain,
-        );
+        ImageProvider item = items[index];
         return GestureDetector(
           onTap: () => onSelected(item),
-          child: item,
+          child: Image(
+            image: item,
+            fit: BoxFit.contain,
+          ),
         );
       },
     );
