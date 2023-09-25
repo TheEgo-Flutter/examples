@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_card/lib.dart';
+import 'package:photo_card/ui/child_layer_item.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
@@ -142,7 +143,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                   : null,
               onScale: widget.layerItem.type.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
               onRotate: widget.layerItem.type.isRotatable && widget.isFocus ? (a) => angle = a : null,
-              child: buildChildFromLayerItem(layerItem, customSize: size),
+              child: ChildLayerItem(layerItem: layerItem, customSize: size),
             ),
           ),
         ),
@@ -260,67 +261,5 @@ class _DraggablePointState extends State<_DraggablePoint> {
         child: widget.child,
       ),
     );
-  }
-}
-
-Widget buildChildFromLayerItem(LayerItem layerItem, {Size? customSize}) {
-  try {
-    Size targetSize = customSize ?? layerItem.rect.size;
-
-    switch (layerItem.type) {
-      case DrawingType():
-        return Image.memory(
-          layerItem.object as Uint8List,
-          fit: BoxFit.fill,
-          width: targetSize.width,
-          height: targetSize.height,
-        );
-      case BackgroundType():
-        switch (layerItem.type.background) {
-          case Background.gallery:
-            return SizedBox(
-              height: targetSize.height,
-              width: targetSize.width,
-              child: layerItem.object,
-            );
-          case Background.image:
-            return Image(
-              image: layerItem.object as ImageProvider,
-              fit: BoxFit.fill,
-              width: targetSize.width,
-              height: targetSize.height,
-            );
-          case Background.color:
-            return Container(
-              height: targetSize.height,
-              width: targetSize.width,
-              color: layerItem.object as Color,
-            );
-          default:
-            return const SizedBox.shrink();
-        }
-      case FrameType():
-        return Image(
-          image: layerItem.object as ImageProvider,
-          fit: BoxFit.fill,
-          width: targetSize.width,
-          height: targetSize.height,
-        );
-      case StickerType():
-        return Image(
-          width: targetSize.width,
-          height: targetSize.height,
-          image: layerItem.object as ImageProvider,
-        );
-      case TextType():
-        return TextBox(
-          isReadOnly: true,
-          input: layerItem.object,
-        );
-      default:
-        return const SizedBox.shrink();
-    }
-  } catch (e) {
-    return const SizedBox.shrink();
   }
 }

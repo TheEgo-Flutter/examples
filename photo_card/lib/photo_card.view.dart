@@ -44,12 +44,13 @@ class _PhotoCardViewerState extends State<PhotoCard> {
                         backgroundNewSize: constraints.biggest);
 
                     LayerItem newItem = layer.copyWith(rect: newRect);
+
                     return Transform(
                       transform: Matrix4.identity()
                         ..translate(newRect.topLeft.dx, newRect.topLeft.dy)
                         ..rotateZ(layer.angle),
-                      child: buildChildFromLayerItem(
-                        newItem,
+                      child: ChildLayerItem(
+                        layerItem: newItem,
                       ),
                     );
                   },
