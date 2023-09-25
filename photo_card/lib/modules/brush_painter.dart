@@ -68,23 +68,20 @@ class _BrushPainterState extends State<BrushPainter> {
           Navigator.pop(context, await _getImageData(context));
         },
       ),
-      center: ClipPath(
-        clipper: CardBoxClip(aspectRatio: ratio),
-        child: SizedBox(
-          width: GlobalRect().cardRect.width,
-          height: GlobalRect().cardRect.height,
-          child: DrawingBoard(
-            controller: _drawingController,
-            background: Container(
-              width: GlobalRect().cardRect.width,
-              height: GlobalRect().cardRect.height,
-              color: Colors.transparent,
-            ),
-            boardPanEnabled: false,
-            boardScaleEnabled: false,
-            showDefaultActions: false,
-            showDefaultTools: false,
+      center: SizedBox(
+        width: GlobalRect().cardRect.width,
+        height: GlobalRect().cardRect.height,
+        child: DrawingBoard(
+          controller: _drawingController,
+          background: Container(
+            width: GlobalRect().cardRect.width,
+            height: GlobalRect().cardRect.height,
+            color: Colors.transparent,
           ),
+          boardPanEnabled: false,
+          boardScaleEnabled: false,
+          showDefaultActions: false,
+          showDefaultTools: false,
         ),
       ),
       bottom: Expanded(
