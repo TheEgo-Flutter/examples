@@ -32,6 +32,8 @@ class GlobalRect {
 
   Rect get toolBarRect => _toolBarRectDefault;
 
+  Size get stickerSize => Size(cardRect.size.width / 3, cardRect.size.width / 3);
+
   double get statusBarSize => _statusBarSize ?? 0;
   double? _statusBarSize;
   set statusBarSize(double? value) {

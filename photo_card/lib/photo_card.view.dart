@@ -3,7 +3,7 @@ part of 'photo_card.dart';
 class PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
   final AspectRatioEnum aspectRatio;
-  const PhotoCard({required this.tempSavedLayers, this.aspectRatio = AspectRatioEnum.photoCard});
+  const PhotoCard({super.key, required this.tempSavedLayers, this.aspectRatio = AspectRatioEnum.photoCard});
 
   @override
   State<PhotoCard> createState() => _PhotoCardViewerState();
@@ -40,18 +40,15 @@ class _PhotoCardViewerState extends State<PhotoCard> {
   }
 
   Future<LinearGradient?> loadImageColor(Image image) async {
-    if (image != null) {
-      ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: image.image);
-      return LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomCenter,
-        colors: [
-          newScheme.primaryContainer,
-          newScheme.primary,
-        ],
-      );
-    }
-    return null;
+    ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: image.image);
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomCenter,
+      colors: [
+        newScheme.primaryContainer,
+        newScheme.primary,
+      ],
+    );
   }
 
   @override

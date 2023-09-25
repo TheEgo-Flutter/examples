@@ -550,7 +550,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             onSelected: (child) {
               if (child == null) return;
 
-              Size size = const Size(150, 150);
+              Size size = GlobalRect().stickerSize;
               Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
                   GlobalRect().cardRect.size.height / 2 - size.height / 2);
 
