@@ -2,11 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../modules/text_editor.dart';
-import '../utils/global.rect.dart';
-import '../utils/layer_manager.dart';
-import 'delete_area.dart';
+import 'package:photo_card/lib.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
@@ -116,12 +112,12 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
     return Stack(
       children: <Widget>[
         if (widget.isFocus) ..._buildCenterLine(GlobalRect().cardRect, isCenteredHorizontally, isCenteredVertically),
-        Positioned(
-          top: offset.dy,
-          left: offset.dx,
-          child: IgnorePointer(
-            ignoring: widget.layerItem.type.ignorePoint,
+        Transform.translate(
+          offset: offset,
+          child: Transform.rotate(
+            angle: angle,
             child: _DraggablePoint(
+              ignorePointer: widget.layerItem.type.ignorePoint,
               onLayerTapped: () {
                 widget.onLayerTapped?.call(layerItem);
               },
@@ -146,10 +142,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                   : null,
               onScale: widget.layerItem.type.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
               onRotate: widget.layerItem.type.isRotatable && widget.isFocus ? (a) => angle = a : null,
-              child: Transform.rotate(
-                angle: angle,
-                child: buildChild(),
-              ),
+              child: buildChildFromLayerItem(layerItem, customSize: size),
             ),
           ),
         ),
@@ -176,68 +169,6 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
 
     size = updatedSize;
     offset = updatedPosition;
-  }
-
-  Widget buildChild() {
-    try {
-      switch (widget.layerItem.type) {
-        case DrawingType():
-          return Image.memory(
-            widget.layerItem.object as Uint8List,
-            fit: BoxFit.fill,
-            width: size.width,
-            height: size.height,
-          );
-        case BackgroundType():
-          switch (widget.layerItem.type.background) {
-            case Background.gallery:
-              return SizedBox(
-                height: size.height,
-                width: size.width,
-                child: widget.layerItem.object,
-              );
-            case Background.image:
-              return Image(
-                image: widget.layerItem.object as ImageProvider,
-                fit: BoxFit.fill,
-                width: size.width,
-                height: size.height,
-              );
-            case Background.color:
-              return Container(
-                height: size.height,
-                width: size.width,
-                color: widget.layerItem.object as Color,
-              );
-            default:
-              return const SizedBox.shrink();
-          }
-        case FrameType():
-          return Image(
-            image: widget.layerItem.object as ImageProvider,
-            fit: BoxFit.fill,
-            width: size.width,
-            height: size.height,
-          );
-
-        case StickerType():
-          return Image(
-            width: size.width,
-            height: size.height,
-            image: widget.layerItem.object as ImageProvider,
-          );
-
-        case TextType():
-          object as TextBoxInput;
-
-          return TextBox(
-            isReadOnly: true,
-            input: object,
-          );
-      }
-    } catch (e) {
-      return const SizedBox.shrink();
-    }
   }
 
   bool _checkIfCentered(Offset position, Size size, double canvasDimen, Axis axis) {
@@ -280,6 +211,7 @@ class _DraggablePoint extends StatefulWidget {
     this.onDragEnd,
     this.onScale,
     this.onRotate,
+    this.ignorePointer = false,
   }) : super(key: key);
 
   final Widget child;
@@ -289,6 +221,7 @@ class _DraggablePoint extends StatefulWidget {
   final VoidCallback? onDragEnd;
   final ValueSetter<double>? onScale;
   final ValueSetter<double>? onRotate;
+  final bool ignorePointer;
 
   @override
   _DraggablePointState createState() => _DraggablePointState();
@@ -299,30 +232,95 @@ class _DraggablePointState extends State<_DraggablePoint> {
   double angle = 0;
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => widget.onLayerTapped?.call(),
-      onScaleStart: (details) {
-        initPoint = details.localFocalPoint;
-        widget.onDragStart?.call(details.localFocalPoint);
-      },
-      onScaleEnd: (details) => widget.onDragEnd?.call(),
-      onScaleUpdate: (details) {
-        final dx = details.localFocalPoint.dx - initPoint.dx;
-        final dy = details.localFocalPoint.dy - initPoint.dy;
+    return IgnorePointer(
+      ignoring: widget.ignorePointer,
+      child: GestureDetector(
+        onTap: () => widget.onLayerTapped?.call(),
+        onScaleStart: (details) {
+          initPoint = details.localFocalPoint;
+          widget.onDragStart?.call(details.localFocalPoint);
+        },
+        onScaleEnd: (details) => widget.onDragEnd?.call(),
+        onScaleUpdate: (details) {
+          final dx = details.localFocalPoint.dx - initPoint.dx;
+          final dy = details.localFocalPoint.dy - initPoint.dy;
 
-        final angleInRadians = -angle * (math.pi / 180.0);
-        final rotatedDx = dx * math.cos(angleInRadians) - dy * math.sin(angleInRadians);
-        final rotatedDy = dx * math.sin(angleInRadians) + dy * math.cos(angleInRadians);
+          final angleInRadians = -angle * (math.pi / 180.0);
+          final rotatedDx = dx * math.cos(angleInRadians) - dy * math.sin(angleInRadians);
+          final rotatedDy = dx * math.sin(angleInRadians) + dy * math.cos(angleInRadians);
 
-        initPoint = details.localFocalPoint;
-        widget.onDrag?.call(Offset(rotatedDx, rotatedDy), initPoint);
+          initPoint = details.localFocalPoint;
+          widget.onDrag?.call(Offset(rotatedDx, rotatedDy), initPoint);
 
-        if (details.pointerCount > 1) {
-          widget.onScale?.call(details.scale);
-          widget.onRotate?.call(details.rotation);
-        }
-      },
-      child: widget.child,
+          if (details.pointerCount > 1) {
+            widget.onScale?.call(details.scale);
+            widget.onRotate?.call(details.rotation);
+          }
+        },
+        child: widget.child,
+      ),
     );
+  }
+}
+
+Widget buildChildFromLayerItem(LayerItem layerItem, {Size? customSize}) {
+  try {
+    Size targetSize = customSize ?? layerItem.rect.size;
+
+    switch (layerItem.type) {
+      case DrawingType():
+        return Image.memory(
+          layerItem.object as Uint8List,
+          fit: BoxFit.fill,
+          width: targetSize.width,
+          height: targetSize.height,
+        );
+      case BackgroundType():
+        switch (layerItem.type.background) {
+          case Background.gallery:
+            return SizedBox(
+              height: targetSize.height,
+              width: targetSize.width,
+              child: layerItem.object,
+            );
+          case Background.image:
+            return Image(
+              image: layerItem.object as ImageProvider,
+              fit: BoxFit.fill,
+              width: targetSize.width,
+              height: targetSize.height,
+            );
+          case Background.color:
+            return Container(
+              height: targetSize.height,
+              width: targetSize.width,
+              color: layerItem.object as Color,
+            );
+          default:
+            return const SizedBox.shrink();
+        }
+      case FrameType():
+        return Image(
+          image: layerItem.object as ImageProvider,
+          fit: BoxFit.fill,
+          width: targetSize.width,
+          height: targetSize.height,
+        );
+      case StickerType():
+        return Image(
+          width: targetSize.width,
+          height: targetSize.height,
+          image: layerItem.object as ImageProvider,
+        );
+      case TextType():
+        return TextBox(
+          isReadOnly: true,
+          input: layerItem.object,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  } catch (e) {
+    return const SizedBox.shrink();
   }
 }

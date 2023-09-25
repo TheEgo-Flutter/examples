@@ -132,8 +132,13 @@ class CardViewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Card View Page')),
-      body: PhotoCard(
-        tempSavedLayers: returnedLayers,
+      body: Center(
+        child: SizedBox(
+          width: 200,
+          child: PhotoCard(
+            tempSavedLayers: returnedLayers,
+          ),
+        ),
       ),
     );
   }

@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
-import 'package:photo_card/utils/util.dart';
+import 'package:photo_card/lib.dart';
 
 List<PaintContent> drawingData = [];
 AspectRatioEnum ratio = AspectRatioEnum.photoCard;
-
-const Size device = Size(360.0, 800.0);
-
-const EdgeInsets cardPadding = EdgeInsets.symmetric(horizontal: 16.0);
 
 ValueNotifier<double> bottomInsetNotifier = ValueNotifier<double>(0.0);
 const background = Color(0xff1D1D1D);

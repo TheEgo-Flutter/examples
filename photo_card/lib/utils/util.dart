@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:photo_card/utils/global.dart';
 
 import 'global.rect.dart';
 
@@ -39,32 +38,6 @@ Future<T?> customObjectBoxSizeDialog<T>({required BuildContext context, required
 extension RectExtension on Rect {
   Rect get zero {
     return Rect.fromLTWH(0, 0, this.width, this.height);
-  }
-
-  double _getResponsiveDimension(double rectSize, double deviceSize, double viewSize) {
-    return rectSize * viewSize / deviceSize;
-  }
-
-  Size _getResponsiveSize(Size rectSize, Size deviceSize, Size viewSize) {
-    return Size(
-      _getResponsiveDimension(rectSize.width, deviceSize.width, viewSize.width),
-      _getResponsiveDimension(rectSize.height, deviceSize.height, viewSize.height),
-    );
-  }
-
-  Rect ratio(Size view) {
-    Offset topLeft = Offset(
-      _getResponsiveDimension(left, device.width, view.width),
-      _getResponsiveDimension(top, device.height, view.height),
-    );
-
-    Size rectSize = _getResponsiveSize(
-      Size(width, height),
-      device,
-      view,
-    );
-
-    return topLeft & rectSize;
   }
 }
 
