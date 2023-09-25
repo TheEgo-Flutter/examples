@@ -244,7 +244,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           if (result != null) {
             LayerItem newItem = item.copyWith(
               object: result.$1,
-              rect: (item.rect.topLeft & result.$1.size),
+              rect: (item.rect.topLeft & Size.infinite),
             )..newKey();
             log((newItem.object as TextBoxInput).text.toString());
             layerManager.addLayer(newItem);
@@ -399,7 +399,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           UniqueKey(),
           type: TextType(),
           object: result.$1,
-          rect: result.$2 & result.$1.size,
+          rect: result.$2 & Size.infinite,
         );
         layerManager.addLayer(layer);
         setState(() {});

@@ -27,10 +27,10 @@ class _PhotoCardViewerState extends State<PhotoCard> {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: widget.aspectRatio.ratio ?? 1,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(CARD_RADIUS),
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(CARD_RADIUS),
+      child: AspectRatio(
+        aspectRatio: widget.aspectRatio.ratio ?? 1,
         child: Container(
           decoration: boxDecoration,
           child: LayoutBuilder(

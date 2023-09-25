@@ -60,7 +60,6 @@ class _BrushPainterState extends State<BrushPainter> {
         bottomSheetTheme: const BottomSheetThemeData(
           backgroundColor: Colors.black,
         ),
-        inputDecorationTheme: inputDecorationTheme,
       ),
       top: GlobalToolBar(
         onConfirmPressed: () async {

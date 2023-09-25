@@ -6,7 +6,6 @@ import 'package:photo_card/ui/ui.dart';
 
 import '../utils/global.dart';
 import '../utils/global.rect.dart';
-import '../utils/util.dart';
 
 List<String> fontFamilies = [];
 
@@ -46,17 +45,6 @@ class _TextEditorState extends State<TextEditor> {
   TextStyle get currentTextStyle =>
       TextStyle(color: currentColor, fontSize: fontSize.toDouble(), fontFamily: fontFamilies[selectedFontIndex]);
 
-  Size get textFieldSize => addSizes(
-      _textSize,
-      Size((inputDecorationTheme.contentPadding?.horizontal ?? 4) * 4,
-          inputDecorationTheme.contentPadding?.vertical ?? 4));
-
-  Size get _textSize => textSize(
-      TextSpan(
-        text: textNotifier.value,
-        style: currentTextStyle,
-      ),
-      context);
   IconData get icon {
     switch (align) {
       case TextAlign.left:
@@ -88,7 +76,6 @@ class _TextEditorState extends State<TextEditor> {
         align: align,
         style: currentTextStyle,
         backgroundColor: textBackgroundColor,
-        size: textFieldSize,
       );
   double fontMin = 12;
   double fontMax = 64;
@@ -115,15 +102,13 @@ class _TextEditorState extends State<TextEditor> {
               bottomSheetTheme: const BottomSheetThemeData(
                 backgroundColor: Colors.black,
               ),
-              inputDecorationTheme: inputDecorationTheme,
             ),
             top: GlobalToolBar(
               onConfirmPressed: () {
                 if (textNotifier.value.trim().isEmpty) {
                   Navigator.pop(context);
                 } else {
-                  TextBoxInput result = input.copyWith(size: textBoxRect.size);
-                  Navigator.pop(context, (result, textBoxRect.topLeft));
+                  Navigator.pop(context, (input, textBoxRect.topLeft));
                 }
               },
             ),
@@ -303,7 +288,6 @@ class _TextEditorState extends State<TextEditor> {
 
 class TextBoxInput {
   final String? text;
-  final Size size;
   final TextStyle style;
   final TextAlign align;
   final Color backgroundColor;
@@ -312,7 +296,6 @@ class TextBoxInput {
     required this.align,
     required this.style,
     required this.backgroundColor,
-    required this.size,
   });
 
   TextBoxInput copyWith({
@@ -320,14 +303,12 @@ class TextBoxInput {
     TextAlign? align,
     TextStyle? style,
     Color? backgroundColor,
-    Size? size,
   }) {
     return TextBoxInput(
       text: text ?? this.text,
       align: align ?? this.align,
       style: style ?? this.style,
       backgroundColor: backgroundColor ?? this.backgroundColor,
-      size: size ?? this.size,
     );
   }
 }
@@ -345,27 +326,22 @@ class TextBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: input.size.width,
-      margin: inputDecorationTheme.contentPadding,
-      decoration: BoxDecoration(
-        color: input.backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+    return TextFormField(
+      readOnly: isReadOnly,
+      enabled: !isReadOnly,
+      initialValue: input.text,
+      textAlign: input.align,
+      style: input.style,
+      decoration: const InputDecoration.collapsed(
+        hintText: null,
       ),
-      child: TextFormField(
-        readOnly: isReadOnly,
-        enabled: !isReadOnly,
-        initialValue: input.text,
-        textAlign: input.align,
-        style: input.style,
-        onChanged: onChanged,
-        textAlignVertical: TextAlignVertical.center,
-        keyboardType: TextInputType.multiline,
-        enableSuggestions: false,
-        autocorrect: false,
-        maxLines: null,
-        autofocus: true,
-      ),
+      onChanged: onChanged,
+      textAlignVertical: TextAlignVertical.center,
+      keyboardType: TextInputType.multiline,
+      enableSuggestions: false,
+      autocorrect: false,
+      maxLines: null,
+      autofocus: true,
     );
   }
 }

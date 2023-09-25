@@ -40,9 +40,4 @@ ThemeData theme = ThemeData().copyWith(
   textTheme: const TextTheme(
     bodyMedium: TextStyle(color: label),
   ),
-  inputDecorationTheme: const InputDecorationTheme().copyWith(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-    border: InputBorder.none,
-  ),
 );
-InputDecorationTheme get inputDecorationTheme => theme.inputDecorationTheme;
