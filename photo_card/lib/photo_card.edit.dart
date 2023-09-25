@@ -242,9 +242,12 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                 );
               });
           if (result != null) {
+            TextBoxInput value = result.$1;
+            InlineSpan? span = TextSpan(text: value.text, style: value.style);
+            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
             LayerItem newItem = item.copyWith(
-              object: result.$1,
-              rect: (item.rect.topLeft & Size.infinite),
+              object: value,
+              rect: (item.rect.topLeft & size),
             )..newKey();
             log((newItem.object as TextBoxInput).text.toString());
             layerManager.addLayer(newItem);
@@ -395,11 +398,14 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
         setState(() {});
 
         if (result == null) break;
+        TextBoxInput value = result.$1;
+        InlineSpan? span = TextSpan(text: value.text, style: value.style);
+        Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
         var layer = LayerItem(
           UniqueKey(),
           type: TextType(),
-          object: result.$1,
-          rect: result.$2 & Size.infinite,
+          object: value,
+          rect: result.$2 & size,
         );
         layerManager.addLayer(layer);
         setState(() {});
