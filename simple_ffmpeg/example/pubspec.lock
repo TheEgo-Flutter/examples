@@ -73,11 +73,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
-  ffmpeg_kit_flutter_https_gpl:
+  ffmpeg_kit_flutter_min:
     dependency: transitive
     description:
-      name: ffmpeg_kit_flutter_https_gpl
-      sha256: "004d69b4fff606ff4289ca942df9ad42385868da55141ef2ee0cbbceaa4b7d9a"
+      name: ffmpeg_kit_flutter_min
+      sha256: "123bfbc0e0b9e7cf6d32d8ba8e08b666d66af0f52c07683dd2305fbfc13f494a"
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
@@ -304,10 +304,10 @@ packages:
     dependency: "direct main"
     description:
       name: video_player
-      sha256: d3910a8cefc0de8a432a4411dcf85030e885d8fef3ddea291f162253a05dbf01
+      sha256: "74b86e63529cf5885130c639d74cd2f9232e7c8a66cbecbddd1dcb9dbd060d1e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.7.1"
+    version: "2.7.2"
   video_player_android:
     dependency: transitive
     description:
@@ -352,10 +352,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: "9e82a402b7f3d518fb9c02d0e9ae45952df31b9bf34d77baf19da2de03fc2aaa"
+      sha256: c97defd418eef4ec88c0d1652cdce84b9f7b63dd7198e266d06ac1710d527067
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.7"
+    version: "5.0.8"
   xdg_directories:
     dependency: transitive
     description:

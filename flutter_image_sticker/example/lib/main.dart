@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_image_sticker/sticker.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -64,8 +64,7 @@ class _HomePageState extends State<HomePage> {
                             height: MediaQuery.of(context).size.height * 0.7,
                             child: imageFile != null
                                 ? Image.file(imageFile!)
-                                : const Center(
-                                    child: Text(' no image selected')),
+                                : const Center(child: Text(' no image selected')),
                           );
                         });
                   },
@@ -76,18 +75,16 @@ class _HomePageState extends State<HomePage> {
               FloatingActionButton(
                 child: const Icon(Icons.save_alt),
                 onPressed: () async {
-                  Uint8List? imageData =
-                      await StickerView.saveAsUint8List(ImageQuality.high);
-                  if (imageData != null) {
-                    var imageName =
-                        DateTime.now().microsecondsSinceEpoch.toString();
-                    var appDocDir = await getApplicationDocumentsDirectory();
-                    String imagePath = '${appDocDir.path}$imageName.png';
-                    imageFile = File(imagePath);
-                    imageFile!.writeAsBytesSync(imageData);
-                    // ignore: avoid_print
-                    print("imageFile::::$imageFile");
-                  }
+                  Uint8List? imageData = await StickerView.saveAsUint8List(ImageQuality.high);
+                  // if (imageData != null) {
+                  //   var imageName = DateTime.now().microsecondsSinceEpoch.toString();
+                  //   var appDocDir = await getApplicationDocumentsDirectory();
+                  //   String imagePath = '${appDocDir.path}$imageName.png';
+                  //   imageFile = File(imagePath);
+                  //   imageFile!.writeAsBytesSync(imageData);
+                  //   // ignore: avoid_print
+                  //   print("imageFile::::$imageFile");
+                  // }
                 },
               ),
             ],
