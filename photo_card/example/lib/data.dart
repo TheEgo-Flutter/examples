@@ -52,6 +52,9 @@ var fontUrls = {
   'Montserrat': 'https://github.com/google/fonts/raw/main/ofl/meddon/Meddon.ttf',
 };
 List<String> stickers = [
+  'stickers/sample1.png',
+  'stickers/sample2.png',
+  'stickers/sample3.png',
   'stickers/sticker_01.png',
   'stickers/sticker_02.png',
   'stickers/sticker_03.png',

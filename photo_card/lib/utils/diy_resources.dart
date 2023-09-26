@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
+import 'package:photo_card/lib.dart';
 
 class DiyResources {
-  final List<ImageProvider> stickers;
+  final List<StickerImageProvider> stickers;
   final List<ImageProvider> backgrounds;
   final List<ImageProvider> frames;
   final List<String> fonts;
@@ -17,7 +16,7 @@ class DiyResources {
   });
 
   DiyResources copyWith({
-    List<ImageProvider>? stickers,
+    List<StickerImageProvider>? stickers,
     List<ImageProvider>? backgrounds,
     List<ImageProvider>? frames,
     List<String>? fonts,
@@ -29,28 +28,6 @@ class DiyResources {
       fonts: fonts ?? this.fonts,
     );
   }
-
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'stickers': stickers,
-      'backgrounds': backgrounds,
-      'frames': frames,
-      'fonts': fonts,
-    };
-  }
-
-  factory DiyResources.fromMap(Map<String, dynamic> map) {
-    return DiyResources(
-      stickers: List<ImageProvider>.from(map['stickers']),
-      backgrounds: List<ImageProvider>.from(map['backgrounds']),
-      frames: List<ImageProvider>.from(map['frames']),
-      fonts: List<String>.from(map['fonts']),
-    );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory DiyResources.fromJson(String source) => DiyResources.fromMap(json.decode(source));
 
   @override
   String toString() =>

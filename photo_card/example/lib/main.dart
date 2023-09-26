@@ -44,7 +44,7 @@ class ImageEditor extends StatefulWidget {
 }
 
 class _ImageEditorState extends State<ImageEditor> {
-  List<ImageProvider> stickerList = [];
+  List<StickerImageProvider> stickerList = [];
   List<ImageProvider> frameList = [];
   List<ImageProvider> backgroundList = [];
   List<LayerItem> returnedLayers = [];
@@ -55,7 +55,10 @@ class _ImageEditorState extends State<ImageEditor> {
   }
 
   Future<void> callAssets() async {
-    stickerList = await loadImageProvider(stickers);
+    List<ImageProvider> thumbnailStickerList = await loadImageProvider(stickers);
+    stickerList = List<StickerImageProvider>.generate(
+        thumbnailStickerList.length, (index) => StickerImageProvider( image: thumbnailStickerList[index]));
+
     frameList = await loadImageProvider(frames);
     backgroundList = await loadImageProvider(backgrounds);
   }

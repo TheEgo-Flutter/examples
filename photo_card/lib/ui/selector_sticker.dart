@@ -4,6 +4,22 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
+class StickerImageProvider {
+  final Key? key;
+  final ImageProvider image;
+  final ImageProvider? animation; // if animation is not null, it will be used as a sticker
+
+  const StickerImageProvider({this.key, required this.image, this.animation});
+
+  ImageProvider get thumbnail {
+    return image;
+  }
+
+  ImageProvider get sticker {
+    return animation ?? image;
+  }
+}
+
 class StickerSelector extends StatelessWidget {
   const StickerSelector({
     Key? key,
@@ -11,7 +27,7 @@ class StickerSelector extends StatelessWidget {
     required this.onSelected,
   }) : super(key: key);
 
-  final List<ImageProvider> items;
+  final List<StickerImageProvider> items;
   final ValueChanged<ImageProvider?> onSelected;
 
   @override
@@ -28,11 +44,11 @@ class StickerSelector extends StatelessWidget {
       ),
       itemCount: items.length,
       itemBuilder: (BuildContext context, int index) {
-        ImageProvider item = items[index];
+        StickerImageProvider item = items[index];
         return GestureDetector(
-          onTap: () => onSelected(item),
+          onTap: () => onSelected(item.sticker),
           child: Image(
-            image: item,
+            image: item.thumbnail,
             fit: BoxFit.contain,
           ),
         );
