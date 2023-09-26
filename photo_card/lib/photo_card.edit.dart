@@ -10,15 +10,17 @@ class DialogValue {
 
 class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
-  final AspectRatioEnum aspectRatio;
+  final double aspectRatio;
   final Widget completed;
   final Function(List<LayerItem>)? onComplete;
   final AsyncValueGetter<List<LayerItem>?>? onStartDialog;
   final AsyncValueGetter<bool?>? onEndDialog;
+  final Radius cardRadius;
   const PhotoEditor({
     Key? key,
     required this.resources,
-    this.aspectRatio = AspectRatioEnum.photoCard,
+    this.aspectRatio = 300 / 464,
+    this.cardRadius = const Radius.circular(16),
     this.completed = const Text('저장'),
     this.onComplete,
     this.onStartDialog,
@@ -141,7 +143,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               builder: (context, constraints) {
                 double space = kToolbarHeight / 3;
                 int cardFlex = 70;
-                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * (widget.aspectRatio.ratio ?? 1);
+                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
 
                 return Center(
                   child: SizedBox(
@@ -162,9 +164,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                           child: GestureDetector(
                             onTap: () => swapWidget(null),
                             child: AspectRatio(
-                              aspectRatio: widget.aspectRatio.ratio ?? 1,
-                              child: ClipPath(
-                                clipper: CardBoxClip(aspectRatio: widget.aspectRatio),
+                              aspectRatio: widget.aspectRatio,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.all(widget.cardRadius),
                                 child: buildImageLayer(context),
                               ),
                             ),
@@ -174,24 +176,21 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                           flex: 100 - cardFlex,
                           child: Container(
                             padding: EdgeInsets.only(top: space),
-                            child: ClipPath(
+                            child: Stack(
                               key: GlobalRect().objectAreaKey,
-                              clipper: CardBoxClip(),
-                              child: Stack(
-                                children: [
-                                  IgnorePointer(
-                                    ignoring: _animationController.isAnimating,
-                                    child: buildItemArea(),
+                              children: [
+                                IgnorePointer(
+                                  ignoring: _animationController.isAnimating,
+                                  child: buildItemArea(),
+                                ),
+                                AnimatedSwitcher(
+                                  duration: const Duration(microseconds: 100),
+                                  child: SlideTransition(
+                                    position: _offsetAnimation,
+                                    child: switchingWidget(),
                                   ),
-                                  AnimatedSwitcher(
-                                    duration: const Duration(microseconds: 100),
-                                    child: SlideTransition(
-                                      position: _offsetAnimation,
-                                      child: switchingWidget(),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -241,18 +240,21 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                   textEditorStyle: item.object as TextBoxInput,
                 );
               });
-          if (result != null) {
+
+          if (result == null) {
+            layerManager.addLayer(item);
+            setState(() {});
+          } else {
             TextBoxInput value = result.$1;
             InlineSpan? span = TextSpan(text: value.text, style: value.style);
+
             Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
             LayerItem newItem = item.copyWith(
               object: value,
               rect: (item.rect.topLeft & size),
             )..newKey();
-            log((newItem.object as TextBoxInput).text.toString());
             layerManager.addLayer(newItem);
-          } else {
-            layerManager.addLayer(item);
+            setState(() {});
           }
         }
         setState(() {
@@ -415,7 +417,9 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           context: context,
           barrierColor: Colors.transparent,
           pageBuilder: (context, animation, secondaryAnimation) {
-            return const BrushPainter();
+            return BrushPainter(
+              cardRadius: widget.cardRadius,
+            );
           },
         );
 
@@ -476,6 +480,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                   ),
                   Expanded(
                     child: ImageSelector(
+                      aspectRatio: widget.aspectRatio,
                       items: widget.resources.backgrounds,
                       firstItem: GestureDetector(
                           onTap: () async {
@@ -534,6 +539,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             ),
           ),
           child: ImageSelector(
+            aspectRatio: widget.aspectRatio,
             items: widget.resources.frames,
             firstItem: GestureDetector(
               onTap: () {

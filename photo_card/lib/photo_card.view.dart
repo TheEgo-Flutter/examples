@@ -1,9 +1,15 @@
 part of 'photo_card.dart';
 
+const double _cardAspectRatio = 300 / 464;
+
 class PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
-  final AspectRatioEnum aspectRatio;
-  const PhotoCard({super.key, required this.tempSavedLayers, this.aspectRatio = AspectRatioEnum.photoCard});
+  final double aspectRatio;
+  const PhotoCard({
+    super.key,
+    required this.tempSavedLayers,
+    this.aspectRatio = _cardAspectRatio,
+  });
 
   @override
   State<PhotoCard> createState() => _PhotoCardViewerState();
@@ -27,40 +33,41 @@ class _PhotoCardViewerState extends State<PhotoCard> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.all(CARD_RADIUS),
-      child: AspectRatio(
-        aspectRatio: widget.aspectRatio.ratio ?? 1,
-        child: Container(
-          decoration: boxDecoration,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Stack(children: [
-                ...layerManager.layers.map(
-                  (layer) {
-                    Rect newRect = computeNewObjectRect(
-                        backgroundOld: layerManager.layers.first.rect,
-                        objectOld: layer.rect,
-                        backgroundNewSize: constraints.biggest);
+    return AspectRatio(
+      aspectRatio: widget.aspectRatio,
+      child: Container(
+        decoration: boxDecoration,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(children: [
+              ...layerManager.layers.map(
+                (layer) {
+                  Rect newRect = computeNewObjectRect(
+                      backgroundOld: layerManager.layers.first.rect,
+                      objectOld: layer.rect,
+                      backgroundNewSize: constraints.biggest);
 
-                    LayerItem newItem = layer.copyWith(rect: newRect);
+                  LayerItem newItem = layer.copyWith(rect: newRect);
 
-                    return Transform(
-                      transform: Matrix4.identity()
-                        ..translate(newRect.topLeft.dx, newRect.topLeft.dy)
-                        ..rotateZ(layer.angle),
-                      child: ChildLayerItem(
-                        layerItem: newItem,
-                      ),
-                    );
-                  },
-                ).toList(),
-              ]);
-            },
-          ),
+                  return Transform(
+                    transform: Matrix4.identity()
+                      ..translate(newRect.topLeft.dx, newRect.topLeft.dy)
+                      ..rotateZ(layer.angle),
+                    child: ChildLayerItem(
+                      layerItem: newItem,
+                    ),
+                  );
+                },
+              ).toList(),
+            ]);
+          },
         ),
       ),
     );
+    // ClipRRect(
+    //   borderRadius: const BorderRadius.all(CARD_RADIUS),
+    //   child: ,
+    // );
   }
 
   Future<BoxDecoration> loadBackgroundColor() async {

@@ -6,9 +6,10 @@ class ImageSelector extends StatefulWidget {
   final Widget? firstItem;
   final List<ImageProvider> items;
   final ValueChanged<ImageProvider?> onItemSelected;
-
+  final double aspectRatio;
   const ImageSelector({
     Key? key,
+    required this.aspectRatio,
     required this.items,
     this.firstItem,
     required this.onItemSelected,
@@ -28,10 +29,10 @@ class ImageSelectorState extends State<ImageSelector> {
       physics: const ClampingScrollPhysics(),
       scrollDirection: Axis.vertical,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
+        crossAxisCount: 4,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 4.0,
-        childAspectRatio: ratio.ratio ?? 1,
+        childAspectRatio: widget.aspectRatio,
       ),
       padding: const EdgeInsets.all(8.0),
       itemCount: widget.items.length,

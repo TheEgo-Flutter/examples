@@ -10,8 +10,8 @@ import 'package:photo_card/utils/global.dart';
 import '../utils/global.rect.dart';
 
 class BrushPainter extends StatefulWidget {
-  const BrushPainter({super.key});
-
+  const BrushPainter({super.key, required this.cardRadius});
+  final Radius cardRadius;
   @override
   State<BrushPainter> createState() => _BrushPainterState();
 }
@@ -68,54 +68,54 @@ class _BrushPainterState extends State<BrushPainter> {
           Navigator.pop(context, await _getImageData(context));
         },
       ),
-      center: SizedBox(
-        width: GlobalRect().cardRect.width,
-        height: GlobalRect().cardRect.height,
-        child: DrawingBoard(
-          controller: _drawingController,
-          background: Container(
-            width: GlobalRect().cardRect.width,
-            height: GlobalRect().cardRect.height,
-            color: Colors.transparent,
+      center: ClipRRect(
+        borderRadius: BorderRadius.all(widget.cardRadius),
+        child: SizedBox(
+          width: GlobalRect().cardRect.width,
+          height: GlobalRect().cardRect.height,
+          child: DrawingBoard(
+            controller: _drawingController,
+            background: Container(
+              width: GlobalRect().cardRect.width,
+              height: GlobalRect().cardRect.height,
+              color: Colors.transparent,
+            ),
+            boardPanEnabled: false,
+            boardScaleEnabled: false,
+            showDefaultActions: false,
+            showDefaultTools: false,
           ),
-          boardPanEnabled: false,
-          boardScaleEnabled: false,
-          showDefaultActions: false,
-          showDefaultTools: false,
         ),
       ),
       bottom: Expanded(
-        child: ClipPath(
-          clipper: CardBoxClip(),
-          child: SizedBox(
-            width: GlobalRect().objectRect.width,
-            height: GlobalRect().objectRect.height,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: () => _drawingController.undo(),
-                      icon: const Icon(DUIcons.undo),
-                      color: Colors.white,
-                    ),
-                    IconButton(
-                      onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
-                      icon: const Icon(DUIcons.eraser),
-                      color: Colors.white,
-                    )
-                  ],
-                ),
-                ColorBar(
-                  onColorChanged: changeColor,
-                  value: _drawingController.getColor,
-                ),
-              ],
-            ),
+        child: SizedBox(
+          width: GlobalRect().objectRect.width,
+          height: GlobalRect().objectRect.height,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    onPressed: () => _drawingController.undo(),
+                    icon: const Icon(DUIcons.undo),
+                    color: Colors.white,
+                  ),
+                  IconButton(
+                    onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
+                    icon: const Icon(DUIcons.eraser),
+                    color: Colors.white,
+                  )
+                ],
+              ),
+              ColorBar(
+                onColorChanged: changeColor,
+                value: _drawingController.getColor,
+              ),
+            ],
           ),
         ),
       ),

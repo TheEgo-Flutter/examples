@@ -22,7 +22,7 @@ class StickerSelector extends StatelessWidget {
       scrollDirection: Axis.vertical,
       padding: const EdgeInsets.all(8.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
+        crossAxisCount: 4,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
       ),

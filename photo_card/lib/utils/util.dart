@@ -40,17 +40,3 @@ extension RectExtension on Rect {
     return Rect.fromLTWH(0, 0, this.width, this.height);
   }
 }
-
-enum AspectRatioEnum {
-  rFree('Free', null),
-  photoCard('photoCard', 300 / 464),
-  r1x1('1:1', 1),
-  r3x4('3:4', 3 / 4),
-  r4x5('4:5', 4 / 5),
-  r5x7('5:7', 5 / 7),
-  r9x16('9:16', 9 / 16);
-
-  const AspectRatioEnum(this.title, this.ratio);
-  final String title;
-  final double? ratio;
-}
