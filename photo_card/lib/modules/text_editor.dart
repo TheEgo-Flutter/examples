@@ -326,22 +326,27 @@ class TextBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      readOnly: isReadOnly,
-      enabled: !isReadOnly,
-      initialValue: input.text,
-      textAlign: input.align,
-      style: input.style,
-      decoration: const InputDecoration.collapsed(
-        hintText: null,
+    return Theme(
+      data: ThemeData(
+        inputDecorationTheme: const InputDecorationTheme(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+        ),
       ),
-      onChanged: onChanged,
-      textAlignVertical: TextAlignVertical.center,
-      keyboardType: TextInputType.multiline,
-      enableSuggestions: false,
-      autocorrect: false,
-      maxLines: null,
-      autofocus: true,
+      child: TextFormField(
+        readOnly: isReadOnly,
+        enabled: !isReadOnly,
+        initialValue: input.text,
+        textAlign: input.align,
+        style: input.style.copyWith(fontSize: input.style.fontSize),
+        onChanged: onChanged,
+        textAlignVertical: TextAlignVertical.center,
+        keyboardType: TextInputType.multiline,
+        enableSuggestions: false,
+        autocorrect: false,
+        maxLines: null,
+        autofocus: true,
+      ),
     );
   }
 }
