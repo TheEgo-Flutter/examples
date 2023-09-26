@@ -13,8 +13,9 @@ class PhotoEditor extends StatefulWidget {
   final double aspectRatio;
   final Widget completed;
   final Function(List<LayerItem>)? onComplete;
+  final Function(List<LayerItem>)? onCancel;
   final AsyncValueGetter<List<LayerItem>?>? onStartDialog;
-  final AsyncValueGetter<bool?>? onEndDialog;
+  final AsyncValueGetter<bool?>? onCancelDialog;
   final Radius cardRadius;
   const PhotoEditor({
     Key? key,
@@ -23,8 +24,9 @@ class PhotoEditor extends StatefulWidget {
     this.cardRadius = const Radius.circular(16),
     this.completed = const Text('저장'),
     this.onComplete,
+    this.onCancel,
     this.onStartDialog,
-    this.onEndDialog,
+    this.onCancelDialog,
   }) : super(key: key);
   @override
   State<PhotoEditor> createState() => _PhotoEditorState();
@@ -341,14 +343,11 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           CircleIconButton(
             iconData: DUIcons.back,
             onPressed: () async {
-              bool? result = await widget.onEndDialog?.call();
+              bool? result = await widget.onCancelDialog?.call();
 
               if (result ?? false) {
-                widget.onComplete?.call(layerManager.layers);
-              } else {
-                widget.onComplete?.call([]);
+                widget.onCancel?.call(layerManager.layers);
               }
-              Navigator.of(context).pop();
             },
           ),
           Padding(
