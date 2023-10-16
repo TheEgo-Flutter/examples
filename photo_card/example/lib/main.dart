@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_card/lib.dart';
 import 'package:photo_card/utils/diy_resources.dart';
 
@@ -16,8 +17,10 @@ void main() async {
   }
 
   runApp(
-    const MaterialApp(
-      home: Home(),
+    const ProviderScope(
+      child: MaterialApp(
+        home: Home(),
+      ),
     ),
   );
 }
@@ -57,7 +60,7 @@ class _ImageEditorState extends State<ImageEditor> {
   Future<void> callAssets() async {
     List<ImageProvider> thumbnailStickerList = await loadImageProvider(stickers);
     stickerList = List<StickerImageProvider>.generate(
-        thumbnailStickerList.length, (index) => StickerImageProvider( image: thumbnailStickerList[index]));
+        thumbnailStickerList.length, (index) => StickerImageProvider(image: thumbnailStickerList[index]));
 
     frameList = await loadImageProvider(frames);
     backgroundList = await loadImageProvider(backgrounds);
@@ -121,8 +124,6 @@ class _ImageEditorState extends State<ImageEditor> {
         },
       ),
     );
-
-    ;
   }
 }
 
@@ -140,7 +141,10 @@ class CardViewPage extends StatelessWidget {
           width: 200,
           child: PhotoCard(
             tempSavedLayers: returnedLayers,
-          ),
+          ) as Widget,
+          // child: PhotoCard(
+          //   tempSavedLayers: returnedLayers,
+          // ),
         ),
       ),
     );

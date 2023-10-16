@@ -8,7 +8,7 @@ class DialogValue {
   DialogValue({required this.dialog, required this.no, required this.yes});
 }
 
-class PhotoEditor extends StatefulWidget {
+class PhotoEditor extends ConsumerStatefulWidget {
   final DiyResources resources;
   final double aspectRatio;
   final Widget completed;
@@ -29,13 +29,13 @@ class PhotoEditor extends StatefulWidget {
     this.onCancelDialog,
   }) : super(key: key);
   @override
-  State<PhotoEditor> createState() => _PhotoEditorState();
+  ConsumerState<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
-  var layerManager = LayerManager();
-  LayerType? _selectedLayer;
+  // var layerManager = LayerManager();
+
   LinearGradient? cardColor;
   late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
@@ -70,7 +70,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   void dispose() {
-    layerManager.clearLayers();
+    // ref.invalidate(layerManagerNotifierProvider);
+    // layerManager.clearLayers();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -78,8 +79,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   void _startDialog() async {
     List<LayerItem>? result = await widget.onStartDialog?.call();
     if (result != null && result.isNotEmpty) {
-      layerManager.loadLayers(result);
-      setState(() {});
+      ref.read(layerManagerNotifierProvider.notifier).loadLayers(result);
+      // layerManager.loadLayers(result);
     }
   }
 
@@ -97,22 +98,22 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       object: Colors.white,
       rect: GlobalRect().cardRect.zero,
     );
-    layerManager.addLayer(layer);
+    // layerManager.addLayer(layer);
+    ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {
     if (imageFile != null) {
       ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(imageFile));
-      setState(() {
-        cardColor = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
-          colors: [
-            newScheme.primaryContainer,
-            newScheme.primary,
-          ],
-        );
-      });
+
+      cardColor = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomCenter,
+        colors: [
+          newScheme.primaryContainer,
+          newScheme.primary,
+        ],
+      );
     } else {
       cardColor = null;
     }
@@ -126,6 +127,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(layerManagerNotifierProvider);
     return Theme(
       data: theme,
       child: Scaffold(
@@ -219,68 +221,66 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       child: Stack(
         fit: StackFit.expand,
         children: [
-          ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+          if (ref.watch(layerManagerNotifierProvider).layers != null)
+            ...ref.watch(layerManagerNotifierProvider).layers!.map((layer) => buildLayerWidgets(layer)),
         ],
       ),
     );
   }
 
   Widget buildLayerWidgets(LayerItem layer) {
-    return DraggableResizable(
-      key: Key('${layer.key}_draggableResizable'),
-      isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
-      onLayerTapped: (LayerItem item) async {
-        if (item.type is TextType) {
-          setState(() {
-            layerManager.removeLayerByKey(item.key);
-          });
-          (TextBoxInput, Offset)? result = await showGeneralDialog(
-              context: context,
-              barrierColor: Colors.transparent,
-              pageBuilder: (context, animation, secondaryAnimation) {
-                return TextEditor(
-                  textEditorStyle: item.object as TextBoxInput,
-                );
-              });
+    return GestureDetector(
+      child: DraggableResizable(
+        key: Key('${layer.key}_draggableResizable'),
+        onLayerTapped: (LayerItem item) async {
+          print('=== tap ===');
+          if (item.type is TextType) {
+            ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
 
-          if (result == null) {
-            layerManager.addLayer(item);
-            setState(() {});
-          } else {
-            TextBoxInput value = result.$1;
-            InlineSpan? span = TextSpan(text: value.text, style: value.style);
+            (TextBoxInput, Offset)? result = await showGeneralDialog(
+                context: context,
+                barrierColor: Colors.transparent,
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return TextEditor(
+                    textEditorStyle: item.object as TextBoxInput,
+                  );
+                });
 
-            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
-            LayerItem newItem = item.copyWith(
-              object: value,
-              rect: (item.rect.topLeft & size),
-            )..newKey();
-            layerManager.addLayer(newItem);
-            setState(() {});
+            if (result == null) {
+              ref.read(layerManagerNotifierProvider.notifier).addLayer(item);
+            } else {
+              TextBoxInput value = result.$1;
+              InlineSpan? span = TextSpan(text: value.text, style: value.style);
+
+              Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+              LayerItem newItem = item.copyWith(
+                object: value,
+                rect: (item.rect.topLeft & size),
+              )..newKey();
+              ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
+            }
           }
-        }
-        setState(() {
+
           if (item.type.isObject) {
-            layerManager.swap(item);
+            ref.read(layerManagerNotifierProvider.notifier).swap(item);
           }
-        });
-      },
-      onDragStart: (LayerItem item) {
-        setState(() {
-          layerManager.selectedLayerItem = item;
+        },
+        onDragStart: (LayerItem item) {
+          print('=== start ===');
+          print('item: ${item.key}');
+
           if (item.type.isObject) {
-            layerManager.swap(item);
+            ref.read(layerManagerNotifierProvider.notifier).swap(item);
           }
-        });
-      },
-      onDragEnd: (LayerItem item) {
-        layerManager.updateLayer(item);
-        setState(() {
-          layerManager.selectedLayerItem = null;
-        });
-      },
-      onDelete: (layerItem) => layerManager.removeLayerByKey(layerItem.key),
-      layerItem: layer,
+        },
+        onDragEnd: (LayerItem item) {
+          print('=== end ===');
+          print('item: ${item.key}');
+          ref.read(layerManagerNotifierProvider.notifier).updateLayer(item);
+        },
+        onDelete: (layerItem) => ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(layerItem.key),
+        layerItem: layer,
+      ),
     );
   }
 
@@ -346,7 +346,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               bool? result = await widget.onCancelDialog?.call();
 
               if (result ?? false) {
-                widget.onCancel?.call(layerManager.layers);
+                widget.onCancel?.call(ref.read(layerManagerNotifierProvider).layers!);
               }
             },
           ),
@@ -356,7 +356,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               child: InkWell(
                 splashFactory: NoSplash.splashFactory,
                 onTap: () {
-                  widget.onComplete?.call(layerManager.layers);
+                  widget.onComplete?.call(ref.read(layerManagerNotifierProvider).layers!);
                 },
                 child: widget.completed,
               ),
@@ -370,22 +370,18 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   void swapWidget(LayerType? type) {
     if (!_animationController.isAnimating) {
       if (type == null) {
-        _animationController.reverse().then((value) => setState(() {
-              _selectedLayer = null;
-            }));
+        _animationController
+            .reverse()
+            .then((value) => ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(null));
       } else {
         _animationController.forward(from: 0.0);
-        setState(() {
-          _selectedLayer = type;
-        });
+        ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(type);
       }
     }
   }
 
   void switchingDialog(LayerType type, BuildContext context) async {
-    setState(() {
-      _selectedLayer = type;
-    });
+    ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(type);
     switch (type) {
       case TextType():
         (TextBoxInput, Offset)? result = await showGeneralDialog(
@@ -395,8 +391,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             return const TextEditor();
           },
         );
-
-        setState(() {});
 
         if (result == null) break;
         TextBoxInput value = result.$1;
@@ -408,8 +402,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           object: value,
           rect: result.$2 & size,
         );
-        layerManager.addLayer(layer);
-        setState(() {});
+        ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+
         break;
       case DrawingType():
         (Uint8List?, Size?)? data = await showGeneralDialog(
@@ -423,15 +417,13 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
         );
 
         if ((data != null && data.$1 != null)) {
-          setState(() {
-            var layer = LayerItem(
-              UniqueKey(),
-              type: DrawingType(),
-              object: data.$1!,
-              rect: GlobalRect().cardRect.zero,
-            );
-            layerManager.addLayer(layer);
-          });
+          var layer = LayerItem(
+            UniqueKey(),
+            type: DrawingType(),
+            object: data.$1!,
+            rect: GlobalRect().cardRect.zero,
+          );
+          ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
         }
         break;
       default:
@@ -440,7 +432,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   }
 
   Widget switchingWidget() {
-    switch (_selectedLayer) {
+    switch (ref.watch(layerManagerNotifierProvider).selectedLayer) {
       case BackgroundType():
         return Container(
           decoration: const BoxDecoration(
@@ -451,8 +443,14 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           ),
           child: StatefulBuilder(
             builder: (context, dialogSetState) {
-              LayerItem? background =
-                  layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
+              LayerItem? background = ref
+                  .watch(layerManagerNotifierProvider)
+                  .layers!
+                  .where((element) => element.type is BackgroundType)
+                  .firstOrNull;
+
+              // LayerItem? background =
+              //     layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
               Color? value = background == null
                   ? Colors.white
                   : background.type.background == Background.color
@@ -470,11 +468,11 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                         object: color,
                         rect: GlobalRect().cardRect.zero,
                       );
-                      layerManager.addLayer(layer);
+                      ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+
                       dialogSetState(() {
                         value = color; // <-- Update the local color here
                       });
-                      setState(() {});
                     },
                   ),
                   Expanded(
@@ -499,8 +497,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                                 value = null; // <-- Reset the local color here
                               },
                             );
-                            setState(() {});
-                            layerManager.addLayer(imageBackground);
+                            ref.read(layerManagerNotifierProvider.notifier).addLayer(imageBackground);
                           },
                           child: const Icon(
                             DUIcons.picture,
@@ -519,8 +516,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                             value = null; // <-- Reset the local color here
                           },
                         );
-                        setState(() {});
-                        layerManager.addLayer(layer);
+                        ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
                       },
                     ),
                   ),
@@ -542,8 +538,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             items: widget.resources.frames,
             firstItem: GestureDetector(
               onTap: () {
-                layerManager.removeLayerByType(FrameType());
-                setState(() {});
+                ref.read(layerManagerNotifierProvider.notifier).removeLayerByType(FrameType());
               },
               child: const Icon(
                 DUIcons.ban,
@@ -557,8 +552,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                 object: child,
                 rect: GlobalRect().cardRect.zero,
               );
-              layerManager.addLayer(layer);
-              setState(() {});
+              ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
             },
           ),
         );
@@ -585,8 +579,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                 object: child,
                 rect: (offset & size),
               );
-              layerManager.addLayer(layer);
-              setState(() {});
+              ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
             },
           ),
         );
