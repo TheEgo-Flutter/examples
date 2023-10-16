@@ -6,7 +6,7 @@ import 'package:photo_card/lib.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
-    required key,
+    Key? key,
     required this.layerItem,
     this.onLayerTapped,
     this.onDelete,
@@ -125,7 +125,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                 widget.onLayerTapped?.call(layerItem);
               },
               onDragStart: (d) {
-                // print('onDragStart');
+                print('onDragStart');
                 widget.onDragStart?.call(layerItem);
                 startingFingerPositionFromObject = d;
               },
@@ -246,7 +246,15 @@ class _DraggablePointState extends State<_DraggablePoint> {
     return IgnorePointer(
       ignoring: widget.ignorePointer,
       child: GestureDetector(
-        onTap: () => widget.onLayerTapped?.call(),
+        // onTap: () {
+        //   print('aaaaa');
+        //   return widget.onLayerTapped?.call();
+        // },
+        onTapDown: (details) {
+          print('aaaaa');
+          initPoint = details.localPosition;
+          widget.onLayerTapped?.call();
+        },
         onScaleStart: (details) {
           initPoint = details.localFocalPoint;
           widget.onDragStart?.call(details.localFocalPoint);

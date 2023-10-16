@@ -230,10 +230,10 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
 
   Widget buildLayerWidgets(LayerItem layer) {
     return GestureDetector(
+      key: Key('${layer.key}'),
       child: DraggableResizable(
         key: Key('${layer.key}_draggableResizable'),
         onLayerTapped: (LayerItem item) async {
-          print('=== tap ===');
           if (item.type is TextType) {
             ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
 
@@ -266,16 +266,11 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
           }
         },
         onDragStart: (LayerItem item) {
-          print('=== start ===');
-          print('item: ${item.key}');
-
           if (item.type.isObject) {
             ref.read(layerManagerNotifierProvider.notifier).swap(item);
           }
         },
         onDragEnd: (LayerItem item) {
-          print('=== end ===');
-          print('item: ${item.key}');
           ref.read(layerManagerNotifierProvider.notifier).updateLayer(item);
         },
         onDelete: (layerItem) => ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(layerItem.key),
@@ -432,7 +427,7 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
   }
 
   Widget switchingWidget() {
-    switch (ref.watch(layerManagerNotifierProvider).selectedLayer) {
+    switch (ref.watch(layerManagerNotifierProvider).selectedLayerType) {
       case BackgroundType():
         return Container(
           decoration: const BoxDecoration(
@@ -449,8 +444,6 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
                   .where((element) => element.type is BackgroundType)
                   .firstOrNull;
 
-              // LayerItem? background =
-              //     layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
               Color? value = background == null
                   ? Colors.white
                   : background.type.background == Background.color

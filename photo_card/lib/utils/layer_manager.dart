@@ -57,6 +57,7 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
         addObjectLayer(item);
         break;
     }
+    setLayer();
   }
 
   void swap(LayerItem layer) {
@@ -65,6 +66,12 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
       removeObjectLayer(index);
       addObjectLayer(layer);
     }
+    setSelectedLayerItem(layer);
+    setLayer();
+  }
+
+  void setSelectedLayerItem(LayerItem? layer) {
+    state = state.copyWith(selectedLayerItem: layer);
   }
 
   void updateLayer(LayerItem layer) {
@@ -119,7 +126,7 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
   }
 
   setSelectedLayer(LayerType? type) {
-    state = state.copyWith(selectedLayer: type);
+    state = state.copyWith(selectedLayerType: type);
   }
 
   void removeLayerByType(LayerType type) {
@@ -176,8 +183,8 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
       setDrawingLayer(state.drawingLayer!.newKey());
     }
 
-    for (int i = 0; i < state.objectLayers!.length; i++) {
-      state.objectLayers![i] = state.objectLayers![i].newKey();
+    for (int i = 0; i < state.objectLayers.length; i++) {
+      state = state.copyWith(objectLayers: [...state.objectLayers]..[i] = state.objectLayers[i].newKey());
     }
   }
 }
@@ -188,15 +195,16 @@ class LayerManager {
   final LayerItem? drawingLayer;
   final List<LayerItem> objectLayers;
   final List<LayerItem>? layers;
-  final LayerType? selectedLayer;
-  const LayerManager({
-    this.backgroundLayer,
-    this.frameLayer,
-    this.drawingLayer,
-    this.objectLayers = const [],
-    this.layers,
-    this.selectedLayer,
-  });
+  final LayerType? selectedLayerType;
+  final LayerItem? selectedLayerItem;
+  const LayerManager(
+      {this.backgroundLayer,
+      this.frameLayer,
+      this.drawingLayer,
+      this.objectLayers = const [],
+      this.layers,
+      this.selectedLayerType,
+      this.selectedLayerItem});
 
   LayerManager copyWith({
     LayerItem? backgroundLayer,
@@ -204,15 +212,17 @@ class LayerManager {
     LayerItem? drawingLayer,
     List<LayerItem>? objectLayers,
     List<LayerItem>? layers,
-    LayerType? selectedLayer,
+    LayerType? selectedLayerType,
+    LayerItem? selectedLayerItem,
   }) {
     return LayerManager(
-      backgroundLayer: backgroundLayer,
-      frameLayer: frameLayer,
-      drawingLayer: drawingLayer,
+      backgroundLayer: backgroundLayer ?? this.backgroundLayer,
+      frameLayer: frameLayer ?? this.frameLayer,
+      drawingLayer: drawingLayer ?? this.drawingLayer,
       objectLayers: objectLayers ?? this.objectLayers,
-      layers: layers,
-      selectedLayer: selectedLayer,
+      layers: layers ?? this.layers,
+      selectedLayerType: selectedLayerType ?? selectedLayerType,
+      selectedLayerItem: selectedLayerItem ?? selectedLayerItem,
     );
   }
 
@@ -226,7 +236,8 @@ class LayerManager {
         other.drawingLayer == drawingLayer &&
         listEquals(other.objectLayers, objectLayers) &&
         listEquals(other.layers, layers) &&
-        other.selectedLayer == selectedLayer;
+        other.selectedLayerType == selectedLayerType &&
+        other.selectedLayerItem == selectedLayerItem;
   }
 
   @override
@@ -236,6 +247,7 @@ class LayerManager {
         drawingLayer.hashCode ^
         objectLayers.hashCode ^
         layers.hashCode ^
-        selectedLayer.hashCode;
+        selectedLayerType.hashCode ^
+        selectedLayerItem.hashCode;
   }
 }
