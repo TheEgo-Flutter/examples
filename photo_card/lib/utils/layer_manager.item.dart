@@ -7,21 +7,23 @@ class LayerItem {
   final Rect rect;
   final double angle;
 
-  LayerItem(
-    this.key, {
+  const LayerItem({
+    required this.key,
     required this.type,
     required this.object,
-    Rect? rect,
+    required this.rect,
     this.angle = 0,
-  }) : rect = rect ?? Rect.fromCenter(center: GlobalRect().cardRect.center, width: 0, height: 0);
+  });
 
   LayerItem copyWith({
+    Key? key,
     Rect? rect,
     double? angle,
     dynamic object,
+    LayerType? layerType,
   }) {
     return LayerItem(
-      key,
+      key: key ?? this.key,
       type: type,
       object: object ?? this.object,
       rect: rect ?? this.rect,
@@ -31,7 +33,7 @@ class LayerItem {
 
   LayerItem newKey() {
     return LayerItem(
-      UniqueKey(),
+      key: UniqueKey(),
       type: type,
       object: object,
       rect: rect,

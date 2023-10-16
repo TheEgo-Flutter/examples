@@ -2,7 +2,7 @@ part of 'photo_card.dart';
 
 const double _cardAspectRatio = 300 / 464;
 
-class PhotoCard extends StatefulWidget {
+class PhotoCard extends ConsumerStatefulWidget {
   final List<LayerItem> tempSavedLayers;
   final double aspectRatio;
   const PhotoCard({
@@ -12,18 +12,19 @@ class PhotoCard extends StatefulWidget {
   });
 
   @override
-  State<PhotoCard> createState() => _PhotoCardViewerState();
+  ConsumerState<PhotoCard> createState() => _PhotoCardViewerState();
 }
 
-class _PhotoCardViewerState extends State<PhotoCard> {
-  LayerManager layerManager = LayerManager();
+class _PhotoCardViewerState extends ConsumerState<PhotoCard> {
+  // LayerManager layerManager = LayerManager();
   BoxDecoration boxDecoration = const BoxDecoration(color: Colors.white);
 
   @override
   void initState() {
-    layerManager.loadLayers(widget.tempSavedLayers);
-    layerManager.newKeyLayers();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ref.read(layerManagerNotifierProvider.notifier).loadLayers(widget.tempSavedLayers);
+      ref.read(layerManagerNotifierProvider.notifier).newKeyLayers();
+
       boxDecoration = await loadBackgroundColor();
       setState(() {});
     });
@@ -40,10 +41,10 @@ class _PhotoCardViewerState extends State<PhotoCard> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return Stack(children: [
-              ...layerManager.layers.map(
+              ...ref.watch(layerManagerNotifierProvider).layers!.map(
                 (layer) {
                   Rect newRect = computeNewObjectRect(
-                      backgroundOld: layerManager.layers.first.rect,
+                      backgroundOld: ref.watch(layerManagerNotifierProvider).layers!.first.rect,
                       objectOld: layer.rect,
                       backgroundNewSize: constraints.biggest);
 
@@ -71,11 +72,11 @@ class _PhotoCardViewerState extends State<PhotoCard> {
   }
 
   Future<BoxDecoration> loadBackgroundColor() async {
-    if (layerManager.backgroundLayer?.type.background == Background.gallery) {
-      var gradient = await loadImageColor(layerManager.backgroundLayer?.object as Image);
+    if (ref.watch(layerManagerNotifierProvider).backgroundLayer?.type.background == Background.gallery) {
+      var gradient = await loadImageColor(ref.watch(layerManagerNotifierProvider).backgroundLayer?.object as Image);
       return BoxDecoration(gradient: gradient ?? const LinearGradient(colors: [Colors.white, Colors.white]));
-    } else if (layerManager.backgroundLayer?.type.background == Background.color) {
-      return BoxDecoration(color: layerManager.backgroundLayer?.object as Color);
+    } else if (ref.watch(layerManagerNotifierProvider).backgroundLayer?.type.background == Background.color) {
+      return BoxDecoration(color: ref.watch(layerManagerNotifierProvider).backgroundLayer?.object as Color);
     } else {
       return const BoxDecoration(color: Colors.white);
     }

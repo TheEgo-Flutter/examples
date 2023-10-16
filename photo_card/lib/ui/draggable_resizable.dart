@@ -6,7 +6,7 @@ import 'package:photo_card/lib.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
-    required key,
+    Key? key,
     required this.layerItem,
     this.onLayerTapped,
     this.onDelete,
@@ -19,6 +19,7 @@ class DraggableResizable extends StatefulWidget {
   final ValueChanged<LayerItem>? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
+
   final bool isFocus;
   final LayerItem layerItem;
 
@@ -117,11 +118,14 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
           child: Transform.rotate(
             angle: angle,
             child: _DraggablePoint(
+              // key: widget.key,
               ignorePointer: widget.layerItem.type.ignorePoint,
               onLayerTapped: () {
+                print('onLayerTapped');
                 widget.onLayerTapped?.call(layerItem);
               },
               onDragStart: (d) {
+                print('onDragStart');
                 widget.onDragStart?.call(layerItem);
                 startingFingerPositionFromObject = d;
               },
@@ -131,6 +135,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
               },
               onDrag: widget.layerItem.type.isDraggable && widget.isFocus
                   ? (d, focalPoint) async {
+                      print('onDrag');
                       offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
                       isCenteredHorizontally =
                           _checkIfCentered(offset, size, GlobalRect().cardRect.size.width, Axis.horizontal);
@@ -219,6 +224,7 @@ class _DraggablePoint extends StatefulWidget {
   final VoidCallback? onLayerTapped;
   final ValueSetter<Offset>? onDragStart;
   final VoidCallback? onDragEnd;
+
   final ValueSetter<double>? onScale;
   final ValueSetter<double>? onRotate;
   final bool ignorePointer;
@@ -235,7 +241,15 @@ class _DraggablePointState extends State<_DraggablePoint> {
     return IgnorePointer(
       ignoring: widget.ignorePointer,
       child: GestureDetector(
-        onTap: () => widget.onLayerTapped?.call(),
+        // onTap: () {
+        //   print('aaaaa');
+        //   return widget.onLayerTapped?.call();
+        // },
+        onTapDown: (details) {
+          print('aaaaa');
+          initPoint = details.localPosition;
+          widget.onLayerTapped?.call();
+        },
         onScaleStart: (details) {
           initPoint = details.localFocalPoint;
           widget.onDragStart?.call(details.localFocalPoint);
