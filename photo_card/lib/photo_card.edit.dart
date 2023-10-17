@@ -183,57 +183,54 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
   }
 
   Widget buildLayerWidgets(LayerItem layer) {
-    return GestureDetector(
-      key: Key('${layer.key}'),
-      child: DraggableResizable(
-        key: Key('${layer.key}_draggableResizable'),
-        isFocus: layer.type.isDraggable,
-        onLayerTapped: (LayerItem item) async {
-          if (item.type is TextType) {
-            ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
+    return DraggableResizable(
+      key: Key('${layer.key}_draggableResizable'),
+      canTransform: ref.watch(layerManagerNotifierProvider).objectLayers.lastOrNull?.key == layer.key,
+      onLayerTapped: (LayerItem item) async {
+        if (item.type is TextType) {
+          ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
 
-            (TextBoxInput, Offset)? result = await showGeneralDialog(
-                context: context,
-                barrierColor: Colors.transparent,
-                pageBuilder: (context, animation, secondaryAnimation) {
-                  return TextEditor(
-                    textEditorStyle: item.object as TextBoxInput,
-                  );
-                });
+          (TextBoxInput, Offset)? result = await showGeneralDialog(
+              context: context,
+              barrierColor: Colors.transparent,
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return TextEditor(
+                  textEditorStyle: item.object as TextBoxInput,
+                );
+              });
 
-            if (result == null) {
-              ref.read(layerManagerNotifierProvider.notifier).addLayer(item);
-            } else {
-              TextBoxInput value = result.$1;
-              InlineSpan? span = TextSpan(text: value.text, style: value.style);
+          if (result == null) {
+            ref.read(layerManagerNotifierProvider.notifier).addLayer(item);
+          } else {
+            TextBoxInput value = result.$1;
+            InlineSpan? span = TextSpan(text: value.text, style: value.style);
 
-              Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
-              LayerItem newItem = item.copyWith(
-                object: value,
-                rect: (item.rect.topLeft & size),
-              )..newKey();
-              ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
-            }
+            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+            LayerItem newItem = item.copyWith(
+              object: value,
+              rect: (item.rect.topLeft & size),
+            )..newKey();
+            ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
           }
+        }
 
-          if (item.type.isObject) {
-            ref.read(layerManagerNotifierProvider.notifier).swap(item);
-          }
-        },
-        onDragStart: (LayerItem item) {
-          if (item.type.isObject) {
-            ref.read(layerManagerNotifierProvider.notifier).swap(item);
-          }
-        },
-        onDragEnd: (LayerItem item) {
-          ref.read(layerManagerNotifierProvider.notifier).updateLayer(item);
+        if (item.type.isObject) {
+          ref.read(layerManagerNotifierProvider.notifier).swap(item);
+        }
+      },
+      onDragStart: (LayerItem item) {
+        if (item.type.isObject) {
+          ref.read(layerManagerNotifierProvider.notifier).swap(item);
+        }
+      },
+      onDragEnd: (LayerItem item) {
+        ref.read(layerManagerNotifierProvider.notifier).updateLayer(item);
 
-          // 초기화는 backgroundType으로 변경
-          // ref.read(layerManagerNotifierProvider.notifier).setSelectedLayerType(const BackgroundType());
-        },
-        onDelete: (layerItem) => ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(layerItem.key),
-        layerItem: layer,
-      ),
+        // 초기화는 backgroundType으로 변경
+        ref.read(layerManagerNotifierProvider.notifier).initSelectedLayerItem();
+      },
+      onDelete: (layerItem) => ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(layerItem.key),
+      layerItem: layer,
     );
   }
 

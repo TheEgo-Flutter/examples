@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'global.rect.dart';
-
 part 'layer_manager.item.dart';
 part 'layer_manager.type.dart';
 
@@ -38,6 +36,7 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
     if (state.drawingLayer != null) {
       layers.add(state.drawingLayer!);
     }
+    setSelectedLayerItem(layers.last);
     setLayers(layers);
   }
 
@@ -57,6 +56,7 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
         addObjectLayer(item);
         break;
     }
+    setSelectedLayerItem(item);
     setLayer();
   }
 
@@ -72,6 +72,17 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
 
   void setSelectedLayerItem(LayerItem? layer) {
     state = state.copyWith(selectedLayerItem: layer);
+  }
+
+  void initSelectedLayerItem() {
+    state = state.copyWith(
+        selectedLayerItem: LayerItem(
+      key: UniqueKey(),
+      type: const BackgroundType(),
+      rect: Rect.zero,
+      angle: 0,
+      object: null,
+    ));
   }
 
   void updateLayer(LayerItem layer) {
@@ -197,14 +208,16 @@ class LayerManager {
   final List<LayerItem>? layers;
   final LayerType? selectedLayerType;
   final LayerItem? selectedLayerItem;
-  const LayerManager(
-      {this.backgroundLayer,
-      this.frameLayer,
-      this.drawingLayer,
-      this.objectLayers = const [],
-      this.layers,
-      this.selectedLayerType,
-      this.selectedLayerItem});
+
+  const LayerManager({
+    this.backgroundLayer,
+    this.frameLayer,
+    this.drawingLayer,
+    this.objectLayers = const [],
+    this.layers,
+    this.selectedLayerType,
+    this.selectedLayerItem,
+  });
 
   LayerManager copyWith({
     LayerItem? backgroundLayer,
@@ -214,6 +227,7 @@ class LayerManager {
     List<LayerItem>? layers,
     LayerType? selectedLayerType,
     LayerItem? selectedLayerItem,
+    bool? hasFocus,
   }) {
     return LayerManager(
       backgroundLayer: backgroundLayer ?? this.backgroundLayer,
