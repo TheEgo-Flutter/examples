@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_card/custom_bottom_sheet.dart';
 
 import 'modules/modules.dart';
 import 'ui/ui.dart';

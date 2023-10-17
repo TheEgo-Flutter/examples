@@ -141,7 +141,7 @@ class CardViewPage extends StatelessWidget {
           width: 200,
           child: PhotoCard(
             tempSavedLayers: returnedLayers,
-          ) as Widget,
+          ),
           // child: PhotoCard(
           //   tempSavedLayers: returnedLayers,
           // ),

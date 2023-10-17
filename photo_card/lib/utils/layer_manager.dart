@@ -125,7 +125,7 @@ class LayerManagerNotifier extends Notifier<LayerManager> {
     state = state.copyWith(layers: layers);
   }
 
-  setSelectedLayer(LayerType? type) {
+  setSelectedLayerType(LayerType? type) {
     state = state.copyWith(selectedLayerType: type);
   }
 
