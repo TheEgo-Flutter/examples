@@ -364,16 +364,27 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
   }
 
   void swapWidget(LayerType? type) {
-    if (!_animationController.isAnimating) {
-      if (type == null) {
-        _animationController
-            .reverse()
-            .then((value) => ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(null));
-      } else {
-        _animationController.forward(from: 0.0);
-        ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(type);
-      }
-    }
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Container(
+            height: 200,
+            width: double.infinity,
+            color: Colors.red,
+          );
+        }).then(
+      (value) => ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(null),
+    );
+    // if (!_animationController.isAnimating) {
+    //   if (type == null) {
+    //     _animationController
+    //         .reverse()
+    //         .then((value) => ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(null));
+    //   } else {
+    //     _animationController.forward(from: 0.0);
+    //     ref.read(layerManagerNotifierProvider.notifier).setSelectedLayer(type);
+    //   }
+    // }
   }
 
   void switchingDialog(LayerType type, BuildContext context) async {
