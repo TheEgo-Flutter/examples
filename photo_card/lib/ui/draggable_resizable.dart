@@ -133,23 +133,18 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
                 _handleDeleteAction(false);
                 widget.onDragEnd?.call(layerItem);
               },
-              onDrag:
-                  // widget.layerItem.type.isDraggable && widget.isFocus
-                  widget.layerItem.type.isDraggable
-                      ? (d, focalPoint) async {
-                          print('onDrag');
-                          offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
-                          isCenteredHorizontally =
-                              _checkIfCentered(offset, size, GlobalRect().cardRect.size.width, Axis.horizontal);
-                          isCenteredVertically =
-                              _checkIfCentered(offset, size, GlobalRect().cardRect.size.height, Axis.vertical);
-                          currentFingerPosition = startingFingerPositionFromObject + offset;
-                          _handleDeleteAction(true);
-                        }
-                      : (d, focalPoint) {
-                          print('onDrag22');
-                          return null;
-                        },
+              onDrag: widget.layerItem.type.isDraggable && widget.isFocus
+                  ? (d, focalPoint) async {
+                      print('onDrag');
+                      offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
+                      isCenteredHorizontally =
+                          _checkIfCentered(offset, size, GlobalRect().cardRect.size.width, Axis.horizontal);
+                      isCenteredVertically =
+                          _checkIfCentered(offset, size, GlobalRect().cardRect.size.height, Axis.vertical);
+                      currentFingerPosition = startingFingerPositionFromObject + offset;
+                      _handleDeleteAction(true);
+                    }
+                  : null,
               onScale: widget.layerItem.type.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
               onRotate: widget.layerItem.type.isRotatable && widget.isFocus ? (a) => angle = a : null,
               child: ChildLayerItem(layerItem: layerItem, customSize: size),

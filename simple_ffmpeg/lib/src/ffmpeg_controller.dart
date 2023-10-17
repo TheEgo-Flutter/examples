@@ -168,7 +168,7 @@ class FFMpegController {
     print("FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n");
     String command = '';
     // if (Platform.isAndroid) {
-    command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
+    command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v h264 $videoFilePath";
     // } else {
     // command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v h264 -b:v 3000k $videoFilePath";
     // }

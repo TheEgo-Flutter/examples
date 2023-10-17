@@ -47,7 +47,7 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
     drawingData = [];
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
 
@@ -233,6 +233,7 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
       key: Key('${layer.key}'),
       child: DraggableResizable(
         key: Key('${layer.key}_draggableResizable'),
+        isFocus: layer.type.isDraggable,
         onLayerTapped: (LayerItem item) async {
           if (item.type is TextType) {
             ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
