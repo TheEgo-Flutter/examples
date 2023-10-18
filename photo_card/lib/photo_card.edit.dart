@@ -203,13 +203,13 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
           if (result == null) {
             ref.read(layerManagerNotifierProvider.notifier).addLayer(item);
           } else {
-            TextBoxInput value = result.$1;
-            InlineSpan? span = TextSpan(text: value.text, style: value.style);
+            // TextBoxInput value = result.$1;
+            // InlineSpan? span = TextSpan(text: value.text, style: value.style);
 
-            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+            // Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
             LayerItem newItem = item.copyWith(
-              object: value,
-              rect: (item.rect.topLeft & size),
+              object: result.$1,
+              rect: (item.rect.topLeft & result.$2.size),
             )..newKey();
             ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
           }

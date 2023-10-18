@@ -41,7 +41,8 @@ class _TextEditorState extends State<TextEditor> {
     InlineSpan? span = TextSpan(text: input.text, style: input.style);
     Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
 
-    Rect rect = Offset(GlobalRect().cardRect.right / 2 - size.width / 2, renderBox.localToGlobal(Offset.zero).dy) &
+    Rect rect = Offset((GlobalRect().cardRect.right - GlobalRect().cardRect.left) / 2 - (size.width + 30) / 2,
+            renderBox.localToGlobal(Offset.zero).dy - GlobalRect().cardRect.topLeft.dy) &
         Size(size.width + 30, size.height + 30);
 
     return rect;
@@ -121,7 +122,7 @@ class _TextEditorState extends State<TextEditor> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(height: 50),
+                  const SizedBox(height: 50),
                   SizedBox(
                     width: GlobalRect().cardRect.width,
                     child: Center(
