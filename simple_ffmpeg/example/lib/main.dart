@@ -102,7 +102,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                             color: _colorAnimation.value,
                           ),
                           const Align(alignment: Alignment.topRight, child: Text('애니메이션')),
-                          Image.asset('assets/elephant.png')
+                          Image.asset('assets/animated03.png')
                         ],
                       ),
                     );
