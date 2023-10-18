@@ -121,46 +121,47 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
     return Theme(
       data: theme,
       child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          key: scaffoldGlobalKey,
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              double space = kToolbarHeight / 3;
-              int cardFlex = 70;
-              // double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
+        resizeToAvoidBottomInset: false,
+        key: scaffoldGlobalKey,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            double space = kToolbarHeight / 3;
+            int cardFlex = 70;
+            // double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
 
-              return Center(
-                child: SizedBox(
-                  // width: maxWidth,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: statusBarHeight + space,
-                      ),
-                      Expanded(
-                        flex: cardFlex,
-                        child: AspectRatio(
-                          aspectRatio: widget.aspectRatio,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.all(widget.cardRadius),
-                            child: buildImageLayer(context),
-                          ),
+            return Center(
+              child: SizedBox(
+                // width: maxWidth,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: statusBarHeight + space,
+                    ),
+                    Expanded(
+                      flex: cardFlex,
+                      child: AspectRatio(
+                        aspectRatio: widget.aspectRatio,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.all(widget.cardRadius),
+                          child: buildImageLayer(context),
                         ),
                       ),
-                      Expanded(
-                        key: GlobalRect().objectAreaKey,
-                        flex: 100 - cardFlex,
-                        child: Container(
-                          padding: EdgeInsets.only(top: space),
-                          child: buildItemArea(),
-                        ),
+                    ),
+                    Expanded(
+                      key: GlobalRect().objectAreaKey,
+                      flex: 100 - cardFlex,
+                      child: Container(
+                        padding: EdgeInsets.only(top: space),
+                        child: buildItemArea(),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          )),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -186,11 +187,11 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
     return DraggableResizable(
       key: Key('${layer.key}_draggableResizable'),
       canTransform: ref.watch(layerManagerNotifierProvider).objectLayers.lastOrNull?.key == layer.key,
-      onLayerTapped: (LayerItem item) async {
+      onTap: (LayerItem item) async {
         if (item.type is TextType) {
           ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
 
-          (TextBoxInput, Offset)? result = await showGeneralDialog(
+          (TextBoxInput, Rect)? result = await showGeneralDialog(
               context: context,
               barrierColor: Colors.transparent,
               pageBuilder: (context, animation, secondaryAnimation) {
@@ -213,7 +214,8 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
             ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
           }
         }
-
+      },
+      onTapDown: (LayerItem item) async {
         if (item.type.isObject) {
           ref.read(layerManagerNotifierProvider.notifier).swap(item);
         }
@@ -335,7 +337,7 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
     ref.read(layerManagerNotifierProvider.notifier).setSelectedLayerType(type);
     switch (type) {
       case TextType():
-        (TextBoxInput, Offset)? result = await showGeneralDialog(
+        (TextBoxInput, Rect)? result = await showGeneralDialog(
           context: context,
           barrierColor: Colors.transparent,
           pageBuilder: (context, animation, secondaryAnimation) {
@@ -345,13 +347,13 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
 
         if (result == null) break;
         TextBoxInput value = result.$1;
-        InlineSpan? span = TextSpan(text: value.text, style: value.style);
-        Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+        // InlineSpan? span = TextSpan(text: value.text, style: value.style);
+        // Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
         var layer = LayerItem(
           key: UniqueKey(),
           type: TextType(),
           object: value,
-          rect: result.$2 & size,
+          rect: result.$2,
         );
         ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
 

@@ -9,7 +9,7 @@ class GlobalToolBar extends StatelessWidget {
   const GlobalToolBar({
     super.key,
     required this.onConfirmPressed,
-    this.confirmButtonText = '확인',
+    this.confirmButtonText = '완료',
   });
 
   @override
@@ -22,49 +22,25 @@ class GlobalToolBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            GestureDetector(
-              onTap: () {
+            TextButton(
+              onPressed: () {
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context);
                 }
               },
-              child: const SizedBox(
-                height: kToolbarHeight,
-                child: Center(
-                  child: Text(
-                    '취소',
-                    style: TextStyle(
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2.0, 2.0),
-                          blurRadius: 3.0,
-                          color: Colors.black38,
-                        ),
-                      ],
-                    ),
-                  ),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Colors.white,
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: onConfirmPressed,
-              child: SizedBox(
-                height: kToolbarHeight,
-                child: Center(
-                  child: Text(
-                    confirmButtonText,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2.0, 2.0),
-                          blurRadius: 3.0,
-                          color: Colors.black38,
-                        ),
-                      ],
-                    ),
-                  ),
+            TextButton(
+              onPressed: onConfirmPressed,
+              child: Text(
+                confirmButtonText,
+                style: const TextStyle(
+                  color: Colors.white,
                 ),
               ),
             ),

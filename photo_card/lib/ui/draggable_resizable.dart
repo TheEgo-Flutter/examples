@@ -9,13 +9,15 @@ class DraggableResizable extends StatefulWidget {
     Key? key,
     required this.layerItem,
     required this.canTransform,
-    this.onLayerTapped,
+    this.onTap,
+    this.onTapDown,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
   }) : super(key: key);
 
-  final ValueChanged<LayerItem>? onLayerTapped;
+  final ValueChanged<LayerItem>? onTap;
+  final ValueChanged<LayerItem>? onTapDown;
   final ValueChanged<LayerItem>? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
@@ -131,9 +133,11 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
               child: _DraggablePoint(
                 // key: widget.key,
                 ignorePointer: widget.layerItem.type.ignorePoint,
-                onLayerTapped: () {
-                  print('onLayerTapped');
-                  widget.onLayerTapped?.call(layerItem);
+                onTap: () {
+                  widget.onTap?.call(layerItem);
+                },
+                onTapDown: () {
+                  widget.onTapDown?.call(layerItem);
                 },
                 onDragStart: (d) {
                   setState(() {
@@ -228,7 +232,8 @@ class _DraggablePoint extends StatefulWidget {
   const _DraggablePoint({
     Key? key,
     required this.child,
-    this.onLayerTapped,
+    this.onTap,
+    this.onTapDown,
     this.onDrag,
     this.onDragStart,
     this.onDragEnd,
@@ -239,7 +244,8 @@ class _DraggablePoint extends StatefulWidget {
 
   final Widget child;
   final void Function(Offset p1, Offset p2)? onDrag;
-  final VoidCallback? onLayerTapped;
+  final VoidCallback? onTap;
+  final VoidCallback? onTapDown;
   final ValueSetter<Offset>? onDragStart;
   final VoidCallback? onDragEnd;
 
@@ -259,17 +265,18 @@ class _DraggablePointState extends State<_DraggablePoint> {
     return IgnorePointer(
       ignoring: widget.ignorePointer,
       child: GestureDetector(
-        // onTapDown: (details) {
-        //   print('aaaaa');
-        //   initPoint = details.localPosition;
-        //   widget.onLayerTapped?.call();
-        // },
+        onTap: () {
+          widget.onTap?.call();
+        },
+        onTapDown: (details) {
+          initPoint = details.localPosition;
+          widget.onTapDown?.call();
+        },
         onScaleStart: (details) {
           initPoint = details.localFocalPoint;
           widget.onDragStart?.call(details.localFocalPoint);
         },
         onScaleEnd: (details) => widget.onDragEnd?.call(),
-
         onScaleUpdate: (details) {
           final dx = details.localFocalPoint.dx - initPoint.dx;
           final dy = details.localFocalPoint.dy - initPoint.dy;

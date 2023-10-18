@@ -1,11 +1,10 @@
-import 'dart:developer';
-
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_card/ui/ui.dart';
 
 import '../utils/global.dart';
 import '../utils/global.rect.dart';
+import '../utils/util.dart';
 
 List<String> fontFamilies = [];
 
@@ -38,8 +37,14 @@ class _TextEditorState extends State<TextEditor> {
     if (renderBox == null) {
       return Rect.zero;
     }
-    log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(GlobalRect().cardRect.topLeft)}\t${renderBox.localToGlobal(GlobalRect().cardRect.topLeft)}');
-    return renderBox.localToGlobal(Offset.zero) - GlobalRect().cardRect.topLeft & renderBox.size;
+
+    InlineSpan? span = TextSpan(text: input.text, style: input.style);
+    Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+
+    Rect rect = Offset(GlobalRect().cardRect.right / 2 - size.width / 2, renderBox.localToGlobal(Offset.zero).dy) &
+        Size(size.width, size.height);
+
+    return rect;
   }
 
   TextStyle get currentTextStyle =>
@@ -108,32 +113,38 @@ class _TextEditorState extends State<TextEditor> {
                 if (textNotifier.value.trim().isEmpty) {
                   Navigator.pop(context);
                 } else {
-                  Navigator.pop(context, (input, textBoxRect.topLeft));
+                  Navigator.pop(context, (input, textBoxRect));
                 }
               },
             ),
             center: Expanded(
-              child: SizedBox(
-                width: GlobalRect().cardRect.width,
-                child: Center(
-                  child: Align(
-                    alignment: align == TextAlign.center
-                        ? Alignment.center
-                        : align == TextAlign.left
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
-                    child: ValueListenableBuilder<String>(
-                        valueListenable: textNotifier,
-                        builder: (context, text, child) {
-                          return TextBox(
-                            key: textBoxKey,
-                            isReadOnly: false,
-                            input: input,
-                            onChanged: (value) => textNotifier.value = value,
-                          );
-                        }),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: 50),
+                  SizedBox(
+                    width: GlobalRect().cardRect.width,
+                    child: Center(
+                      child: Align(
+                        alignment: align == TextAlign.center
+                            ? Alignment.center
+                            : align == TextAlign.left
+                                ? Alignment.centerLeft
+                                : Alignment.centerRight,
+                        child: ValueListenableBuilder<String>(
+                            valueListenable: textNotifier,
+                            builder: (context, text, child) {
+                              return TextBox(
+                                key: textBoxKey,
+                                isReadOnly: false,
+                                input: input,
+                                onChanged: (value) => textNotifier.value = value,
+                              );
+                            }),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
             bottom: Expanded(
@@ -334,10 +345,14 @@ class TextBox extends StatelessWidget {
         ),
       ),
       child: TextFormField(
+        // key: key,
         readOnly: isReadOnly,
         enabled: !isReadOnly,
         initialValue: input.text,
         textAlign: input.align,
+        decoration: const InputDecoration(
+          contentPadding: EdgeInsets.zero,
+        ),
         style: input.style.copyWith(fontSize: input.style.fontSize),
         onChanged: onChanged,
         textAlignVertical: TextAlignVertical.center,
