@@ -42,7 +42,7 @@ class _TextEditorState extends State<TextEditor> {
     Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
 
     Rect rect = Offset(GlobalRect().cardRect.right / 2 - size.width / 2, renderBox.localToGlobal(Offset.zero).dy) &
-        Size(size.width, size.height);
+        Size(size.width + 30, size.height + 30);
 
     return rect;
   }
@@ -341,18 +341,13 @@ class TextBox extends StatelessWidget {
       data: ThemeData(
         inputDecorationTheme: const InputDecorationTheme(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
         ),
       ),
       child: TextFormField(
-        // key: key,
         readOnly: isReadOnly,
         enabled: !isReadOnly,
         initialValue: input.text,
         textAlign: input.align,
-        decoration: const InputDecoration(
-          contentPadding: EdgeInsets.zero,
-        ),
         style: input.style.copyWith(fontSize: input.style.fontSize),
         onChanged: onChanged,
         textAlignVertical: TextAlignVertical.center,
