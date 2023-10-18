@@ -208,17 +208,6 @@ class LayerManager {
   final List<LayerItem>? layers;
   final LayerType? selectedLayerType;
   final LayerItem? selectedLayerItem;
-<<<<<<< HEAD
-  const LayerManager(
-      {this.backgroundLayer,
-      this.frameLayer,
-      this.drawingLayer,
-      this.objectLayers = const [],
-      this.layers,
-      this.selectedLayerType,
-      this.selectedLayerItem});
-=======
-
   const LayerManager({
     this.backgroundLayer,
     this.frameLayer,
@@ -228,8 +217,6 @@ class LayerManager {
     this.selectedLayerType,
     this.selectedLayerItem,
   });
->>>>>>> 0f16ef572d6cadb70ff22dbe46677daaee579bf0
-
   LayerManager copyWith({
     LayerItem? backgroundLayer,
     LayerItem? frameLayer,
@@ -238,10 +225,6 @@ class LayerManager {
     List<LayerItem>? layers,
     LayerType? selectedLayerType,
     LayerItem? selectedLayerItem,
-<<<<<<< HEAD
-=======
-    bool? hasFocus,
->>>>>>> 0f16ef572d6cadb70ff22dbe46677daaee579bf0
   }) {
     return LayerManager(
       backgroundLayer: backgroundLayer ?? this.backgroundLayer,

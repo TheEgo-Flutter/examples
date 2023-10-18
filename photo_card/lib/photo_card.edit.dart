@@ -138,7 +138,6 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
                         height: statusBarHeight + space,
                       ),
                       Expanded(
-                        key: GlobalRect().objectAreaKey,
                         flex: cardFlex,
                         child: AspectRatio(
                           aspectRatio: widget.aspectRatio,
@@ -149,6 +148,7 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
                         ),
                       ),
                       Expanded(
+                        key: GlobalRect().objectAreaKey,
                         flex: 100 - cardFlex,
                         child: Container(
                           padding: EdgeInsets.only(top: space),
@@ -175,8 +175,8 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (ref.watch(layerManagerNotifierProvider).layers != null)
-            ...ref.watch(layerManagerNotifierProvider).layers!.map((layer) => buildLayerWidgets(layer)),
+          // if (ref.watch(layerManagerNotifierProvider).layers != null)
+          ...ref.watch(layerManagerNotifierProvider).layers!.map((layer) => buildLayerWidgets(layer)),
         ],
       ),
     );
