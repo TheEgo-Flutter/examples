@@ -296,3 +296,50 @@ class GifViewState extends State<GifView> with TickerProviderStateMixin {
     }
   }
 }
+
+extension GifViewExtenstion on GifView {
+  GifView copyWith({
+    ImageProvider? image,
+    GifController? controller,
+    int? frameRate,
+    double? height,
+    double? width,
+    Widget? progress,
+    BoxFit? fit,
+    Color? color,
+    BlendMode? colorBlendMode,
+    AlignmentGeometry? alignment,
+    ImageRepeat? repeat,
+    Rect? centerSlice,
+    bool? matchTextDirection,
+    bool? invertColors,
+    FilterQuality? filterQuality,
+    bool? isAntiAlias,
+    bool? withOpacityAnimation,
+    Function(dynamic)? onError,
+    Duration? fadeDuration,
+  }) {
+    return GifView(
+      key: key,
+      image: image ?? this.image,
+      controller: controller ?? this.controller,
+      frameRate: frameRate ?? this.frameRate,
+      height: height ?? this.height,
+      width: width ?? this.width,
+      progress: progress ?? this.progress,
+      fit: fit ?? this.fit,
+      color: color ?? this.color,
+      colorBlendMode: colorBlendMode ?? this.colorBlendMode,
+      alignment: alignment ?? this.alignment,
+      repeat: repeat ?? this.repeat,
+      centerSlice: centerSlice ?? this.centerSlice,
+      matchTextDirection: matchTextDirection ?? this.matchTextDirection,
+      invertColors: invertColors ?? this.invertColors,
+      filterQuality: filterQuality ?? this.filterQuality,
+      isAntiAlias: isAntiAlias ?? this.isAntiAlias,
+      withOpacityAnimation: withOpacityAnimation ?? this.withOpacityAnimation,
+      onError: onError ?? this.onError,
+      fadeDuration: fadeDuration ?? this.fadeDuration,
+    );
+  }
+}
