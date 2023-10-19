@@ -14,9 +14,7 @@ dependencies:
   image_picker: ^1.0.0
   flutter_drawing_board: ^0.5.0
   simple_ffmpeg: 
-    git:
-      url: https://github.com/the-ego/packages.git
-      path: simple_ffmpeg
+    path : ../simple_ffmpeg
   du_icons:
     git:
       url: https://github.com/the-ego/samples.git

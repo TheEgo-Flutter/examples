@@ -106,11 +106,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  ffmpeg_kit_flutter:
+  ffmpeg_kit_flutter_min:
     dependency: transitive
     description:
-      name: ffmpeg_kit_flutter
-      sha256: "843aae41823ca94a0988d975b4b6cdc6948744b9b7e2707d81a3a9cd237b0100"
+      name: ffmpeg_kit_flutter_min
+      sha256: "123bfbc0e0b9e7cf6d32d8ba8e08b666d66af0f52c07683dd2305fbfc13f494a"
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
@@ -436,11 +436,9 @@ packages:
   simple_ffmpeg:
     dependency: "direct main"
     description:
-      path: simple_ffmpeg
-      ref: HEAD
-      resolved-ref: "49aa67466c1c6cecc7dc4b9eac5a8a11324afd2c"
-      url: "https://github.com/the-ego/packages.git"
-    source: git
+      path: "../simple_ffmpeg"
+      relative: true
+    source: path
     version: "0.1.0"
   sky_engine:
     dependency: transitive
