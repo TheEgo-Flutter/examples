@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_card/modules/gif_view.dart';
+import 'package:simple_ffmpeg/src.dart';
 
 import 'modules/modules.dart';
 import 'ui/ui.dart';
