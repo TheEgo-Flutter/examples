@@ -12,8 +12,9 @@ dependencies:
   photo_card: 
     path : ../
   video_player: ^2.7.0
-  render: ^0.1.3+1
   gal: ^1.8.5
+  simple_ffmpeg: 
+    path: ../../simple_ffmpeg
   du_icons:
     git:
       url: https://github.com/the-ego/samples.git
