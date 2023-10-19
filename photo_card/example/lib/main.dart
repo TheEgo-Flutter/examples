@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'package:photo_card/lib.dart';
 import 'package:photo_card/utils/diy_resources.dart';
-import 'package:simple_ffmpeg/src.dart';
 import 'package:video_player/video_player.dart';
 
 void main() async {
@@ -139,7 +138,6 @@ class CardViewPage extends StatefulWidget {
 
 class _CardViewPageState extends State<CardViewPage> {
   late PhotoCardController controller;
-  late FFMpegController ffmpegController;
   late VideoPlayerController videoController;
   File? file;
   @override
@@ -195,7 +193,7 @@ class _CardViewPageState extends State<CardViewPage> {
             FloatingActionButton(
               heroTag: 'video',
               onPressed: () async {
-                File? _file = await controller.encording();
+                File? _file = await controller.encoding();
                 setState(() {
                   file = _file;
                 });

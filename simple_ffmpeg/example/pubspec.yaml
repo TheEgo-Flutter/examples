@@ -9,8 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  simple_ffmpeg:
-    path: ../
+  simple_ffmpeg: 
+    git:
+      url: https://github.com/the-ego/packages.git
+      path: simple_ffmpeg
   video_player: ^2.7.1
   image_gallery_saver: ^2.0.3
 

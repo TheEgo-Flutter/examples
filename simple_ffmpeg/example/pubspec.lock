@@ -65,11 +65,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  ffmpeg_kit_flutter_min:
+  ffmpeg_kit_flutter:
     dependency: transitive
     description:
-      name: ffmpeg_kit_flutter_min
-      sha256: "123bfbc0e0b9e7cf6d32d8ba8e08b666d66af0f52c07683dd2305fbfc13f494a"
+      name: ffmpeg_kit_flutter
+      sha256: "843aae41823ca94a0988d975b4b6cdc6948744b9b7e2707d81a3a9cd237b0100"
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
@@ -212,10 +212,10 @@ packages:
     dependency: transitive
     description:
       name: platform
-      sha256: ae68c7bfcd7383af3629daafb32fb4e8681c7154428da4febcff06200585f102
+      sha256: "0a279f0707af40c890e80b1e9df8bb761694c074ba7e1d4ab1bc4b728e200b59"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.2"
+    version: "3.1.3"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -227,9 +227,11 @@ packages:
   simple_ffmpeg:
     dependency: "direct main"
     description:
-      path: ".."
-      relative: true
-    source: path
+      path: simple_ffmpeg
+      ref: HEAD
+      resolved-ref: "49aa67466c1c6cecc7dc4b9eac5a8a11324afd2c"
+      url: "https://github.com/the-ego/packages.git"
+    source: git
     version: "0.1.0"
   sky_engine:
     dependency: transitive
@@ -344,10 +346,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: c97defd418eef4ec88c0d1652cdce84b9f7b63dd7198e266d06ac1710d527067
+      sha256: "350a11abd2d1d97e0cc7a28a81b781c08002aa2864d9e3f192ca0ffa18b06ed3"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.8"
+    version: "5.0.9"
   xdg_directories:
     dependency: transitive
     description:

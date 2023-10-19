@@ -145,7 +145,7 @@ class PhotoCardController {
     }
   }
 
-  Future<File?> encording() async {
+  Future<File?> encoding() async {
     Duration fadeDuration = const Duration(milliseconds: 200);
     int totalFrame = 0;
     for (var element in layerManager.layers) {
