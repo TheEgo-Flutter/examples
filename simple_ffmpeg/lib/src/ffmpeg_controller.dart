@@ -7,19 +7,25 @@ class FFMpegController {
   GlobalKey? key;
 
   String get SCALE => '${size.width * _RATIO}:${size.height * _RATIO}';
-  int get TOTAL_FRAME => (fps * duration.inSeconds).toInt();
-  Duration get captureDuration => Duration(milliseconds: (1000 / fps).round());
 
   Size get size => _size;
   Size _size = Size.zero;
   set size(Size value) => _size = value;
 
-  Duration get duration => _duration;
-  Duration _duration = Duration.zero;
-  set duration(Duration value) => _duration = value;
+  Duration get totalDuration => _totalDuration;
+  Duration _totalDuration = const Duration(seconds: 2);
+  set totalDuration(Duration value) => _totalDuration = value;
+
+  Duration get frameDelay => _frameDelay;
+  Duration _frameDelay = const Duration(milliseconds: 1000 ~/ 30);
+  set frameDelay(Duration value) => _frameDelay = value;
+
+  int get totalFrame => _totalFrame;
+  int _totalFrame = 60;
+  set totalFrame(int value) => _totalFrame = value;
 
   int get fps => _fps;
-  int _fps = 60;
+  int _fps = 30; // 기본값으로 설정
   set fps(int value) => _fps = value;
 
   String get firstFrame => _firstFrame;
@@ -27,7 +33,8 @@ class FFMpegController {
   set firstFrame(String value) => _firstFrame = value;
 
   FFMpegController();
-  Future<void> _captureFrames({AnimationController? controller}) async {
+
+  Future<void> _captureFrames() async {
     final directory = await getTemporaryDirectory();
 
     // 임시 디렉터리에서 _FILE_NAME 접미사를 가진 모든 파일 삭제
@@ -52,11 +59,8 @@ class FFMpegController {
     final renderObject = key!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     size = renderObject?.size ?? Size.zero;
 
-    for (int i = 0; i < TOTAL_FRAME; i++) {
-      if (controller != null) {
-        controller.value = i / (TOTAL_FRAME - 1);
-      }
-      Uint8List? byte = await Future<Uint8List?>.delayed(captureDuration, () async {
+    for (int i = 0; i < totalFrame; i++) {
+      Uint8List? byte = await Future<Uint8List?>.delayed(frameDelay, () async {
         try {
           ui.Image? image = _captureContext(key!);
 
@@ -115,17 +119,29 @@ class FFMpegController {
     return videoFile;
   }
 
-  Future<File?> animationToVideo({required AnimationController controller, required int framerate}) async {
-    fps = framerate;
-    duration = controller.duration ?? Duration.zero;
-    await _captureFrames(controller: controller);
+  Future<File?> captureDurationToVideo(
+      {required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
+    // totalDuration과 frameDelay 둘 다 제공되지 않았을 경우
+    if (totalDuration == null && frameDelay == null) {
+      throw ArgumentError('totalDuration 또는 frameDelay 중 하나는 반드시 제공되어야 합니다.');
+    }
+    totalFrame = totalFrames;
+    _setDuration(frameDelay, totalDuration);
+
+    // 프레임 캡처 및 비디오 변환
+    await _captureFrames();
     return await _convertFramesToVideo();
   }
 
-  Future<File?> captureDurationToVideo({required int framerate}) async {
-    fps = framerate;
-    await _captureFrames();
-    return await _convertFramesToVideo();
+  void _setDuration(Duration? frameDelay, Duration? totalDuration) {
+    if (frameDelay != null) {
+      this.frameDelay = frameDelay; // 사용자가 제공한 frameDelay 사용
+      this.totalDuration =
+          Duration(milliseconds: frameDelay.inMilliseconds * totalFrame); //totalFrame으로 totalDuration 계산
+    } else if (totalDuration != null) {
+      this.totalDuration = totalDuration; // 사용자가 제공한 totalDuration 사용
+      this.frameDelay = Duration(milliseconds: totalDuration.inMilliseconds ~/ totalFrame); //totalFrame으로 frameDelay 계산
+    }
   }
 
   ui.Image _captureContext(GlobalKey key) {
@@ -161,17 +177,15 @@ class FFMpegController {
     }
   }
 
-  String _generateEncodeVideoScript(
-    String videoFilePath,
-    Directory directory,
-  ) {
-    print("FPS: $fps\nDuration: $duration\nTotal Frames: $TOTAL_FRAME\nCapture Duration: $captureDuration\n");
+  String _generateEncodeVideoScript(String videoFilePath, Directory directory) {
+    // 총 재생 시간과 총 프레임 수에 따라 프레임레이트를 계산합니다.
+    double calculatedFramerate = totalFrame / totalDuration.inSeconds;
+
     String command = '';
-    // if (Platform.isAndroid) {
-    command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
-    // } else {
-    // command = "-framerate $fps -i '${directory.path}/$_FILE_NAME%d.png' -c:v h264 -b:v 3000k $videoFilePath";
-    // }
+    // 기존에 fps 대신 계산된 프레임레이트를 사용합니다.
+    command = "-framerate $calculatedFramerate -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
+    // 다른 플랫폼 설정이 주석 처리되어 있으므로 필요한 경우 이 부분도 적절히 조정할 수 있습니다.
+
     return command;
   }
 }
