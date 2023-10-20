@@ -10,9 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   photo_card: 
-    git:
-      url: https://github.com/the-ego/packages.git
-      path: photo_card
+    path: ../
   video_player: ^2.7.0
   gal: ^1.8.5
   du_icons:
