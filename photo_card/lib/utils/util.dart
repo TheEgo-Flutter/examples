@@ -2,10 +2,29 @@ import 'package:flutter/material.dart';
 
 import 'global.rect.dart';
 
-Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) =>
-    (TextPainter(text: text, textDirection: TextDirection.rtl, textScaleFactor: MediaQuery.textScaleFactorOf(context))
-          ..layout(maxWidth: maxWidth))
+Size textSize(InlineSpan text, BuildContext context, {double maxWidth = double.infinity}) => (TextPainter(
+      text: text,
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.left,
+      textScaleFactor: MediaQuery.textScaleFactorOf(context),
+    )..layout(maxWidth: maxWidth))
         .size;
+
+// Size getTextSize(String text, double fontSize, FontWeight fontWeight) {
+//   final textStyle = TextStyle(
+//     fontSize: fontSize,
+//     fontWeight: fontWeight,
+//   );
+
+//   final textPainter = TextPainter(
+//     text: TextSpan(text: text, style: textStyle),
+//     textDirection: TextDirection.ltr,
+//   );
+
+//   textPainter.layout();
+
+//   return textPainter.size;
+// }
 
 Offset getCenterOffset(Rect standardRect, Size size) => Offset(
       standardRect.size.width / 2 - size.width / 2,

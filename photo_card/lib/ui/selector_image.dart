@@ -30,8 +30,8 @@ class ImageSelectorState extends State<ImageSelector> {
       scrollDirection: Axis.vertical,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        mainAxisSpacing: 8.0,
-        crossAxisSpacing: 4.0,
+        mainAxisSpacing: 10.0,
+        crossAxisSpacing: 20.0,
         childAspectRatio: widget.aspectRatio,
       ),
       padding: const EdgeInsets.all(8.0),

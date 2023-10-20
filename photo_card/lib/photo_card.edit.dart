@@ -8,7 +8,7 @@ class DialogValue {
   DialogValue({required this.dialog, required this.no, required this.yes});
 }
 
-class PhotoEditor extends StatefulWidget {
+class PhotoEditor extends ConsumerStatefulWidget {
   final DiyResources resources;
   final double aspectRatio;
   final Widget completed;
@@ -29,16 +29,15 @@ class PhotoEditor extends StatefulWidget {
     this.onCancelDialog,
   }) : super(key: key);
   @override
-  State<PhotoEditor> createState() => _PhotoEditorState();
+  ConsumerState<PhotoEditor> createState() => _PhotoEditorState();
 }
 
-class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
+class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingObserver, TickerProviderStateMixin {
   final scaffoldGlobalKey = GlobalKey<ScaffoldState>();
-  var layerManager = LayerManager();
-  LayerType? _selectedLayer;
+  // var layerManager = LayerManager();
+
   LinearGradient? cardColor;
-  late AnimationController _animationController;
-  late Animation<Offset> _offsetAnimation;
+
   double get statusBarHeight => MediaQuery.of(context).padding.top;
   @override
   void initState() {
@@ -46,15 +45,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     fontFamilies = widget.resources.fonts;
     drawingData = [];
 
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 1.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _captureRect();
@@ -70,7 +60,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   void dispose() {
-    layerManager.clearLayers();
+    // ref.invalidate(layerManagerNotifierProvider);
+    // layerManager.clearLayers();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -78,8 +69,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   void _startDialog() async {
     List<LayerItem>? result = await widget.onStartDialog?.call();
     if (result != null && result.isNotEmpty) {
-      layerManager.loadLayers(result);
-      setState(() {});
+      ref.read(layerManagerNotifierProvider.notifier).loadLayers(result);
+      // layerManager.loadLayers(result);
     }
   }
 
@@ -92,27 +83,27 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   void _initialBackground() {
     LayerItem layer = LayerItem(
-      UniqueKey(),
+      key: UniqueKey(),
       type: const BackgroundType.color(),
       object: Colors.white,
       rect: GlobalRect().cardRect.zero,
     );
-    layerManager.addLayer(layer);
+    // layerManager.addLayer(layer);
+    ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
   }
 
   Future<void> _loadImageColor(Uint8List? imageFile) async {
     if (imageFile != null) {
       ColorScheme newScheme = await ColorScheme.fromImageProvider(provider: MemoryImage(imageFile));
-      setState(() {
-        cardColor = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomCenter,
-          colors: [
-            newScheme.primaryContainer,
-            newScheme.primary,
-          ],
-        );
-      });
+
+      cardColor = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomCenter,
+        colors: [
+          newScheme.primaryContainer,
+          newScheme.primary,
+        ],
+      );
     } else {
       cardColor = null;
     }
@@ -126,83 +117,49 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(layerManagerNotifierProvider);
     return Theme(
       data: theme,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         key: scaffoldGlobalKey,
-        body: Stack(
-          children: [
-            GestureDetector(
-              onTap: () => swapWidget(null),
-              child: Container(
-                color: background,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-              ),
-            ),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                double space = kToolbarHeight / 3;
-                int cardFlex = 70;
-                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            double space = kToolbarHeight / 3;
+            int cardFlex = 70;
+            // double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
 
-                return Center(
-                  child: SizedBox(
-                    width: maxWidth,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: statusBarHeight,
-                        ),
-                        const SizedBox(
-                          height: kToolbarHeight,
-                        ),
-                        SizedBox(
-                          height: space,
-                        ),
-                        Expanded(
-                          flex: cardFlex,
-                          child: GestureDetector(
-                            onTap: () => swapWidget(null),
-                            child: AspectRatio(
-                              aspectRatio: widget.aspectRatio,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.all(widget.cardRadius),
-                                child: buildImageLayer(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 100 - cardFlex,
-                          child: Container(
-                            padding: EdgeInsets.only(top: space),
-                            child: Stack(
-                              key: GlobalRect().objectAreaKey,
-                              children: [
-                                IgnorePointer(
-                                  ignoring: _animationController.isAnimating,
-                                  child: buildItemArea(),
-                                ),
-                                AnimatedSwitcher(
-                                  duration: const Duration(microseconds: 100),
-                                  child: SlideTransition(
-                                    position: _offsetAnimation,
-                                    child: switchingWidget(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+            return Center(
+              child: SizedBox(
+                // width: maxWidth,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: statusBarHeight + space,
                     ),
-                  ),
-                );
-              },
-            ),
-          ],
+                    Expanded(
+                      flex: cardFlex,
+                      child: AspectRatio(
+                        aspectRatio: widget.aspectRatio,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.all(widget.cardRadius),
+                          child: buildImageLayer(context),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      key: GlobalRect().objectAreaKey,
+                      flex: 100 - cardFlex,
+                      child: Container(
+                        padding: EdgeInsets.only(top: space),
+                        child: buildItemArea(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -219,7 +176,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       child: Stack(
         fit: StackFit.expand,
         children: [
-          ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+          // if (ref.watch(layerManagerNotifierProvider).layers != null)
+          ...ref.watch(layerManagerNotifierProvider).layers!.map((layer) => buildLayerWidgets(layer)),
         ],
       ),
     );
@@ -228,13 +186,12 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   Widget buildLayerWidgets(LayerItem layer) {
     return DraggableResizable(
       key: Key('${layer.key}_draggableResizable'),
-      isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
-      onLayerTapped: (LayerItem item) async {
+      canTransform: ref.watch(layerManagerNotifierProvider).objectLayers.lastOrNull?.key == layer.key,
+      onTap: (LayerItem item) async {
         if (item.type is TextType) {
-          setState(() {
-            layerManager.removeLayerByKey(item.key);
-          });
-          (TextBoxInput, Offset)? result = await showGeneralDialog(
+          ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(item.key);
+
+          (TextBoxInput, Rect)? result = await showGeneralDialog(
               context: context,
               barrierColor: Colors.transparent,
               pageBuilder: (context, animation, secondaryAnimation) {
@@ -244,42 +201,37 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               });
 
           if (result == null) {
-            layerManager.addLayer(item);
-            setState(() {});
+            ref.read(layerManagerNotifierProvider.notifier).addLayer(item);
           } else {
-            TextBoxInput value = result.$1;
-            InlineSpan? span = TextSpan(text: value.text, style: value.style);
+            // TextBoxInput value = result.$1;
+            // InlineSpan? span = TextSpan(text: value.text, style: value.style);
 
-            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+            // Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
             LayerItem newItem = item.copyWith(
-              object: value,
-              rect: (item.rect.topLeft & size),
+              object: result.$1,
+              rect: (item.rect.topLeft & result.$2.size),
             )..newKey();
-            layerManager.addLayer(newItem);
-            setState(() {});
+            ref.read(layerManagerNotifierProvider.notifier).addLayer(newItem);
           }
         }
-        setState(() {
-          if (item.type.isObject) {
-            layerManager.swap(item);
-          }
-        });
+      },
+      onTapDown: (LayerItem item) async {
+        if (item.type.isObject) {
+          ref.read(layerManagerNotifierProvider.notifier).swap(item);
+        }
       },
       onDragStart: (LayerItem item) {
-        setState(() {
-          layerManager.selectedLayerItem = item;
-          if (item.type.isObject) {
-            layerManager.swap(item);
-          }
-        });
+        if (item.type.isObject) {
+          ref.read(layerManagerNotifierProvider.notifier).swap(item);
+        }
       },
       onDragEnd: (LayerItem item) {
-        layerManager.updateLayer(item);
-        setState(() {
-          layerManager.selectedLayerItem = null;
-        });
+        ref.read(layerManagerNotifierProvider.notifier).updateLayer(item);
+
+        // 초기화는 backgroundType으로 변경
+        ref.read(layerManagerNotifierProvider.notifier).initSelectedLayerItem();
       },
-      onDelete: (layerItem) => layerManager.removeLayerByKey(layerItem.key),
+      onDelete: (layerItem) => ref.read(layerManagerNotifierProvider.notifier).removeLayerByKey(layerItem.key),
       layerItem: layer,
     );
   }
@@ -291,7 +243,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircleIconButton(
                 iconData: DUIcons.picture,
@@ -299,24 +251,28 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                   swapWidget(const BackgroundType());
                 },
               ),
+              const SizedBox(width: 8),
               CircleIconButton(
                 iconData: DUIcons.tool_marquee,
                 onPressed: () {
                   swapWidget(FrameType());
                 },
               ),
+              const SizedBox(width: 8),
               CircleIconButton(
                 iconData: DUIcons.sticker,
                 onPressed: () {
                   swapWidget(StickerType());
                 },
               ),
+              const SizedBox(width: 8),
               CircleIconButton(
                 iconData: DUIcons.letter_case,
                 onPressed: () {
                   switchingDialog(TextType(), context);
                 },
               ),
+              const SizedBox(width: 8),
               CircleIconButton(
                 iconData: DUIcons.paint_brush,
                 onPressed: () {
@@ -346,7 +302,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               bool? result = await widget.onCancelDialog?.call();
 
               if (result ?? false) {
-                widget.onCancel?.call(layerManager.layers);
+                widget.onCancel?.call(ref.read(layerManagerNotifierProvider).layers!);
               }
             },
           ),
@@ -356,7 +312,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
               child: InkWell(
                 splashFactory: NoSplash.splashFactory,
                 onTap: () {
-                  widget.onComplete?.call(layerManager.layers);
+                  widget.onComplete?.call(ref.read(layerManagerNotifierProvider).layers!);
                 },
                 child: widget.completed,
               ),
@@ -368,27 +324,20 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   }
 
   void swapWidget(LayerType? type) {
-    if (!_animationController.isAnimating) {
-      if (type == null) {
-        _animationController.reverse().then((value) => setState(() {
-              _selectedLayer = null;
-            }));
-      } else {
-        _animationController.forward(from: 0.0);
-        setState(() {
-          _selectedLayer = type;
-        });
-      }
-    }
+    if (type == null) return;
+    customBottomSheet(
+      context: context,
+      contents: _buildContents(type),
+    ).then(
+      (value) => ref.read(layerManagerNotifierProvider.notifier).setSelectedLayerType(null),
+    );
   }
 
   void switchingDialog(LayerType type, BuildContext context) async {
-    setState(() {
-      _selectedLayer = type;
-    });
+    ref.read(layerManagerNotifierProvider.notifier).setSelectedLayerType(type);
     switch (type) {
       case TextType():
-        (TextBoxInput, Offset)? result = await showGeneralDialog(
+        (TextBoxInput, Rect)? result = await showGeneralDialog(
           context: context,
           barrierColor: Colors.transparent,
           pageBuilder: (context, animation, secondaryAnimation) {
@@ -396,42 +345,40 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           },
         );
 
-        setState(() {});
-
         if (result == null) break;
         TextBoxInput value = result.$1;
-        InlineSpan? span = TextSpan(text: value.text, style: value.style);
-        Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+        // InlineSpan? span = TextSpan(text: value.text, style: value.style);
+        // Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
         var layer = LayerItem(
-          UniqueKey(),
+          key: UniqueKey(),
           type: TextType(),
           object: value,
-          rect: result.$2 & size,
+          rect: result.$2,
         );
-        layerManager.addLayer(layer);
-        setState(() {});
+        ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+
         break;
       case DrawingType():
-        (Uint8List?, Size?)? data = await showGeneralDialog(
-          context: context,
-          barrierColor: Colors.transparent,
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return BrushPainter(
-              cardRadius: widget.cardRadius,
-            );
-          },
-        );
+        if (mounted) {
+          (Uint8List?, Size?)? data = await showGeneralDialog(
+            context: context,
+            barrierColor: Colors.transparent,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return BrushPainter(
+                cardRadius: widget.cardRadius,
+              );
+            },
+          );
 
-        if ((data != null && data.$1 != null)) {
-          setState(() {
+          if ((data != null && data.$1 != null)) {
             var layer = LayerItem(
-              UniqueKey(),
+              key: UniqueKey(),
               type: DrawingType(),
               object: data.$1!,
               rect: GlobalRect().cardRect.zero,
             );
-            layerManager.addLayer(layer);
-          });
+            ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+          }
         }
         break;
       default:
@@ -439,165 +386,161 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     }
   }
 
-  Widget switchingWidget() {
-    switch (_selectedLayer) {
+  Widget _buildContents(type) {
+    switch (type) {
       case BackgroundType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: StatefulBuilder(
-            builder: (context, dialogSetState) {
-              LayerItem? background =
-                  layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
-              Color? value = background == null
-                  ? Colors.white
-                  : background.type.background == Background.color
-                      ? (background.object as Color)
-                      : null;
-              return Column(
-                children: [
-                  ColorBar(
-                    value: value,
-                    onColorChanged: (color) async {
-                      await _loadImageColor(null);
-                      LayerItem layer = LayerItem(
-                        UniqueKey(),
-                        type: const BackgroundType.color(),
-                        object: color,
-                        rect: GlobalRect().cardRect.zero,
-                      );
-                      layerManager.addLayer(layer);
-                      dialogSetState(() {
-                        value = color; // <-- Update the local color here
-                      });
-                      setState(() {});
-                    },
-                  ),
-                  Expanded(
-                    child: ImageSelector(
-                      aspectRatio: widget.aspectRatio,
-                      items: widget.resources.backgrounds,
-                      firstItem: GestureDetector(
-                          onTap: () async {
-                            final picker = ImagePicker();
-                            var value = await picker.pickImage(source: ImageSource.gallery);
-                            if (value == null) return;
-                            Uint8List? loadImage = await _loadImage(value);
-                            await _loadImageColor(loadImage);
-                            LayerItem imageBackground = LayerItem(
-                              UniqueKey(),
-                              type: const BackgroundType.gallery(),
-                              object: Image.memory(loadImage),
-                              rect: GlobalRect().cardRect.zero,
-                            );
-                            dialogSetState(
-                              () {
-                                value = null; // <-- Reset the local color here
-                              },
-                            );
-                            setState(() {});
-                            layerManager.addLayer(imageBackground);
-                          },
-                          child: const Icon(
-                            DUIcons.picture,
-                            color: Colors.white,
-                          )),
-                      onItemSelected: (child) async {
-                        await _loadImageColor(null);
-                        LayerItem layer = LayerItem(
-                          UniqueKey(),
-                          type: const BackgroundType.image(),
-                          object: child,
-                          rect: GlobalRect().cardRect.zero,
-                        );
-                        dialogSetState(
-                          () {
-                            value = null; // <-- Reset the local color here
-                          },
-                        );
-                        setState(() {});
-                        layerManager.addLayer(layer);
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
+        return _buildBackgroundItems();
       case FrameType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: ImageSelector(
-            aspectRatio: widget.aspectRatio,
-            items: widget.resources.frames,
-            firstItem: GestureDetector(
-              onTap: () {
-                layerManager.removeLayerByType(FrameType());
-                setState(() {});
-              },
-              child: const Icon(
-                DUIcons.ban,
-                color: Colors.white,
-              ),
-            ),
-            onItemSelected: (child) {
-              LayerItem layer = LayerItem(
-                UniqueKey(),
-                type: FrameType(),
-                object: child,
-                rect: GlobalRect().cardRect.zero,
-              );
-              layerManager.addLayer(layer);
-              setState(() {});
-            },
-          ),
-        );
+        return _buildFrameItems();
       case StickerType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: StickerSelector(
-            items: widget.resources.stickers,
-            onSelected: (child) {
-              if (child == null) return;
-
-              Size size = GlobalRect().stickerSize;
-              Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
-                  GlobalRect().cardRect.size.height / 2 - size.height / 2);
-              GifController controller = GifController();
-              LayerItem layer = LayerItem(
-                UniqueKey(),
-                type: StickerType(),
-                object: GifView(
-                  controller: controller,
-                  fadeDuration: const Duration(milliseconds: 300),
-                  image: child,
-                  width: size.width,
-                  height: size.height,
-                ),
-                rect: (offset & size),
-              );
-              layerManager.addLayer(layer);
-              setState(() {});
-            },
-          ),
-        );
+        return _buildStickerItems();
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildBackgroundItems() {
+    return StatefulBuilder(
+      builder: (context, dialogSetState) {
+        LayerItem? background = ref
+            .watch(layerManagerNotifierProvider)
+            .layers!
+            .where((element) => element.type is BackgroundType)
+            .firstOrNull;
+
+        Color? value = background == null
+            ? Colors.white
+            : background.type.background == Background.color
+                ? (background.object as Color)
+                : null;
+        return Column(
+          children: [
+            ColorBar(
+              value: value,
+              onColorChanged: (color) async {
+                await _loadImageColor(null);
+                LayerItem layer = LayerItem(
+                  key: UniqueKey(),
+                  type: const BackgroundType.color(),
+                  object: color,
+                  rect: GlobalRect().cardRect.zero,
+                );
+                ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+
+                dialogSetState(() {
+                  value = color; // <-- Update the local color here
+                });
+              },
+            ),
+            Expanded(
+              child: ImageSelector(
+                aspectRatio: widget.aspectRatio,
+                items: widget.resources.backgrounds,
+                firstItem: GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      var value = await picker.pickImage(source: ImageSource.gallery);
+                      if (value == null) return;
+                      Uint8List? loadImage = await _loadImage(value);
+                      await _loadImageColor(loadImage);
+                      LayerItem imageBackground = LayerItem(
+                        key: UniqueKey(),
+                        type: const BackgroundType.gallery(),
+                        object: Image.memory(loadImage),
+                        rect: GlobalRect().cardRect.zero,
+                      );
+                      dialogSetState(
+                        () {
+                          value = null; // <-- Reset the local color here
+                        },
+                      );
+                      ref.read(layerManagerNotifierProvider.notifier).addLayer(imageBackground);
+                    },
+                    child: const Icon(
+                      DUIcons.picture,
+                      color: Colors.white,
+                    )),
+                onItemSelected: (child) async {
+                  await _loadImageColor(null);
+                  LayerItem layer = LayerItem(
+                    key: UniqueKey(),
+                    type: const BackgroundType.image(),
+                    object: child,
+                    rect: GlobalRect().cardRect.zero,
+                  );
+                  dialogSetState(
+                    () {
+                      value = null; // <-- Reset the local color here
+                    },
+                  );
+                  ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFrameItems() {
+    return ImageSelector(
+      aspectRatio: widget.aspectRatio,
+      items: widget.resources.frames,
+      firstItem: GestureDetector(
+        onTap: () {
+          ref.read(layerManagerNotifierProvider.notifier).removeLayerByType(FrameType());
+        },
+        child: const Icon(
+          DUIcons.ban,
+          color: Colors.white,
+        ),
+      ),
+      onItemSelected: (child) {
+        LayerItem layer = LayerItem(
+          key: UniqueKey(),
+          type: FrameType(),
+          object: child,
+          rect: GlobalRect().cardRect.zero,
+        );
+        ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+      },
+    );
+  }
+
+  Widget _buildStickerItems() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: bottomSheet,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      child: StickerSelector(
+        items: widget.resources.stickers,
+        onSelected: (child) {
+          if (child == null) return;
+
+          Size size = GlobalRect().stickerSize;
+          Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
+              GlobalRect().cardRect.size.height / 2 - size.height / 2);
+          GifController controller = GifController();
+          LayerItem layer = LayerItem(
+            key: UniqueKey(),
+            type: StickerType(),
+            object: GifView(
+              controller: controller,
+              fadeDuration: const Duration(milliseconds: 300),
+              image: child,
+              width: size.width,
+              height: size.height,
+            ),
+            rect: (offset & size),
+          );
+
+          ref.read(layerManagerNotifierProvider.notifier).addLayer(layer);
+        },
+      ),
+    );
   }
 }

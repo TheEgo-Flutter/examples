@@ -84,7 +84,8 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                       });
                     }, onError: (error) {
                       log("Error initializing video player: $error");
-                    });
+                    })
+                    ..setLooping(true);
                 },
               ),
               FFmpegWidget(

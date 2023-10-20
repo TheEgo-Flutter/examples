@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:photo_card/lib.dart';
 import 'package:photo_card/utils/diy_resources.dart';
@@ -18,8 +19,10 @@ void main() async {
   }
 
   runApp(
-    const MaterialApp(
-      home: Home(),
+    const ProviderScope(
+      child: MaterialApp(
+        home: Home(),
+      ),
     ),
   );
 }
@@ -122,8 +125,6 @@ class _ImageEditorState extends State<ImageEditor> {
         },
       ),
     );
-
-    ;
   }
 }
 

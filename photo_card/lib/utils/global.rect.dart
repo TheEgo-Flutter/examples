@@ -9,7 +9,7 @@ class CardRect {
 
   CardRect._internal();
   Rect get deleteRect => _deleteRectDefault;
-  double get width => GlobalRect().cardRect.width * 0.15;
+  double get width => GlobalRect().cardRect.width * 0.2;
   Rect get _deleteRectDefault => Rect.fromLTWH(
         GlobalRect().cardRect.bottomCenter.dx - (width / 2),
         GlobalRect().cardRect.bottomCenter.dy - (width * 1.2),

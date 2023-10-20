@@ -2,7 +2,7 @@ part of 'photo_card.dart';
 
 const double _cardAspectRatio = 300 / 464;
 
-class PhotoCard extends StatefulWidget {
+class PhotoCard extends ConsumerStatefulWidget {
   final List<LayerItem> tempSavedLayers;
   final PhotoCardController? controller;
   final double aspectRatio;
@@ -14,24 +14,23 @@ class PhotoCard extends StatefulWidget {
   });
 
   @override
-  State<PhotoCard> createState() => _PhotoCardViewerState();
+  ConsumerState<PhotoCard> createState() => _PhotoCardViewerState();
 }
 
-class _PhotoCardViewerState extends State<PhotoCard> {
+class _PhotoCardViewerState extends ConsumerState<PhotoCard> {
   late final PhotoCardController controller;
 
-  LayerManager layerManager = LayerManager();
   BoxDecoration boxDecoration = const BoxDecoration(color: Colors.white);
 
   @override
   void initState() {
-    layerManager.loadLayers(widget.tempSavedLayers);
-    layerManager.newKeyLayers();
-
     super.initState();
-    controller = (widget.controller ?? PhotoCardController())..initial(layerManager);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      controller = (widget.controller ?? PhotoCardController())..initial(ref.read(layerManagerNotifierProvider));
+      ref.read(layerManagerNotifierProvider.notifier).loadLayers(widget.tempSavedLayers);
+      ref.read(layerManagerNotifierProvider.notifier).newKeyLayers();
+
       boxDecoration = await loadBackgroundColor();
       setState(() {});
     });
@@ -48,10 +47,10 @@ class _PhotoCardViewerState extends State<PhotoCard> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return Stack(children: [
-                ...layerManager.layers.map(
+                ...ref.watch(layerManagerNotifierProvider).layers!.map(
                   (layer) {
                     Rect newRect = computeNewObjectRect(
-                        backgroundOld: layerManager.layers.first.rect,
+                        backgroundOld: ref.watch(layerManagerNotifierProvider).layers!.first.rect,
                         objectOld: layer.rect,
                         backgroundNewSize: constraints.biggest);
 
@@ -76,11 +75,11 @@ class _PhotoCardViewerState extends State<PhotoCard> {
   }
 
   Future<BoxDecoration> loadBackgroundColor() async {
-    if (layerManager.backgroundLayer?.type.background == Background.gallery) {
-      var gradient = await loadImageColor(layerManager.backgroundLayer?.object as Image);
+    if (ref.watch(layerManagerNotifierProvider).backgroundLayer?.type.background == Background.gallery) {
+      var gradient = await loadImageColor(ref.watch(layerManagerNotifierProvider).backgroundLayer?.object as Image);
       return BoxDecoration(gradient: gradient ?? const LinearGradient(colors: [Colors.white, Colors.white]));
-    } else if (layerManager.backgroundLayer?.type.background == Background.color) {
-      return BoxDecoration(color: layerManager.backgroundLayer?.object as Color);
+    } else if (ref.watch(layerManagerNotifierProvider).backgroundLayer?.type.background == Background.color) {
+      return BoxDecoration(color: ref.watch(layerManagerNotifierProvider).backgroundLayer?.object as Color);
     } else {
       return const BoxDecoration(color: Colors.white);
     }
@@ -108,7 +107,7 @@ class PhotoCardController {
   void initial(LayerManager layerManager) {
     this.layerManager = layerManager;
     ffmpegController = FFMpegController();
-    for (var element in layerManager.layers) {
+    for (var element in layerManager.layers ?? []) {
       if (element.type is StickerType && element.object is GifView) {
         // ffmpegController.duration =
         //     ((element.object as GifView).fadeDuration! * (element.object as GifView).controller!.countFrames);
@@ -148,7 +147,7 @@ class PhotoCardController {
   Future<File?> encoding() async {
     Duration fadeDuration = const Duration(milliseconds: 200);
     int totalFrame = 0;
-    for (var element in layerManager.layers) {
+    for (var element in layerManager.layers ?? []) {
       if (element.type is StickerType && (element.object as GifView).fadeDuration != null) {
         fadeDuration = (element.object as GifView).fadeDuration!;
         totalFrame = controllers.first.countFrames;

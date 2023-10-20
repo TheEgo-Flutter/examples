@@ -6,21 +6,25 @@ import 'package:photo_card/lib.dart';
 
 class DraggableResizable extends StatefulWidget {
   const DraggableResizable({
-    required key,
+    Key? key,
     required this.layerItem,
-    this.onLayerTapped,
+    required this.canTransform,
+    this.onTap,
+    this.onTapDown,
     this.onDelete,
     this.onDragStart,
     this.onDragEnd,
-    this.isFocus = false,
   }) : super(key: key);
 
-  final ValueChanged<LayerItem>? onLayerTapped;
+  final ValueChanged<LayerItem>? onTap;
+  final ValueChanged<LayerItem>? onTapDown;
   final ValueChanged<LayerItem>? onDelete;
   final ValueChanged<LayerItem>? onDragStart;
   final ValueChanged<LayerItem>? onDragEnd;
-  final bool isFocus;
+
   final LayerItem layerItem;
+
+  final bool canTransform;
 
   @override
   State<DraggableResizable> createState() => _DraggableResizableState();
@@ -71,6 +75,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   Offset currentFingerPosition = Offset.zero;
 
   bool isInDeleteArea = false;
+  bool isFocus = false;
 
   @override
   void initState() {
@@ -98,7 +103,7 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
       return;
     } else {
       if (isDragging) {
-        if (!isInDeleteArea) HapticFeedback.lightImpact();
+        if (!isInDeleteArea) await HapticFeedback.lightImpact();
 
         isInDeleteArea = true;
       } else {
@@ -111,45 +116,67 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        if (widget.isFocus) ..._buildCenterLine(GlobalRect().cardRect, isCenteredHorizontally, isCenteredVertically),
+        if (isFocus) ..._buildCenterLine(GlobalRect().cardRect, isCenteredHorizontally, isCenteredVertically),
         Transform.translate(
           offset: offset,
           child: Transform.rotate(
             angle: angle,
-            child: _DraggablePoint(
-              ignorePointer: widget.layerItem.type.ignorePoint,
-              onLayerTapped: () {
-                widget.onLayerTapped?.call(layerItem);
-              },
-              onDragStart: (d) {
-                widget.onDragStart?.call(layerItem);
-                startingFingerPositionFromObject = d;
-              },
-              onDragEnd: () {
-                _handleDeleteAction(false);
-                widget.onDragEnd?.call(layerItem);
-              },
-              onDrag: widget.layerItem.type.isDraggable && widget.isFocus
-                  ? (d, focalPoint) async {
-                      offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
-                      isCenteredHorizontally =
-                          _checkIfCentered(offset, size, GlobalRect().cardRect.size.width, Axis.horizontal);
-                      isCenteredVertically =
-                          _checkIfCentered(offset, size, GlobalRect().cardRect.size.height, Axis.vertical);
-                      currentFingerPosition = startingFingerPositionFromObject + offset;
-                      _handleDeleteAction(true);
-                    }
-                  : null,
-              onScale: widget.layerItem.type.isScalable && widget.isFocus ? (s) => _handleScale(s) : null,
-              onRotate: widget.layerItem.type.isRotatable && widget.isFocus ? (a) => angle = a : null,
-              child: ChildLayerItem(layerItem: layerItem, customSize: size),
+            child: Container(
+              height: size.height,
+              width: size.width,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  width: 2,
+                  color: widget.canTransform && isFocus ? Colors.blue : Colors.transparent,
+                ),
+              ),
+              child: _DraggablePoint(
+                // key: widget.key,
+                ignorePointer: widget.layerItem.type.ignorePoint,
+                onTap: () {
+                  widget.onTap?.call(layerItem);
+                },
+                onTapDown: () {
+                  widget.onTapDown?.call(layerItem);
+                },
+                onDragStart: (d) {
+                  setState(() {
+                    isFocus = true;
+                  });
+                  print('onDragStart');
+                  widget.onDragStart?.call(layerItem);
+                  startingFingerPositionFromObject = d;
+                },
+                onDragEnd: () {
+                  setState(() {
+                    isFocus = false;
+                  });
+                  _handleDeleteAction(false);
+                  widget.onDragEnd?.call(layerItem);
+                },
+                onDrag: widget.layerItem.type.isDraggable
+                    ? (d, focalPoint) async {
+                        print('onDrag');
+                        offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
+                        isCenteredHorizontally =
+                            _checkIfCentered(offset, size, GlobalRect().cardRect.size.width, Axis.horizontal);
+                        isCenteredVertically =
+                            _checkIfCentered(offset, size, GlobalRect().cardRect.size.height, Axis.vertical);
+                        currentFingerPosition = startingFingerPositionFromObject + offset;
+                        _handleDeleteAction(true);
+                      }
+                    : null,
+                onScale: widget.layerItem.type.isScalable ? (s) => _handleScale(s) : null,
+                onRotate: widget.layerItem.type.isRotatable ? (a) => angle = a : null,
+                child: ChildLayerItem(layerItem: layerItem, customSize: size),
+              ),
             ),
           ),
         ),
-        if (widget.isFocus)
-          DeleteArea(
-            visible: widget.layerItem.type.isObject,
-          ),
+        Visibility(
+          visible: isFocus && widget.layerItem.type.isObject,
+          child: DeleteArea(currentFingerPosition: currentFingerPosition),
+        ),
       ],
     );
   }
@@ -205,7 +232,8 @@ class _DraggablePoint extends StatefulWidget {
   const _DraggablePoint({
     Key? key,
     required this.child,
-    this.onLayerTapped,
+    this.onTap,
+    this.onTapDown,
     this.onDrag,
     this.onDragStart,
     this.onDragEnd,
@@ -216,9 +244,11 @@ class _DraggablePoint extends StatefulWidget {
 
   final Widget child;
   final void Function(Offset p1, Offset p2)? onDrag;
-  final VoidCallback? onLayerTapped;
+  final VoidCallback? onTap;
+  final VoidCallback? onTapDown;
   final ValueSetter<Offset>? onDragStart;
   final VoidCallback? onDragEnd;
+
   final ValueSetter<double>? onScale;
   final ValueSetter<double>? onRotate;
   final bool ignorePointer;
@@ -235,7 +265,13 @@ class _DraggablePointState extends State<_DraggablePoint> {
     return IgnorePointer(
       ignoring: widget.ignorePointer,
       child: GestureDetector(
-        onTap: () => widget.onLayerTapped?.call(),
+        onTap: () {
+          widget.onTap?.call();
+        },
+        onTapDown: (details) {
+          initPoint = details.localPosition;
+          widget.onTapDown?.call();
+        },
         onScaleStart: (details) {
           initPoint = details.localFocalPoint;
           widget.onDragStart?.call(details.localFocalPoint);

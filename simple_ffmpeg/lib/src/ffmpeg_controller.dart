@@ -179,13 +179,13 @@ class FFMpegController {
 
   String _generateEncodeVideoScript(String videoFilePath, Directory directory) {
     // 총 재생 시간과 총 프레임 수에 따라 프레임레이트를 계산합니다.
-    double calculatedFramerate = totalFrame / totalDuration.inSeconds;
+    int calculatedFramerate = totalFrame ~/ totalDuration.inSeconds;
 
     String command = '';
     // 기존에 fps 대신 계산된 프레임레이트를 사용합니다.
     command = "-framerate $calculatedFramerate -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
     // 다른 플랫폼 설정이 주석 처리되어 있으므로 필요한 경우 이 부분도 적절히 조정할 수 있습니다.
-
+    developer.log('\nffmpeg command: $command\n\n');
     return command;
   }
 }
