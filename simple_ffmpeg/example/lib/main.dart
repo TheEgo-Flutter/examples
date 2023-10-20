@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,13 +35,13 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
   List<String> capturedImages = [];
   late AnimationController _animationController;
   late Animation<Color?> _colorAnimation;
-
+  final totalDuration = const Duration(seconds: 3);
   @override
   void initState() {
     super.initState();
-    ffMpegController = FFMpegController()..duration = const Duration(seconds: 2);
+    ffMpegController = FFMpegController();
     _animationController = AnimationController(
-      duration: ffMpegController.duration,
+      duration: totalDuration,
       vsync: this,
     );
     _colorAnimation = ColorTween(
@@ -70,10 +70,11 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
               ElevatedButton(
                 child: const Text('Duration to Video'),
                 onPressed: () async {
-                  File? video = await ffMpegController.captureDurationToVideo(framerate: 10);
+                  File? video =
+                      await ffMpegController.captureDurationToVideo(totalFrames: 20, totalDuration: totalDuration);
                   _videoPath = video?.path ?? '';
                   if (!(await File(_videoPath).exists())) {
-                    developer.log("파일이 존재하지 않습니다.");
+                    log("파일이 존재하지 않습니다.");
                     return;
                   }
                   _videoPlayerController = VideoPlayerController.file(File(_videoPath))
@@ -82,7 +83,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                         _videoPlayerController?.play();
                       });
                     }, onError: (error) {
-                      developer.log("Error initializing video player: $error");
+                      log("Error initializing video player: $error");
                     });
                 },
               ),
@@ -102,7 +103,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                             color: _colorAnimation.value,
                           ),
                           const Align(alignment: Alignment.topRight, child: Text('애니메이션')),
-                          Image.asset('assets/elephant.png')
+                          Image.asset('assets/animated03.png')
                         ],
                       ),
                     );
@@ -124,27 +125,6 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
                         }
                       },
                     ),
-                  ElevatedButton(
-                    child: const Text('to Video'),
-                    onPressed: () async {
-                      File? video =
-                          await ffMpegController.animationToVideo(controller: _animationController, framerate: 10);
-
-                      _videoPath = video?.path ?? '';
-                      if (!(await File(_videoPath).exists())) {
-                        developer.log("파일이 존재하지 않습니다.");
-                        return;
-                      }
-                      _videoPlayerController = VideoPlayerController.file(File(_videoPath))
-                        ..initialize().then((_) {
-                          setState(() {
-                            _videoPlayerController?.play();
-                          });
-                        }, onError: (error) {
-                          developer.log("Error initializing video player: $error");
-                        });
-                    },
-                  ),
                 ],
               ),
               Container(

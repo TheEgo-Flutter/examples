@@ -4,10 +4,12 @@ const double _cardAspectRatio = 300 / 464;
 
 class PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
+  final PhotoCardController? controller;
   final double aspectRatio;
   const PhotoCard({
     super.key,
     required this.tempSavedLayers,
+    this.controller,
     this.aspectRatio = _cardAspectRatio,
   });
 
@@ -16,6 +18,8 @@ class PhotoCard extends StatefulWidget {
 }
 
 class _PhotoCardViewerState extends State<PhotoCard> {
+  late final PhotoCardController controller;
+
   LayerManager layerManager = LayerManager();
   BoxDecoration boxDecoration = const BoxDecoration(color: Colors.white);
 
@@ -23,51 +27,52 @@ class _PhotoCardViewerState extends State<PhotoCard> {
   void initState() {
     layerManager.loadLayers(widget.tempSavedLayers);
     layerManager.newKeyLayers();
+
+    super.initState();
+    controller = (widget.controller ?? PhotoCardController())..initial(layerManager);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       boxDecoration = await loadBackgroundColor();
       setState(() {});
     });
-
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: widget.aspectRatio,
-      child: Container(
-        decoration: boxDecoration,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Stack(children: [
-              ...layerManager.layers.map(
-                (layer) {
-                  Rect newRect = computeNewObjectRect(
-                      backgroundOld: layerManager.layers.first.rect,
-                      objectOld: layer.rect,
-                      backgroundNewSize: constraints.biggest);
+    return FFmpegWidget(
+      controller: controller.ffmpegController,
+      child: AspectRatio(
+        aspectRatio: widget.aspectRatio,
+        child: Container(
+          decoration: boxDecoration,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(children: [
+                ...layerManager.layers.map(
+                  (layer) {
+                    Rect newRect = computeNewObjectRect(
+                        backgroundOld: layerManager.layers.first.rect,
+                        objectOld: layer.rect,
+                        backgroundNewSize: constraints.biggest);
 
-                  LayerItem newItem = layer.copyWith(rect: newRect);
+                    LayerItem newItem = layer.copyWith(rect: newRect);
 
-                  return Transform(
-                    transform: Matrix4.identity()
-                      ..translate(newRect.topLeft.dx, newRect.topLeft.dy)
-                      ..rotateZ(layer.angle),
-                    child: ChildLayerItem(
-                      layerItem: newItem,
-                    ),
-                  );
-                },
-              ).toList(),
-            ]);
-          },
+                    return Transform(
+                      transform: Matrix4.identity()
+                        ..translate(newRect.topLeft.dx, newRect.topLeft.dy)
+                        ..rotateZ(layer.angle),
+                      child: ChildLayerItem(
+                        layerItem: newItem,
+                      ),
+                    );
+                  },
+                ).toList(),
+              ]);
+            },
+          ),
         ),
       ),
     );
-    // ClipRRect(
-    //   borderRadius: const BorderRadius.all(CARD_RADIUS),
-    //   child: ,
-    // );
   }
 
   Future<BoxDecoration> loadBackgroundColor() async {
@@ -91,6 +96,68 @@ class _PhotoCardViewerState extends State<PhotoCard> {
         newScheme.primary,
       ],
     );
+  }
+}
+
+class PhotoCardController {
+  late FFMpegController ffmpegController;
+  late final LayerManager layerManager;
+  final List<GifController> controllers = [];
+
+  PhotoCardController();
+  void initial(LayerManager layerManager) {
+    this.layerManager = layerManager;
+    ffmpegController = FFMpegController();
+    for (var element in layerManager.layers) {
+      if (element.type is StickerType && element.object is GifView) {
+        // ffmpegController.duration =
+        //     ((element.object as GifView).fadeDuration! * (element.object as GifView).controller!.countFrames);
+        (element.object as GifView).controller != null
+            ? controllers.add((element.object as GifView).controller!)
+            : null;
+      }
+    }
+  }
+
+  void play({GifStatus? status}) {
+    if (status == null) {
+      if (controllers.first.status == GifStatus.playing) {
+        for (GifController controller in controllers) {
+          controller.pause();
+        }
+        return;
+      } else {
+        for (GifController controller in controllers) {
+          controller.play(initialFrame: 0);
+        }
+      }
+    } else {
+      if (status == GifStatus.playing) {
+        for (GifController controller in controllers) {
+          controller.pause();
+          controller.play(initialFrame: 0);
+        }
+      } else {
+        for (GifController controller in controllers) {
+          controller.pause();
+        }
+      }
+    }
+  }
+
+  Future<File?> encoding() async {
+    Duration fadeDuration = const Duration(milliseconds: 200);
+    int totalFrame = 0;
+    for (var element in layerManager.layers) {
+      if (element.type is StickerType && (element.object as GifView).fadeDuration != null) {
+        fadeDuration = (element.object as GifView).fadeDuration!;
+        totalFrame = controllers.first.countFrames;
+        break;
+      }
+    }
+    play(status: GifStatus.playing);
+
+    return await ffmpegController.captureDurationToVideo(totalFrames: totalFrame, frameDelay: fadeDuration);
   }
 }
 
