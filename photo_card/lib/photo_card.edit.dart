@@ -126,83 +126,94 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: theme,
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        key: scaffoldGlobalKey,
-        body: Stack(
-          children: [
-            GestureDetector(
-              onTap: () => swapWidget(null),
-              child: Container(
-                color: background,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-              ),
-            ),
-            LayoutBuilder(
+    return GestureDetector(
+      onTap: () => swapWidget(null),
+      child: Theme(
+        data: theme,
+        child: Scaffold(
+          key: scaffoldGlobalKey,
+          resizeToAvoidBottomInset: false,
+          backgroundColor: background,
+          body: Center(
+            child: LayoutBuilder(
               builder: (context, constraints) {
-                double space = kToolbarHeight / 3;
-                int cardFlex = 70;
-                double maxWidth = (constraints.maxHeight) * cardFlex / 100 * widget.aspectRatio;
-
-                return Center(
-                  child: SizedBox(
-                    width: maxWidth,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: statusBarHeight,
-                        ),
-                        const SizedBox(
-                          height: kToolbarHeight,
-                        ),
-                        SizedBox(
-                          height: space,
-                        ),
-                        Expanded(
-                          flex: cardFlex,
-                          child: GestureDetector(
+                const double fullAspectRatio = 360 / 760;
+                const double padding = 16;
+                double maxHeight = constraints.maxHeight;
+                double maxWidth = (constraints.maxHeight) * fullAspectRatio;
+                return Container(
+                  alignment: Alignment.center,
+                  constraints: BoxConstraints(
+                    // 최소/최대 너비와 높이를 정의합니다.
+                    minWidth: maxWidth / 3,
+                    minHeight: maxHeight / 3,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Column(
+                        children: [
+                          GestureDetector(
                             onTap: () => swapWidget(null),
-                            child: AspectRatio(
-                              aspectRatio: widget.aspectRatio,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.all(widget.cardRadius),
-                                child: buildImageLayer(context),
+                            child: Padding(
+                              padding: const EdgeInsets.all(padding),
+                              child: AspectRatio(
+                                aspectRatio: widget.aspectRatio,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.all(widget.cardRadius),
+                                  child: buildImageLayer(context),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 100 - cardFlex,
-                          child: Container(
-                            padding: EdgeInsets.only(top: space),
-                            child: Stack(
+                          const SizedBox(
+                            height: padding,
+                          ),
+                          Expanded(
+                            child: IgnorePointer(
                               key: GlobalRect().objectAreaKey,
-                              children: [
-                                IgnorePointer(
-                                  ignoring: _animationController.isAnimating,
-                                  child: buildItemArea(),
-                                ),
-                                AnimatedSwitcher(
-                                  duration: const Duration(microseconds: 100),
-                                  child: SlideTransition(
-                                    position: _offsetAnimation,
-                                    child: switchingWidget(),
-                                  ),
-                                ),
-                              ],
+                              ignoring: _animationController.isAnimating,
+                              child: buildItemArea(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(microseconds: 100),
+                          child: SlideTransition(
+                            position: _offsetAnimation,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                // GlobalRect().objectRect.height 와 GlobalRect().cardRect.height / 2 중 큰 쪽으로
+                                maxHeight: GlobalRect().objectRect.height > GlobalRect().cardRect.height / 2
+                                    ? GlobalRect().objectRect.height
+                                    : GlobalRect().cardRect.height / 2,
+                              ),
+                              child: switchingWidget(),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      /* debug code
+                       IgnorePointer(
+                        ignoring: true,
+                        child: Container(
+                          width: maxWidth,
+                          height: maxHeight,
+                          color: Colors.lightGreen.withOpacity(0.2),
+                        ),
+                      )
+                      */
+                    ],
                   ),
                 );
               },
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -287,9 +298,10 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   Widget buildItemArea() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
