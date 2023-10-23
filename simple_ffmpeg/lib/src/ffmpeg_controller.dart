@@ -1,50 +1,65 @@
 part of 'src.dart';
 
+/// The prefix used for temporary files created during frame capture.
 const String _FILE_NAME = 'capture_';
+
+/// The pixel ratio used for capturing frames.
 const double _RATIO = 3;
 
+/// A controller for capturing frames and converting them to video using FFmpeg.
 class FFMpegController {
   GlobalKey? key;
+  int _actualFrameCount = 0;
 
-  String get SCALE => '${size.width * _RATIO}:${size.height * _RATIO}';
+  /// The scale used for capturing frames.
+  String get SCALE => '${(size.width * _RATIO).toInt()}:${(size.height * _RATIO).toInt()}';
 
+  /// The size of the captured frames.
   Size get size => _size;
   Size _size = Size.zero;
   set size(Size value) => _size = value;
 
+  /// The total duration of the captured video.
   Duration get totalDuration => _totalDuration;
   Duration _totalDuration = const Duration(seconds: 2);
   set totalDuration(Duration value) => _totalDuration = value;
 
+  /// The delay between each captured frame.
   Duration get frameDelay => _frameDelay;
   Duration _frameDelay = const Duration(milliseconds: 1000 ~/ 30);
   set frameDelay(Duration value) => _frameDelay = value;
 
+  /// The total number of frames to capture.
   int get totalFrame => _totalFrame;
   int _totalFrame = 60;
   set totalFrame(int value) => _totalFrame = value;
 
+  /// The frames per second (FPS) of the captured video.
   int get fps => _fps;
   int _fps = 30; // 기본값으로 설정
   set fps(int value) => _fps = value;
 
+  /// The path to the first captured frame.
   String get firstFrame => _firstFrame;
   String _firstFrame = '';
   set firstFrame(String value) => _firstFrame = value;
 
+  /// Creates a new instance of [FFMpegController].
   FFMpegController();
 
+  /// Captures frames from the current context and saves them as image files.
   Future<void> _captureFrames() async {
     final directory = await getTemporaryDirectory();
 
-    // 임시 디렉터리에서 _FILE_NAME 접미사를 가진 모든 파일 삭제
+    // Delete all files in the temporary directory with the _FILE_NAME prefix.
     final files = directory.listSync();
+
     for (var file in files) {
       if (file is File && file.path.contains(_FILE_NAME)) {
         try {
           await file.delete();
         } catch (e) {
-          developer.log("파일 삭제 실패: ${file.path}, 오류: $e");
+          developer.log("Failed to delete file: ${file.path}, error: $e");
         }
       }
     }
@@ -53,39 +68,52 @@ class FFMpegController {
       return;
     }
 
-    // firstFrame 초기화
     firstFrame = '';
+    _actualFrameCount = 0;
 
     final renderObject = key!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     size = renderObject?.size ?? Size.zero;
 
-    for (int i = 0; i < totalFrame; i++) {
-      Uint8List? byte = await Future<Uint8List?>.delayed(frameDelay, () async {
+    try {
+      ui.Image? image = _captureContext(key!);
+
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      Uint8List? byte = byteData?.buffer.asUint8List();
+
+      final imagePath = '${directory.path}/${_FILE_NAME}00.png';
+      firstFrame = imagePath;
+
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(byte!);
+      _actualFrameCount++;
+    } catch (e) {
+      return;
+    }
+
+    for (int i = 1; i < totalFrame; i++) {
+      Uint8List? byte = await Future<Uint8List?>.delayed(Duration.zero, () async {
         try {
           ui.Image? image = _captureContext(key!);
 
           ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
           image.dispose();
+          _actualFrameCount++;
           return byteData?.buffer.asUint8List();
-        } catch (e) {
-          developer.log("캡처 실패: $e");
-        }
+        } catch (e) {}
         return null;
       });
 
-      // byte가 null이 아니고 firstFrame이 비어있을 경우 firstFrame에 저장
-
       if (byte == null) continue;
 
-      final imagePath = '${directory.path}/$_FILE_NAME${(i + 1).toString()}.png';
-      if (firstFrame.isEmpty) {
-        firstFrame = imagePath;
-      }
+      final imagePath = '${directory.path}/$_FILE_NAME${i.toString().padLeft(2, '0')}.png';
+
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(byte);
     }
   }
 
+  /// 캡처한 프레임을 FFmpeg를 사용하여 비디오로 변환합니다.
   Future<File?> _convertFramesToVideo() async {
     final completer = Completer<bool>();
     final directory = await getTemporaryDirectory();
@@ -98,94 +126,96 @@ class FFMpegController {
 
     final videoFile = await _generateVideoFilePath();
     await _deleteFile(videoFile);
-    final ffmpegCommand = _generateEncodeVideoScript(videoFile.path, directory);
 
+    final ffmpegCommand = _generateEncodeVideoScript(videoFile.path, directory);
     await FFmpegKit.executeAsync(ffmpegCommand, (session) async {
       final state = FFmpegKitConfig.sessionStateToString(await session.getState());
       final failStackTrace = await session.getFailStackTrace();
       final returnCode = await session.getReturnCode();
 
       if (ReturnCode.isSuccess(returnCode)) {
-        developer.log("성공: $state");
         completer.complete(true);
       } else {
-        developer.log("실패: $state, $failStackTrace");
         completer.completeError('변환 실패');
       }
     }, (_log) => developer.log(_log.getMessage()), (statistics) {});
 
-    await completer.future; // completer가 완료될 때까지 기다림
-
+    await completer.future;
     return videoFile;
   }
 
+  /// 지정된 기간 동안 프레임을 캡처하고 비디오로 변환합니다.
+  ///
+  /// [totalFrames] 매개변수는 캡처할 총 프레임 수를 지정합니다.
+  /// [totalDuration] 또는 [frameDelay] 매개변수 중 하나를 제공해야 합니다.
+  /// 둘 다 제공하는 경우 [frameDelay] 매개변수가 우선합니다.
   Future<File?> captureDurationToVideo(
       {required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
-    // totalDuration과 frameDelay 둘 다 제공되지 않았을 경우
     if (totalDuration == null && frameDelay == null) {
-      throw ArgumentError('totalDuration 또는 frameDelay 중 하나는 반드시 제공되어야 합니다.');
+      throw ArgumentError('totalDuration 또는 frameDelay 중 하나를 제공해야 합니다.');
     }
     totalFrame = totalFrames;
     _setDuration(frameDelay, totalDuration);
 
-    // 프레임 캡처 및 비디오 변환
     await _captureFrames();
     return await _convertFramesToVideo();
   }
 
+  /// 제공된 매개변수를 기반으로 캡처된 비디오의 길이를 설정합니다.
   void _setDuration(Duration? frameDelay, Duration? totalDuration) {
     if (frameDelay != null) {
-      this.frameDelay = frameDelay; // 사용자가 제공한 frameDelay 사용
-      this.totalDuration =
-          Duration(milliseconds: frameDelay.inMilliseconds * totalFrame); //totalFrame으로 totalDuration 계산
+      this.frameDelay = frameDelay;
+      this.totalDuration = Duration(milliseconds: frameDelay.inMilliseconds * totalFrame);
     } else if (totalDuration != null) {
-      this.totalDuration = totalDuration; // 사용자가 제공한 totalDuration 사용
-      this.frameDelay = Duration(milliseconds: totalDuration.inMilliseconds ~/ totalFrame); //totalFrame으로 frameDelay 계산
+      this.totalDuration = totalDuration;
+      this.frameDelay = Duration(milliseconds: totalDuration.inMilliseconds ~/ totalFrame);
     }
   }
 
+  /// 현재 컨텍스트를 이미지로 캡처합니다.
   ui.Image _captureContext(GlobalKey key) {
     try {
       final renderObject = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (renderObject == null) {
         throw Exception(
-          "Capturing frame context unsuccessful as context is null."
-          " Trying next frame.",
+          "컨텍스트를 캡처하는 데 실패했습니다. 다음 프레임을 시도합니다.",
         );
       }
       return renderObject.toImageSync(pixelRatio: _RATIO);
     } catch (e) {
       throw Exception(
-        "Unknown error while capturing frame context. Trying next frame.",
+        "프레임 컨텍스트를 캡처하는 동안 알 수 없는 오류가 발생했습니다. 다음 프레임을 시도합니다.",
       );
     }
   }
 
+  /// 인코딩된 비디오의 파일 경로를 생성합니다.
   Future<File> _generateVideoFilePath() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     return File("${documentsDirectory.path}/encoding_video.mp4");
   }
 
+  /// 지정된 파일이 존재하는 경우 삭제합니다.
   Future<void> _deleteFile(File file) async {
     bool exists = await file.exists();
     if (exists) {
       try {
         await file.delete();
-      } on Exception catch (e) {
-        developer.log("Exception occurred while deleting the file. $e");
-      }
+      } on Exception catch (e) {}
     }
   }
 
   String _generateEncodeVideoScript(String videoFilePath, Directory directory) {
-    // 총 재생 시간과 총 프레임 수에 따라 프레임레이트를 계산합니다.
-    double calculatedFramerate = totalFrame / totalDuration.inSeconds;
-
+    int calculatedFramerate = _actualFrameCount ~/ 2;
+    developer.log(_actualFrameCount.toString());
     String command = '';
-    // 기존에 fps 대신 계산된 프레임레이트를 사용합니다.
-    command = "-framerate $calculatedFramerate -i '${directory.path}/$_FILE_NAME%d.png' -b:v 3000k $videoFilePath";
-    // 다른 플랫폼 설정이 주석 처리되어 있으므로 필요한 경우 이 부분도 적절히 조정할 수 있습니다.
-
+    if (_actualFrameCount <= 1 || totalDuration == Duration.zero) {
+      command = "-loop 1 -i '${directory.path}/${_FILE_NAME}00.png' -t 2 -b:v 3000k  -vf scale=$SCALE $videoFilePath";
+    } else {
+      command =
+          "-framerate $calculatedFramerate -i '${directory.path}/$_FILE_NAME%02d.png' -t 2 -b:v 3000k -vf scale=$SCALE $videoFilePath";
+    }
+    developer.log(command);
     return command;
   }
 }
