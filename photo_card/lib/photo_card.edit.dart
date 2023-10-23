@@ -239,9 +239,10 @@ class _PhotoEditorState extends ConsumerState<PhotoEditor> with WidgetsBindingOb
   Widget buildItemArea() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -333,10 +333,10 @@ packages:
     dependency: transitive
     description:
       name: lottie
-      sha256: b8bdd54b488c54068c57d41ae85d02808da09e2bee8b8dd1f59f441e7efa60cd
+      sha256: a93542cc2d60a7057255405f62252533f8e8956e7e06754955669fd32fb4b216
       url: "https://pub.dev"
     source: hosted
-    version: "2.6.0"
+    version: "2.7.0"
   matcher:
     dependency: transitive
     description:
@@ -444,11 +444,9 @@ packages:
   photo_card:
     dependency: "direct main"
     description:
-      path: photo_card
-      ref: HEAD
-      resolved-ref: f097b1a4d27d977174de83bd2830ef8bfc208ef4
-      url: "https://github.com/the-ego/packages.git"
-    source: git
+      path: ".."
+      relative: true
+    source: path
     version: "0.1.0"
   platform:
     dependency: transitive
@@ -485,9 +483,11 @@ packages:
   simple_ffmpeg:
     dependency: transitive
     description:
-      path: "../../../../../../../.pub-cache/git/packages-f097b1a4d27d977174de83bd2830ef8bfc208ef4/simple_ffmpeg"
-      relative: true
-    source: path
+      path: simple_ffmpeg
+      ref: HEAD
+      resolved-ref: dc287b5479771ed1283b606de6800b0cb272308d
+      url: "https://github.com/the-ego/packages.git"
+    source: git
     version: "0.1.0"
   sky_engine:
     dependency: transitive
