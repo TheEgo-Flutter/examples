@@ -32,7 +32,7 @@ class StickerType extends LayerType {
 class TextType extends LayerType {
   TextType()
       : super(
-          isScalable: true,
+          isScalable: false,
           isDraggable: true,
           isRotatable: true,
           isObject: true,

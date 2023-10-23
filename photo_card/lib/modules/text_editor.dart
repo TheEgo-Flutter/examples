@@ -1,11 +1,10 @@
-import 'dart:developer';
-
 import 'package:du_icons/du_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_card/ui/ui.dart';
 
 import '../utils/global.dart';
 import '../utils/global.rect.dart';
+import '../utils/util.dart';
 
 List<String> fontFamilies = [];
 
@@ -38,8 +37,15 @@ class _TextEditorState extends State<TextEditor> {
     if (renderBox == null) {
       return Rect.zero;
     }
-    log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(GlobalRect().cardRect.topLeft)}\t${renderBox.localToGlobal(GlobalRect().cardRect.topLeft)}');
-    return renderBox.localToGlobal(Offset.zero) - GlobalRect().cardRect.topLeft & renderBox.size;
+
+    InlineSpan? span = TextSpan(text: input.text, style: input.style);
+    Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+
+    Rect rect = Offset((GlobalRect().cardRect.right - GlobalRect().cardRect.left) / 2 - (size.width + 30) / 2,
+            renderBox.localToGlobal(Offset.zero).dy - GlobalRect().cardRect.topLeft.dy) &
+        Size(size.width + 30, size.height + 30);
+
+    return rect;
   }
 
   TextStyle get currentTextStyle =>
@@ -108,7 +114,7 @@ class _TextEditorState extends State<TextEditor> {
                 if (textNotifier.value.trim().isEmpty) {
                   Navigator.pop(context);
                 } else {
-                  Navigator.pop(context, (input, textBoxRect.topLeft));
+                  Navigator.pop(context, (input, textBoxRect));
                 }
               },
             ),
@@ -330,7 +336,6 @@ class TextBox extends StatelessWidget {
       data: ThemeData(
         inputDecorationTheme: const InputDecorationTheme(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
         ),
       ),
       child: TextFormField(
