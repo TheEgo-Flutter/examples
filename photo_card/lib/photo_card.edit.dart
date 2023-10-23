@@ -1,13 +1,5 @@
 part of 'photo_card.dart';
 
-class DialogValue {
-  final Widget dialog;
-  final Widget no;
-  final Widget yes;
-
-  DialogValue({required this.dialog, required this.no, required this.yes});
-}
-
 class PhotoEditor extends StatefulWidget {
   final DiyResources resources;
   final double aspectRatio;
@@ -200,15 +192,15 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                           ),
                         ),
                         /* debug code
-                         IgnorePointer(
-                          ignoring: true,
-                          child: Container(
-                            width: maxWidth,
-                            height: maxHeight,
-                            color: Colors.lightGreen.withOpacity(0.2),
-                          ),
-                        )
-                        */
+                           IgnorePointer(
+                            ignoring: true,
+                            child: Container(
+                              width: maxWidth,
+                              height: maxHeight,
+                              color: Colors.lightGreen.withOpacity(0.2),
+                            ),
+                          )
+                          */
                       ],
                     ),
                   );
@@ -241,13 +233,13 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   Widget buildLayerWidgets(LayerItem layer) {
     return DraggableResizable(
       key: Key('${layer.key}_draggableResizable'),
-      isFocus: layerManager.selectedLayerItem?.key == layer.key ? true : false,
-      onLayerTapped: (LayerItem item) async {
+      canTransform: layerManager.selectedLayerItem?.key == layer.key ? true : false,
+      onTap: (LayerItem item) async {
         if (item.type is TextType) {
           setState(() {
             layerManager.removeLayerByKey(item.key);
           });
-          (TextBoxInput, Offset)? result = await showGeneralDialog(
+          (TextBoxInput, Rect)? result = await showGeneralDialog(
               context: context,
               barrierColor: Colors.transparent,
               pageBuilder: (context, animation, secondaryAnimation) {
@@ -260,23 +252,23 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             layerManager.addLayer(item);
             setState(() {});
           } else {
-            TextBoxInput value = result.$1;
-            InlineSpan? span = TextSpan(text: value.text, style: value.style);
+            // TextBoxInput value = result.$1;
+            // InlineSpan? span = TextSpan(text: value.text, style: value.style);
 
-            Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+            // Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
             LayerItem newItem = item.copyWith(
-              object: value,
-              rect: (item.rect.topLeft & size),
+              object: result.$1,
+              rect: (item.rect.topLeft & result.$2.size),
             )..newKey();
             layerManager.addLayer(newItem);
             setState(() {});
           }
         }
-        setState(() {
-          if (item.type.isObject) {
-            layerManager.swap(item);
-          }
-        });
+      },
+      onTapDown: (LayerItem item) async {
+        if (item.type.isObject) {
+          layerManager.swap(item);
+        }
       },
       onDragStart: (LayerItem item) {
         setState(() {
@@ -402,7 +394,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
     });
     switch (type) {
       case TextType():
-        (TextBoxInput, Offset)? result = await showGeneralDialog(
+        (TextBoxInput, Rect)? result = await showGeneralDialog(
           context: context,
           barrierColor: Colors.transparent,
           pageBuilder: (context, animation, secondaryAnimation) {
@@ -414,40 +406,41 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
 
         if (result == null) break;
         TextBoxInput value = result.$1;
-        InlineSpan? span = TextSpan(text: value.text, style: value.style);
-        Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
+
         var layer = LayerItem(
           UniqueKey(),
           type: TextType(),
           object: value,
-          rect: result.$2 & size,
+          rect: result.$2,
         );
         layerManager.addLayer(layer);
         setState(() {});
         break;
       case DrawingType():
-        (Uint8List?, Size?)? data = await showGeneralDialog(
-          context: context,
-          barrierColor: Colors.transparent,
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return BrushPainter(
-              cardRadius: widget.cardRadius,
-            );
-          },
-        );
+        if (mounted) {
+          (Uint8List?, Size?)? data = await showGeneralDialog(
+            context: context,
+            barrierColor: Colors.transparent,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return BrushPainter(
+                cardRadius: widget.cardRadius,
+              );
+            },
+          );
 
-        if ((data != null && data.$1 != null)) {
-          setState(() {
-            var layer = LayerItem(
-              UniqueKey(),
-              type: DrawingType(),
-              object: data.$1!,
-              rect: GlobalRect().cardRect.zero,
-            );
-            layerManager.addLayer(layer);
-          });
+          if ((data != null && data.$1 != null)) {
+            setState(() {
+              var layer = LayerItem(
+                UniqueKey(),
+                type: DrawingType(),
+                object: data.$1!,
+                rect: GlobalRect().cardRect.zero,
+              );
+              layerManager.addLayer(layer);
+            });
+          }
+          break;
         }
-        break;
       default:
         break;
     }
@@ -456,76 +449,66 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   Widget switchingWidget() {
     switch (_selectedLayer) {
       case BackgroundType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: StatefulBuilder(
-            builder: (context, dialogSetState) {
-              LayerItem? background =
-                  layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
-              Color? value = background == null
-                  ? Colors.white
-                  : background.type.background == Background.color
-                      ? (background.object as Color)
-                      : null;
-              return Column(
-                children: [
-                  ColorBar(
-                    value: value,
-                    onColorChanged: (color) async {
-                      await _loadImageColor(null);
-                      LayerItem layer = LayerItem(
-                        UniqueKey(),
-                        type: const BackgroundType.color(),
-                        object: color,
-                        rect: GlobalRect().cardRect.zero,
-                      );
-                      layerManager.addLayer(layer);
-                      dialogSetState(() {
-                        value = color; // <-- Update the local color here
-                      });
-                      setState(() {});
-                    },
-                  ),
-                  Expanded(
-                    child: ImageSelector(
-                      aspectRatio: widget.aspectRatio,
-                      items: widget.resources.backgrounds,
-                      firstItem: GestureDetector(
-                          onTap: () async {
-                            final picker = ImagePicker();
-                            var value = await picker.pickImage(source: ImageSource.gallery);
-                            if (value == null) return;
-                            Uint8List? loadImage = await _loadImage(value);
-                            await _loadImageColor(loadImage);
-                            LayerItem imageBackground = LayerItem(
-                              UniqueKey(),
-                              type: const BackgroundType.gallery(),
-                              object: Image.memory(loadImage),
-                              rect: GlobalRect().cardRect.zero,
-                            );
-                            dialogSetState(
-                              () {
-                                value = null; // <-- Reset the local color here
-                              },
-                            );
-                            setState(() {});
-                            layerManager.addLayer(imageBackground);
-                          },
-                          child: const Icon(
-                            DUIcons.picture,
-                            color: Colors.white,
-                          )),
-                      onItemSelected: (child) async {
-                        await _loadImageColor(null);
-                        LayerItem layer = LayerItem(
+        return _buildBackgroundItems();
+      case FrameType():
+        return _buildFrameItems();
+      case StickerType():
+        return _buildStickerItems();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildBackgroundItems() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: bottomSheet,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      child: StatefulBuilder(
+        builder: (context, dialogSetState) {
+          LayerItem? background = layerManager.layers.where((element) => element.type is BackgroundType).firstOrNull;
+          Color? value = background == null
+              ? Colors.white
+              : background.type.background == Background.color
+                  ? (background.object as Color)
+                  : null;
+          return Column(
+            children: [
+              ColorBar(
+                value: value,
+                onColorChanged: (color) async {
+                  await _loadImageColor(null);
+                  LayerItem layer = LayerItem(
+                    UniqueKey(),
+                    type: const BackgroundType.color(),
+                    object: color,
+                    rect: GlobalRect().cardRect.zero,
+                  );
+                  layerManager.addLayer(layer);
+                  dialogSetState(() {
+                    value = color; // <-- Update the local color here
+                  });
+                  setState(() {});
+                },
+              ),
+              Expanded(
+                child: ImageSelector(
+                  aspectRatio: widget.aspectRatio,
+                  items: widget.resources.backgrounds,
+                  firstItem: GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        var value = await picker.pickImage(source: ImageSource.gallery);
+                        if (value == null) return;
+                        Uint8List? loadImage = await _loadImage(value);
+                        await _loadImageColor(loadImage);
+                        LayerItem imageBackground = LayerItem(
                           UniqueKey(),
-                          type: const BackgroundType.image(),
-                          object: child,
+                          type: const BackgroundType.gallery(),
+                          object: Image.memory(loadImage),
                           rect: GlobalRect().cardRect.zero,
                         );
                         dialogSetState(
@@ -534,84 +517,105 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                           },
                         );
                         setState(() {});
-                        layerManager.addLayer(layer);
+                        layerManager.addLayer(imageBackground);
                       },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      case FrameType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: ImageSelector(
-            aspectRatio: widget.aspectRatio,
-            items: widget.resources.frames,
-            firstItem: GestureDetector(
-              onTap: () {
-                layerManager.removeLayerByType(FrameType());
-                setState(() {});
-              },
-              child: const Icon(
-                DUIcons.ban,
-                color: Colors.white,
-              ),
-            ),
-            onItemSelected: (child) {
-              LayerItem layer = LayerItem(
-                UniqueKey(),
-                type: FrameType(),
-                object: child,
-                rect: GlobalRect().cardRect.zero,
-              );
-              layerManager.addLayer(layer);
-              setState(() {});
-            },
-          ),
-        );
-      case StickerType():
-        return Container(
-          decoration: const BoxDecoration(
-            color: bottomSheet,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
-          ),
-          child: StickerSelector(
-            items: widget.resources.stickers,
-            onSelected: (child) {
-              if (child == null) return;
-
-              Size size = GlobalRect().stickerSize;
-              Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
-                  GlobalRect().cardRect.size.height / 2 - size.height / 2);
-              GifController controller = GifController();
-              LayerItem layer = LayerItem(
-                UniqueKey(),
-                type: StickerType(),
-                object: GifView(
-                  controller: controller,
-                  fadeDuration: const Duration(milliseconds: 300),
-                  image: child,
-                  width: size.width,
-                  height: size.height,
+                      child: const Icon(
+                        DUIcons.picture,
+                        color: Colors.white,
+                      )),
+                  onItemSelected: (child) async {
+                    await _loadImageColor(null);
+                    LayerItem layer = LayerItem(
+                      UniqueKey(),
+                      type: const BackgroundType.image(),
+                      object: child,
+                      rect: GlobalRect().cardRect.zero,
+                    );
+                    dialogSetState(
+                      () {
+                        value = null; // <-- Reset the local color here
+                      },
+                    );
+                    setState(() {});
+                    layerManager.addLayer(layer);
+                  },
                 ),
-                rect: (offset & size),
-              );
-              layerManager.addLayer(layer);
-              setState(() {});
-            },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFrameItems() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: bottomSheet,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      child: ImageSelector(
+        aspectRatio: widget.aspectRatio,
+        items: widget.resources.frames,
+        firstItem: GestureDetector(
+          onTap: () {
+            layerManager.removeLayerByType(FrameType());
+            setState(() {});
+          },
+          child: const Icon(
+            DUIcons.ban,
+            color: Colors.white,
           ),
-        );
-      default:
-        return const SizedBox.shrink();
-    }
+        ),
+        onItemSelected: (child) {
+          LayerItem layer = LayerItem(
+            UniqueKey(),
+            type: FrameType(),
+            object: child,
+            rect: GlobalRect().cardRect.zero,
+          );
+          layerManager.addLayer(layer);
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  Widget _buildStickerItems() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: bottomSheet,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      child: StickerSelector(
+        items: widget.resources.stickers,
+        onSelected: (child) {
+          if (child == null) return;
+
+          Size size = GlobalRect().stickerSize;
+          Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
+              GlobalRect().cardRect.size.height / 2 - size.height / 2);
+          GifController controller = GifController();
+          LayerItem layer = LayerItem(
+            UniqueKey(),
+            type: StickerType(),
+            object: GifView(
+              controller: controller,
+              fadeDuration: const Duration(milliseconds: 300),
+              image: child,
+              width: size.width,
+              height: size.height,
+            ),
+            rect: (offset & size),
+          );
+          layerManager.addLayer(layer);
+          setState(() {});
+        },
+      ),
+    );
   }
 }
