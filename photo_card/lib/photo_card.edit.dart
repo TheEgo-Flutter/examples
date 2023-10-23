@@ -134,84 +134,86 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           key: scaffoldGlobalKey,
           resizeToAvoidBottomInset: false,
           backgroundColor: background,
-          body: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const double fullAspectRatio = 360 / 760;
-                const double padding = 16;
-                double maxHeight = constraints.maxHeight;
-                double maxWidth = (constraints.maxHeight) * fullAspectRatio;
-                return Container(
-                  alignment: Alignment.center,
-                  constraints: BoxConstraints(
-                    // 최소/최대 너비와 높이를 정의합니다.
-                    minWidth: maxWidth / 3,
-                    minHeight: maxHeight / 3,
-                    maxWidth: maxWidth,
-                    maxHeight: maxHeight,
-                  ),
-                  child: Stack(
+          body: SafeArea(
+            child: Center(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const double fullAspectRatio = 360 / 760;
+                  const double padding = 16;
+                  double maxHeight = constraints.maxHeight;
+                  double maxWidth = (constraints.maxHeight) * fullAspectRatio;
+                  return Container(
                     alignment: Alignment.center,
-                    children: [
-                      Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () => swapWidget(null),
-                            child: Padding(
-                              padding: const EdgeInsets.all(padding),
-                              child: AspectRatio(
-                                aspectRatio: widget.aspectRatio,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.all(widget.cardRadius),
-                                  child: buildImageLayer(context),
+                    constraints: BoxConstraints(
+                      // 최소/최대 너비와 높이를 정의합니다.
+                      minWidth: maxWidth / 3,
+                      minHeight: maxHeight / 3,
+                      maxWidth: maxWidth,
+                      maxHeight: maxHeight,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => swapWidget(null),
+                              child: Padding(
+                                padding: const EdgeInsets.all(padding),
+                                child: AspectRatio(
+                                  aspectRatio: widget.aspectRatio,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.all(widget.cardRadius),
+                                    child: buildImageLayer(context),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(
-                            height: padding,
-                          ),
-                          Expanded(
-                            child: IgnorePointer(
-                              key: GlobalRect().objectAreaKey,
-                              ignoring: _animationController.isAnimating,
-                              child: buildItemArea(),
+                            const SizedBox(
+                              height: padding,
                             ),
-                          ),
-                        ],
-                      ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(microseconds: 100),
-                          child: SlideTransition(
-                            position: _offsetAnimation,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                // GlobalRect().objectRect.height 와 GlobalRect().cardRect.height / 2 중 큰 쪽으로
-                                maxHeight: GlobalRect().objectRect.height > GlobalRect().cardRect.height / 2
-                                    ? GlobalRect().objectRect.height
-                                    : GlobalRect().cardRect.height / 2,
+                            Expanded(
+                              child: IgnorePointer(
+                                key: GlobalRect().objectAreaKey,
+                                ignoring: _animationController.isAnimating,
+                                child: buildItemArea(),
                               ),
-                              child: switchingWidget(),
+                            ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(microseconds: 100),
+                            child: SlideTransition(
+                              position: _offsetAnimation,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  // GlobalRect().objectRect.height 와 GlobalRect().cardRect.height / 2 중 큰 쪽으로
+                                  maxHeight: GlobalRect().objectRect.height > GlobalRect().cardRect.height / 2
+                                      ? GlobalRect().objectRect.height
+                                      : GlobalRect().cardRect.height / 2,
+                                ),
+                                child: switchingWidget(),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      /* debug code
-                       IgnorePointer(
-                        ignoring: true,
-                        child: Container(
-                          width: maxWidth,
-                          height: maxHeight,
-                          color: Colors.lightGreen.withOpacity(0.2),
-                        ),
-                      )
-                      */
-                    ],
-                  ),
-                );
-              },
+                        /* debug code
+                         IgnorePointer(
+                          ignoring: true,
+                          child: Container(
+                            width: maxWidth,
+                            height: maxHeight,
+                            color: Colors.lightGreen.withOpacity(0.2),
+                          ),
+                        )
+                        */
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
