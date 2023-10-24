@@ -172,8 +172,7 @@ class FFMpegController {
   /// [totalFrames] 매개변수는 캡처할 총 프레임 수를 지정합니다.
   /// [totalDuration] 또는 [frameDelay] 매개변수 중 하나를 제공해야 합니다.
   /// 둘 다 제공하는 경우 [frameDelay] 매개변수가 우선합니다.
-  Future<File?> captureDurationToVideo(
-      {required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
+  Future<File?> encodingVideo({required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
     // 필요한 매개변수 검증
     if (totalDuration == null && frameDelay == null) {
       throw ArgumentError('totalDuration 또는 frameDelay 중 하나를 제공해야 합니다.');
@@ -193,6 +192,23 @@ class FFMpegController {
 
     // 프레임 캡처가 성공하면 비디오로 변환합니다.
     return await _convertFramesToVideo();
+  }
+
+  Future<File?> captureFirstFrame() async {
+    try {
+      // 첫 번째 프레임을 캡처합니다.
+      await _captureFirstFrame();
+
+      // 캡처된 이미지의 경로에서 파일을 생성합니다.
+      if (_firstFrame.isNotEmpty) {
+        return File(_firstFrame);
+      } else {
+        throw Exception('첫 번째 프레임의 경로가 유효하지 않습니다.');
+      }
+    } catch (e) {
+      print("첫 번째 프레임 캡처 중 오류 발생: $e");
+      return null; // 필요에 따라 오류 처리를 수행할 수 있습니다.
+    }
   }
 
   /// 제공된 매개변수를 기반으로 캡처된 비디오의 길이를 설정합니다.

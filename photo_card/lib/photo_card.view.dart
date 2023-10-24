@@ -157,7 +157,11 @@ class PhotoCardController {
     }
     play(status: GifStatus.playing);
 
-    return await ffmpegController.captureDurationToVideo(totalFrames: totalFrame, frameDelay: fadeDuration);
+    return await ffmpegController.encodingVideo(totalFrames: totalFrame, frameDelay: fadeDuration);
+  }
+
+  Future<File?> captureFirstFrame() async {
+    return await ffmpegController.captureFirstFrame();
   }
 }
 
