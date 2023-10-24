@@ -18,7 +18,7 @@ class PhotoCard extends StatefulWidget {
 }
 
 class _PhotoCardViewerState extends State<PhotoCard> {
-  late final PhotoCardController controller;
+  PhotoCardController controller = PhotoCardController();
 
   LayerManager layerManager = LayerManager();
   BoxDecoration boxDecoration = const BoxDecoration(color: Colors.white);
@@ -101,7 +101,7 @@ class _PhotoCardViewerState extends State<PhotoCard> {
 
 class PhotoCardController {
   late FFMpegController ffmpegController;
-  late final LayerManager layerManager;
+  LayerManager layerManager = LayerManager();
   final List<GifController> controllers = [];
 
   PhotoCardController();
