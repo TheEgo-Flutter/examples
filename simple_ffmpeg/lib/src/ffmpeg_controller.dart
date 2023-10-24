@@ -47,11 +47,23 @@ class FFMpegController {
   /// Creates a new instance of [FFMpegController].
   FFMpegController();
 
-  /// Captures frames from the current context and saves them as image files.
   Future<void> _captureFrames() async {
-    final directory = await getTemporaryDirectory();
+    await _clearTemporaryFiles(); // 임시 파일 정리
 
-    // Delete all files in the temporary directory with the _FILE_NAME prefix.
+    // 첫 번째 프레임 캡처 시도
+    try {
+      await _captureFirstFrame();
+    } catch (e) {
+      // _captureFirstFrame에서 예외가 발생하면, 여기서 catch하고 상위 함수에 예외를 다시 던집니다.
+      rethrow; // 이 예외는 captureDurationToVideo 메서드에서 처리할 수 있습니다.
+    }
+
+    // 첫 번째 프레임 캡처에 성공한 경우, 나머지 프레임을 캡처합니다.
+    await _captureRemainingFrames();
+  }
+
+  Future<void> _clearTemporaryFiles() async {
+    final directory = await getTemporaryDirectory();
     final files = directory.listSync();
 
     for (var file in files) {
@@ -63,13 +75,14 @@ class FFMpegController {
         }
       }
     }
+  }
 
+// 첫 번째 프레임 캡쳐
+  Future<void> _captureFirstFrame() async {
+    final directory = await getTemporaryDirectory();
     if (key == null) {
-      return;
+      throw Exception('GlobalKey가 null입니다.'); // 적절한 예외 처리를 위한 예외 발생
     }
-
-    firstFrame = '';
-    _actualFrameCount = 0;
 
     final renderObject = key!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     size = renderObject?.size ?? Size.zero;
@@ -88,8 +101,15 @@ class FFMpegController {
       await imageFile.writeAsBytes(byte!);
       _actualFrameCount++;
     } catch (e) {
+      // 적절한 오류 처리를 여기에 추가하세요.
+      print("첫 번째 프레임 캡처 중 오류 발생: $e");
       return;
     }
+  }
+
+// 이후 프레임 캡쳐
+  Future<void> _captureRemainingFrames() async {
+    final directory = await getTemporaryDirectory();
 
     for (int i = 1; i < totalFrame; i++) {
       Uint8List? byte = await Future<Uint8List?>.delayed(Duration.zero, () async {
@@ -100,11 +120,14 @@ class FFMpegController {
           image.dispose();
           _actualFrameCount++;
           return byteData?.buffer.asUint8List();
-        } catch (e) {}
-        return null;
+        } catch (e) {
+          // 특정 프레임 캡처 중 발생하는 예외를 처리합니다.
+          print("프레임 $i 캡처 중 오류 발생: $e");
+          return null;
+        }
       });
 
-      if (byte == null) continue;
+      if (byte == null) continue; // 오류로 인해 byte가 null인 경우, 다음 프레임 캡처로 건너뜁니다.
 
       final imagePath = '${directory.path}/$_FILE_NAME${i.toString().padLeft(2, '0')}.png';
 
@@ -151,13 +174,24 @@ class FFMpegController {
   /// 둘 다 제공하는 경우 [frameDelay] 매개변수가 우선합니다.
   Future<File?> captureDurationToVideo(
       {required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
+    // 필요한 매개변수 검증
     if (totalDuration == null && frameDelay == null) {
       throw ArgumentError('totalDuration 또는 frameDelay 중 하나를 제공해야 합니다.');
     }
+
     totalFrame = totalFrames;
     _setDuration(frameDelay, totalDuration);
 
-    await _captureFrames();
+    try {
+      await _captureFrames(); // 프레임 캡처 시도
+    } catch (e) {
+      // _captureFrames에서 발생한 예외를 처리합니다.
+      print("프레임 캡처 중 에러 발생: $e");
+      // 필요한 추가 작업을 수행할 수 있으며, 필요에 따라 여기서 오류를 던지거나 오류 상황을 처리할 수 있습니다.
+      return null; // 또는 적절한 오류 처리
+    }
+
+    // 프레임 캡처가 성공하면 비디오로 변환합니다.
     return await _convertFramesToVideo();
   }
 
