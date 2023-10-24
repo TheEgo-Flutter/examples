@@ -70,8 +70,7 @@ class _EncoderPageState extends State<EncoderPage> with SingleTickerProviderStat
               ElevatedButton(
                 child: const Text('Duration to Video'),
                 onPressed: () async {
-                  File? video =
-                      await ffMpegController.captureDurationToVideo(totalFrames: 20, totalDuration: totalDuration);
+                  File? video = await ffMpegController.encodingVideo(totalFrame: 20, totalDuration: totalDuration);
                   _videoPath = video?.path ?? '';
                   if (!(await File(_videoPath).exists())) {
                     log("파일이 존재하지 않습니다.");

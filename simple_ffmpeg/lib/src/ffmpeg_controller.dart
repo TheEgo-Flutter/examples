@@ -1,84 +1,56 @@
 part of 'src.dart';
 
-/// The prefix used for temporary files created during frame capture.
 const String _FILE_NAME = 'capture_';
-
-/// The pixel ratio used for capturing frames.
 const double _RATIO = 3;
 
-/// A controller for capturing frames and converting them to video using FFmpeg.
 class FFMpegController {
   GlobalKey? key;
-  int _actualFrameCount = 0;
-
-  /// The scale used for capturing frames.
   String get SCALE => '${(size.width * _RATIO).toInt()}:${(size.height * _RATIO).toInt()}';
-
-  /// The size of the captured frames.
   Size get size => _size;
   Size _size = Size.zero;
   set size(Size value) => _size = value;
 
-  /// The total duration of the captured video.
-  Duration get totalDuration => _totalDuration;
-  Duration _totalDuration = const Duration(seconds: 2);
-  set totalDuration(Duration value) => _totalDuration = value;
+  String firstFrame = '';
 
-  /// The delay between each captured frame.
-  Duration get frameDelay => _frameDelay;
-  Duration _frameDelay = const Duration(milliseconds: 1000 ~/ 30);
-  set frameDelay(Duration value) => _frameDelay = value;
-
-  /// The total number of frames to capture.
-  int get totalFrame => _totalFrame;
-  int _totalFrame = 60;
-  set totalFrame(int value) => _totalFrame = value;
-
-  /// The frames per second (FPS) of the captured video.
-  int get fps => _fps;
-  int _fps = 30; // 기본값으로 설정
-  set fps(int value) => _fps = value;
-
-  /// The path to the first captured frame.
-  String get firstFrame => _firstFrame;
-  String _firstFrame = '';
-  set firstFrame(String value) => _firstFrame = value;
-
-  /// Creates a new instance of [FFMpegController].
   FFMpegController();
 
-  Future<void> _captureFrames() async {
-    await _clearTemporaryFiles(); // 임시 파일 정리
+  Future<File?> captureFirstFrame() => _captureFirstFrame();
 
-    // 첫 번째 프레임 캡처 시도
+  Future<File?> encodingVideo({int totalFrame = 20, Duration totalDuration = const Duration(seconds: 2)}) async {
+    List<File> capturedFrames = [];
     try {
-      await _captureFirstFrame();
+      capturedFrames = await _captureFrames(totalFrame: totalFrame, totalDuration: totalDuration);
     } catch (e) {
-      // _captureFirstFrame에서 예외가 발생하면, 여기서 catch하고 상위 함수에 예외를 다시 던집니다.
-      rethrow; // 이 예외는 captureDurationToVideo 메서드에서 처리할 수 있습니다.
+      developer.log("프레임 캡처 중 에러 발생: $e");
+      return null;
     }
-
-    // 첫 번째 프레임 캡처에 성공한 경우, 나머지 프레임을 캡처합니다.
-    await _captureRemainingFrames();
+    return await _convertFramesToVideo(capturedFrames: capturedFrames, totalDuration: totalDuration);
   }
 
-  Future<void> _clearTemporaryFiles() async {
-    final directory = await getTemporaryDirectory();
-    final files = directory.listSync();
+  Future<List<File>> _captureFrames({required int totalFrame, required Duration totalDuration}) async {
+    await _clearTemporaryFiles();
+    List<File> capturedFrames = [];
 
-    for (var file in files) {
-      if (file is File && file.path.contains(_FILE_NAME)) {
-        try {
-          await file.delete();
-        } catch (e) {
-          developer.log("Failed to delete file: ${file.path}, error: $e");
-        }
+    try {
+      File? file = await _captureFirstFrame();
+      if (file != null && file.existsSync()) {
+        capturedFrames.add(file);
+      }
+    } catch (e) {
+      rethrow;
+    }
+    if (totalFrame > 1) {
+      List<File>? files = await _captureRemainingFrames(totalFrame: totalFrame, totalDuration: totalDuration);
+      if (files != null) {
+        capturedFrames.addAll(files);
       }
     }
+
+    return capturedFrames;
   }
 
 // 첫 번째 프레임 캡쳐
-  Future<void> _captureFirstFrame() async {
+  Future<File?> _captureFirstFrame() async {
     final directory = await getTemporaryDirectory();
     if (key == null) {
       throw Exception('GlobalKey가 null입니다.'); // 적절한 예외 처리를 위한 예외 발생
@@ -99,26 +71,28 @@ class FFMpegController {
 
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(byte!);
-      _actualFrameCount++;
+
+      return imageFile;
     } catch (e) {
       // 적절한 오류 처리를 여기에 추가하세요.
       print("첫 번째 프레임 캡처 중 오류 발생: $e");
-      return;
+      return null;
     }
   }
 
 // 이후 프레임 캡쳐
-  Future<void> _captureRemainingFrames() async {
+  Future<List<File>?> _captureRemainingFrames({required int totalFrame, required Duration totalDuration}) async {
     final directory = await getTemporaryDirectory();
-
+    final List<File> capturedFrames = [];
+    Duration delay = totalDuration ~/ totalFrame;
     for (int i = 1; i < totalFrame; i++) {
-      Uint8List? byte = await Future<Uint8List?>.delayed(Duration.zero, () async {
+      Uint8List? byte = await Future<Uint8List?>.delayed(delay, () async {
         try {
           ui.Image? image = _captureContext(key!);
 
           ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
           image.dispose();
-          _actualFrameCount++;
+
           return byteData?.buffer.asUint8List();
         } catch (e) {
           // 특정 프레임 캡처 중 발생하는 예외를 처리합니다.
@@ -133,11 +107,14 @@ class FFMpegController {
 
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(byte);
+      capturedFrames.add(imageFile);
     }
+
+    return capturedFrames.isNotEmpty ? capturedFrames : null;
   }
 
   /// 캡처한 프레임을 FFmpeg를 사용하여 비디오로 변환합니다.
-  Future<File?> _convertFramesToVideo() async {
+  Future<File?> _convertFramesToVideo({required List<File> capturedFrames, required Duration totalDuration}) async {
     final completer = Completer<bool>();
     final directory = await getTemporaryDirectory();
 
@@ -150,7 +127,7 @@ class FFMpegController {
     final videoFile = await _generateVideoFilePath();
     await _deleteFile(videoFile);
 
-    final ffmpegCommand = _generateEncodeVideoScript(videoFile.path, directory);
+    final ffmpegCommand = _generateEncodeVideoScript(capturedFrames.length, totalDuration, videoFile.path, directory);
     await FFmpegKit.executeAsync(ffmpegCommand, (session) async {
       final state = FFmpegKitConfig.sessionStateToString(await session.getState());
       final failStackTrace = await session.getFailStackTrace();
@@ -161,65 +138,10 @@ class FFMpegController {
       } else {
         completer.completeError('변환 실패');
       }
-    }, (_log) => developer.log(_log.getMessage()), (statistics) {});
+    }, (log) => developer.log(log.getMessage()), (statistics) {});
 
     await completer.future;
     return videoFile;
-  }
-
-  /// 지정된 기간 동안 프레임을 캡처하고 비디오로 변환합니다.
-  ///
-  /// [totalFrames] 매개변수는 캡처할 총 프레임 수를 지정합니다.
-  /// [totalDuration] 또는 [frameDelay] 매개변수 중 하나를 제공해야 합니다.
-  /// 둘 다 제공하는 경우 [frameDelay] 매개변수가 우선합니다.
-  Future<File?> encodingVideo({required int totalFrames, Duration? totalDuration, Duration? frameDelay}) async {
-    // 필요한 매개변수 검증
-    if (totalDuration == null && frameDelay == null) {
-      throw ArgumentError('totalDuration 또는 frameDelay 중 하나를 제공해야 합니다.');
-    }
-
-    totalFrame = totalFrames;
-    _setDuration(frameDelay, totalDuration);
-
-    try {
-      await _captureFrames(); // 프레임 캡처 시도
-    } catch (e) {
-      // _captureFrames에서 발생한 예외를 처리합니다.
-      print("프레임 캡처 중 에러 발생: $e");
-      // 필요한 추가 작업을 수행할 수 있으며, 필요에 따라 여기서 오류를 던지거나 오류 상황을 처리할 수 있습니다.
-      return null; // 또는 적절한 오류 처리
-    }
-
-    // 프레임 캡처가 성공하면 비디오로 변환합니다.
-    return await _convertFramesToVideo();
-  }
-
-  Future<File?> captureFirstFrame() async {
-    try {
-      // 첫 번째 프레임을 캡처합니다.
-      await _captureFirstFrame();
-
-      // 캡처된 이미지의 경로에서 파일을 생성합니다.
-      if (_firstFrame.isNotEmpty) {
-        return File(_firstFrame);
-      } else {
-        throw Exception('첫 번째 프레임의 경로가 유효하지 않습니다.');
-      }
-    } catch (e) {
-      print("첫 번째 프레임 캡처 중 오류 발생: $e");
-      return null; // 필요에 따라 오류 처리를 수행할 수 있습니다.
-    }
-  }
-
-  /// 제공된 매개변수를 기반으로 캡처된 비디오의 길이를 설정합니다.
-  void _setDuration(Duration? frameDelay, Duration? totalDuration) {
-    if (frameDelay != null) {
-      this.frameDelay = frameDelay;
-      this.totalDuration = Duration(milliseconds: frameDelay.inMilliseconds * totalFrame);
-    } else if (totalDuration != null) {
-      this.totalDuration = totalDuration;
-      this.frameDelay = Duration(milliseconds: totalDuration.inMilliseconds ~/ totalFrame);
-    }
   }
 
   /// 현재 컨텍스트를 이미지로 캡처합니다.
@@ -239,10 +161,19 @@ class FFMpegController {
     }
   }
 
-  /// 인코딩된 비디오의 파일 경로를 생성합니다.
-  Future<File> _generateVideoFilePath() async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    return File("${documentsDirectory.path}/encoding_video.mp4");
+  Future<void> _clearTemporaryFiles() async {
+    final directory = await getTemporaryDirectory();
+    final files = directory.listSync();
+
+    for (var file in files) {
+      if (file is File && file.path.contains(_FILE_NAME)) {
+        try {
+          await file.delete();
+        } catch (e) {
+          developer.log("Failed to delete file: ${file.path}, error: $e");
+        }
+      }
+    }
   }
 
   /// 지정된 파일이 존재하는 경우 삭제합니다.
@@ -255,15 +186,22 @@ class FFMpegController {
     }
   }
 
-  String _generateEncodeVideoScript(String videoFilePath, Directory directory) {
-    int calculatedFramerate = _actualFrameCount ~/ 2;
-    developer.log(_actualFrameCount.toString());
+  /// 인코딩된 비디오의 파일 경로를 생성합니다.
+  Future<File> _generateVideoFilePath() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    return File("${documentsDirectory.path}/encoding_video.mp4");
+  }
+
+  String _generateEncodeVideoScript(int frames, Duration duration, String videoFilePath, Directory directory) {
+    int framerate = frames ~/ duration.inSeconds;
+    developer.log(frames.toString());
     String command = '';
-    if (_actualFrameCount <= 1 || totalDuration == Duration.zero) {
-      command = "-loop 1 -i '${directory.path}/${_FILE_NAME}00.png' -t 2 -b:v 3000k  -vf scale=$SCALE $videoFilePath";
+    if (frames <= 1) {
+      command =
+          "-loop 1 -i '${directory.path}/${_FILE_NAME}00.png' -t ${duration.inSeconds} -b:v 3000k  -vf scale=$SCALE $videoFilePath";
     } else {
       command =
-          "-framerate $calculatedFramerate -i '${directory.path}/$_FILE_NAME%02d.png' -t 2 -b:v 3000k -vf scale=$SCALE $videoFilePath";
+          "-framerate $framerate -i '${directory.path}/$_FILE_NAME%02d.png' -t ${duration.inSeconds} -b:v 3000k -vf scale=$SCALE $videoFilePath";
     }
     developer.log(command);
     return command;
