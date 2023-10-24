@@ -59,7 +59,6 @@ class ChildLayerItem extends StatelessWidget {
             return (layerItem.object as GifView).copyWith(
               image: layerItem.object.image,
               controller: layerItem.object.controller,
-              fadeDuration: layerItem.object.fadeDuration,
               width: targetSize.width,
               height: targetSize.height,
             );

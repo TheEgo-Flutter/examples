@@ -75,7 +75,7 @@ class FFMpegController {
       return imageFile;
     } catch (e) {
       // 적절한 오류 처리를 여기에 추가하세요.
-      print("첫 번째 프레임 캡처 중 오류 발생: $e");
+      developer.log("첫 번째 프레임 캡처 중 오류 발생: $e");
       return null;
     }
   }
@@ -96,7 +96,7 @@ class FFMpegController {
           return byteData?.buffer.asUint8List();
         } catch (e) {
           // 특정 프레임 캡처 중 발생하는 예외를 처리합니다.
-          print("프레임 $i 캡처 중 오류 발생: $e");
+          developer.log("프레임 $i 캡처 중 오류 발생: $e");
           return null;
         }
       });
@@ -182,7 +182,9 @@ class FFMpegController {
     if (exists) {
       try {
         await file.delete();
-      } on Exception catch (e) {}
+      } catch (e) {
+        developer.log("Failed to delete file: ${file.path}, error: $e");
+      }
     }
   }
 
@@ -194,7 +196,6 @@ class FFMpegController {
 
   String _generateEncodeVideoScript(int frames, Duration duration, String videoFilePath, Directory directory) {
     int framerate = frames ~/ duration.inSeconds;
-    developer.log(frames.toString());
     String command = '';
     if (frames <= 1) {
       command =

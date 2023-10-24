@@ -62,7 +62,6 @@ class _ImageEditorState extends State<ImageEditor> {
 
   @override
   Widget build(BuildContext mainContext) {
-    int cardFlex = 70;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: FutureBuilder(
@@ -193,7 +192,7 @@ class _CardViewPageState extends State<CardViewPage> {
             FloatingActionButton(
               heroTag: 'video',
               onPressed: () async {
-                File? _file = await controller.encoding();
+                File? _file = await controller.encodeVideo();
                 setState(() {
                   file = _file;
                 });

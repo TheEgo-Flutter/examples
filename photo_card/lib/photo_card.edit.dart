@@ -605,7 +605,6 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
             type: StickerType(),
             object: GifView(
               controller: controller,
-              fadeDuration: const Duration(milliseconds: 300),
               image: child,
               width: size.width,
               height: size.height,

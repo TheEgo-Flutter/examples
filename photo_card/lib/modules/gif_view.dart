@@ -103,7 +103,7 @@ class GifView extends StatefulWidget {
     Uint8List bytes, {
     Key? key,
     this.controller,
-    this.frameRate = 15,
+    this.frameRate = 20,
     this.height,
     this.width,
     this.progress,
@@ -128,7 +128,7 @@ class GifView extends StatefulWidget {
     Key? key,
     required this.image,
     this.controller,
-    this.frameRate = 15,
+    this.frameRate = 20,
     this.height,
     this.width,
     this.progress,
@@ -160,7 +160,7 @@ class GifViewState extends State<GifView> with TickerProviderStateMixin {
     if (widget.withOpacityAnimation) {
       _animationController = AnimationController(
         vsync: this,
-        duration: widget.fadeDuration ?? const Duration(milliseconds: 300),
+        duration: widget.fadeDuration ?? const Duration(milliseconds: 100),
       );
     }
     controller = widget.controller ?? GifController();

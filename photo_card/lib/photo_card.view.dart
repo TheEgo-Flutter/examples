@@ -148,33 +148,7 @@ class PhotoCardController {
     }
   }
 
-  @Deprecated('migration')
-  Future<File?> encoding() async {
-    int totalFrame = 0;
-    for (var element in layerManager.layers) {
-      if (element.type is StickerType && (element.object as GifView).fadeDuration != null) {
-        totalFrame = controllers.first.countFrames;
-        break;
-      }
-    }
-    play(status: GifStatus.playing);
-
-    return await ffmpegController.encodingVideo(totalFrame: totalFrame);
-  }
-
   Future<File?> encodeVideo() async {
-    // controllers GifController.countFrames중 가장 큰 값으로 설정
-    log(controllers.map((e) => e.countFrames).reduce((value, element) => value > element ? value : element).toString());
-    // int maxFrame = controllers.sort((a, b) => a.countFrames.compareTo(b.countFrames));
-
-    // for (var element in layerManager.layers) {
-    //   if (element.type is StickerType && (element.object as GifView).fadeDuration != null) {
-    //     totalFrame = controllers.first.countFrames;
-    //     break;
-    //   }
-    // }
-    play(status: GifStatus.playing);
-
     return await ffmpegController.encodingVideo(totalFrame: 20, totalDuration: const Duration(seconds: 2));
   }
 
