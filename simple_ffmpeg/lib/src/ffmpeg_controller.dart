@@ -198,10 +198,12 @@ class FFMpegController {
     String command = '';
     if (frames <= 1) {
       command =
-          "-loop 1 -i '${directory.path}/${_FILE_NAME}00.png' -t ${duration.inSeconds} -b:v 3000k  -vf scale=$SCALE $videoFilePath";
+          "-loop 1 -i '${directory.path}/${_FILE_NAME}00.png' -t 2 -c:v h264 -b:v 3000k  -vf scale=$SCALE $videoFilePath";
     } else {
       command =
-          "-framerate $framerate -i '${directory.path}/$_FILE_NAME%02d.png' -t ${duration.inSeconds} -b:v 3000k -vf scale=$SCALE $videoFilePath";
+          "-framerate $framerate -i '${directory.path}/$_FILE_NAME%02d.png' -t ${duration.inSeconds} -c:v h264 -b:v 3000k -vf scale=$SCALE $videoFilePath";
+
+      // "-framerate $framerate -i '${directory.path}/$_FILE_NAME%02d.png' -t ${duration.inSeconds} -b:v 3000k -vf scale=$SCALE $videoFilePath";
     }
     developer.log(command);
     return command;
