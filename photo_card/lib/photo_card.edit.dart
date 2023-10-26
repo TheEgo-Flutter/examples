@@ -498,7 +498,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
                 child: ImageSelector(
                   aspectRatio: widget.aspectRatio,
                   items: widget.resources.backgrounds,
-                  firstItem: GestureDetector(
+                  firstItem: SelectorFirstItem(
                       onTap: () async {
                         final picker = ImagePicker();
                         var value = await picker.pickImage(source: ImageSource.gallery);
@@ -559,7 +559,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       child: ImageSelector(
         aspectRatio: widget.aspectRatio,
         items: widget.resources.frames,
-        firstItem: GestureDetector(
+        firstItem: SelectorFirstItem(
           onTap: () {
             layerManager.removeLayerByType(FrameType());
             setState(() {});

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../utils/global.dart';
 
+class SelectorFirstItem {
+  final Widget? child;
+  final VoidCallback? onTap;
+  SelectorFirstItem({this.child, this.onTap});
+}
+
 class ImageSelector extends StatefulWidget {
-  final Widget? firstItem;
   final List<ImageProvider> items;
   final ValueChanged<ImageProvider?> onItemSelected;
   final double aspectRatio;
+  final SelectorFirstItem? firstItem;
   const ImageSelector({
     Key? key,
     required this.aspectRatio,
@@ -39,12 +45,15 @@ class ImageSelectorState extends State<ImageSelector> {
       itemBuilder: (context, index) {
         Widget? item;
         if (index == 0 && widget.firstItem != null) {
-          item = Container(
-            decoration: BoxDecoration(
-              color: bottomItem,
-              borderRadius: BorderRadius.circular(4),
+          item = GestureDetector(
+            onTap: widget.firstItem?.onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                color: bottomItem,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: widget.firstItem?.child,
             ),
-            child: widget.firstItem,
           );
         } else {
           int itemIndex = index - (widget.firstItem == null ? 0 : 1);
