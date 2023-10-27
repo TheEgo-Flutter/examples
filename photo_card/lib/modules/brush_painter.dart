@@ -40,6 +40,7 @@ class _BrushPainterState extends State<BrushPainter> {
   }
 
   void changeColor(Color color) {
+    _drawingController.setPaintContent(SimpleLine());
     setState(() {
       _drawingController.drawConfig.value = _drawingController.drawConfig.value.copyWith(color: color);
     });
