@@ -48,8 +48,20 @@ class _TextEditorState extends State<TextEditor> {
     return rect;
   }
 
-  TextStyle get currentTextStyle =>
-      TextStyle(color: currentColor, fontSize: fontSize.toDouble(), fontFamily: fontFamilies[selectedFontIndex]);
+  TextStyle get currentTextStyle => TextStyle(
+        color: currentColor,
+        fontSize: fontSize.toDouble(),
+        fontFamily: _fontFamily,
+        fontWeight: _fontWeight,
+        letterSpacing: 2.0,
+      );
+  String get _fontFamily {
+    return fontFamilies[selectedFontIndex];
+  }
+
+  FontWeight get _fontWeight {
+    return fontFamilies[selectedFontIndex].toLowerCase().contains('bold') ? FontWeight.bold : FontWeight.normal;
+  }
 
   IconData get icon {
     switch (align) {
@@ -236,7 +248,7 @@ class _TextEditorState extends State<TextEditor> {
             String fontFamily = fontFamilies[index];
             bool isSelected = selectedFontIndex == index;
             return ChoiceChip(
-              label: Text('Aa',
+              label: Text('가',
                   style: TextStyle(
                     color: isSelected ? Colors.purple[900] : Colors.white,
                     fontFamily: fontFamily,
