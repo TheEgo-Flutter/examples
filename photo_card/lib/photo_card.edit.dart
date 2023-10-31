@@ -1,6 +1,7 @@
 part of 'photo_card.dart';
 
 class PhotoEditor extends StatefulWidget {
+  final FFMpegController? ffmpegController;
   final DiyResources resources;
   final double aspectRatio;
   final Widget completed;
@@ -12,6 +13,7 @@ class PhotoEditor extends StatefulWidget {
   const PhotoEditor({
     Key? key,
     required this.resources,
+    this.ffmpegController,
     this.aspectRatio = 300 / 464,
     this.cardRadius = const Radius.circular(16),
     this.completed = const Text('저장'),
@@ -214,18 +216,21 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   }
 
   Widget buildImageLayer(BuildContext context) {
-    return Container(
-      key: GlobalRect().cardAreaKey,
-      decoration: cardColor != null
-          ? BoxDecoration(
-              gradient: cardColor,
-            )
-          : const BoxDecoration(color: Colors.white),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
-        ],
+    return FFmpegWidget(
+      controller: widget.ffmpegController,
+      child: Container(
+        key: GlobalRect().cardAreaKey,
+        decoration: cardColor != null
+            ? BoxDecoration(
+                gradient: cardColor,
+              )
+            : const BoxDecoration(color: Colors.white),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ...layerManager.layers.map((layer) => buildLayerWidgets(layer)),
+          ],
+        ),
       ),
     );
   }
