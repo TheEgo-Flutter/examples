@@ -2,6 +2,7 @@ part of 'photo_card.dart';
 
 const double _cardAspectRatio = 300 / 464;
 
+@Deprecated('Use PhotoEditor instead')
 class PhotoCard extends StatefulWidget {
   final List<LayerItem> tempSavedLayers;
   final PhotoCardController? controller;
