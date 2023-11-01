@@ -62,12 +62,17 @@ class _BrushPainterState extends State<BrushPainter> {
   }
 
   void changeColor(Color color) {
+    setState(() {
+      isEraserSelected = false; // Toggle the eraser selection state
+    });
     widget.drawingDataNotifier.drawingController.setPaintContent(SimpleLine());
     setState(() {
       widget.drawingDataNotifier.drawingController.drawConfig.value =
           widget.drawingDataNotifier.drawingController.drawConfig.value.copyWith(color: color);
     });
   }
+
+  bool isEraserSelected = false; // Add a boolean variable to keep track of eraser selection
 
   @override
   Widget build(BuildContext context) {
@@ -123,17 +128,26 @@ class _BrushPainterState extends State<BrushPainter> {
                     icon: const Icon(DUIcons.undo),
                     color: Colors.white,
                   ),
-                  IconButton(
-                    onPressed: () =>
-                        widget.drawingDataNotifier.drawingController.setPaintContent(Eraser(color: Colors.white)),
-                    icon: const Icon(DUIcons.eraser),
-                    color: Colors.white,
+                  CircleAvatar(
+                    backgroundColor: isEraserSelected ? Colors.white : Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          isEraserSelected = true; // Toggle the eraser selection state
+                        });
+                        widget.drawingDataNotifier.drawingController.setPaintContent(Eraser(color: Colors.white));
+                      },
+                      child: Icon(
+                        DUIcons.eraser,
+                        color: isEraserSelected ? Colors.black : Colors.white,
+                      ),
+                    ),
                   )
                 ],
               ),
               ColorBar(
                 onColorChanged: changeColor,
-                value: widget.drawingDataNotifier.drawingController.getColor,
+                value: isEraserSelected ? null : widget.drawingDataNotifier.drawingController.getColor,
               ),
             ],
           ),
