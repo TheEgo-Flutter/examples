@@ -113,40 +113,40 @@ class _DraggableResizableState extends State<DraggableResizable> with SingleTick
       children: <Widget>[
         Transform.translate(
           offset: offset,
-          child: Transform.rotate(
-            angle: angle,
-            child: _DraggablePoint(
-              ignorePointer: widget.layerItem.type.ignorePoint,
-              onTap: () {
-                widget.onTap?.call(layerItem);
-              },
-              onTapDown: () {
-                widget.onTapDown?.call(layerItem);
-              },
-              onDragStart: (d) {
-                setState(() {
-                  isFocus = true;
-                });
-                widget.onDragStart?.call(layerItem);
-                startingFingerPositionFromObject = d;
-              },
-              onDragEnd: () {
-                setState(() {
-                  isFocus = false;
-                });
-                _handleDeleteAction(false);
-                widget.onDragEnd?.call(layerItem);
-              },
-              onDrag: widget.layerItem.type.isDraggable
-                  ? (d, focalPoint) async {
-                      offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
+          child: _DraggablePoint(
+            ignorePointer: widget.layerItem.type.ignorePoint,
+            onTap: () {
+              widget.onTap?.call(layerItem);
+            },
+            onTapDown: () {
+              widget.onTapDown?.call(layerItem);
+            },
+            onDragStart: (d) {
+              setState(() {
+                isFocus = true;
+              });
+              widget.onDragStart?.call(layerItem);
+              startingFingerPositionFromObject = d;
+            },
+            onDragEnd: () {
+              setState(() {
+                isFocus = false;
+              });
+              _handleDeleteAction(false);
+              widget.onDragEnd?.call(layerItem);
+            },
+            onDrag: widget.layerItem.type.isDraggable
+                ? (d, focalPoint) async {
+                    offset = Offset(offset.dx + d.dx, offset.dy + d.dy);
 
-                      currentFingerPosition = startingFingerPositionFromObject + offset;
-                      _handleDeleteAction(true);
-                    }
-                  : null,
-              onScale: widget.layerItem.type.isScalable ? (s) => _handleScale(s) : null,
-              onRotate: widget.layerItem.type.isRotatable ? (a) => angle = a : null,
+                    currentFingerPosition = startingFingerPositionFromObject + offset;
+                    _handleDeleteAction(true);
+                  }
+                : null,
+            onScale: widget.layerItem.type.isScalable ? (s) => _handleScale(s) : null,
+            onRotate: widget.layerItem.type.isRotatable ? (a) => angle = a : null,
+            child: Transform.rotate(
+              angle: angle,
               child: ChildLayerItem(layerItem: layerItem, customSize: size),
             ),
           ),
