@@ -4,52 +4,69 @@ import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/helpers.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
-import 'package:photo_card/ui/ui.dart';
-import 'package:photo_card/utils/global.dart';
+import 'package:photo_card/photo_card.dart';
 
-import '../utils/global.rect.dart';
-
-class BrushPainter extends StatefulWidget {
-  const BrushPainter({super.key, required this.cardRadius});
-  final Radius cardRadius;
-  @override
-  State<BrushPainter> createState() => _BrushPainterState();
-}
-
-class _BrushPainterState extends State<BrushPainter> {
+class DrawingDataNotifier with ChangeNotifier {
+  List<PaintContent> _drawingData;
   late final DrawingController _drawingController;
-
-  double min = 2;
-  double max = 28;
-  @override
-  void initState() {
-    super.initState();
+  DrawingDataNotifier(this._drawingData) {
     _drawingController = DrawingController(
         config: DrawConfig(
       contentType: SmoothLine,
       color: colors[0],
       strokeWidth: 8,
     ))
-      ..addContents(drawingData);
+      ..addContents(_drawingData);
+  }
+
+  List<PaintContent> get drawingData => _drawingData;
+
+  set drawingData(List<PaintContent> value) {
+    _drawingData = value;
+    notifyListeners();
+  }
+
+  DrawingController get drawingController => _drawingController;
+
+  set drawingController(DrawingController value) {
+    _drawingController = value;
+    notifyListeners();
+  }
+
+  Future<(Uint8List, Size)?> getImageData(BuildContext context) async {
+    final Uint8List? data = (await drawingController.getImageData())?.buffer.asUint8List();
+    Size? size = drawingController.drawConfig.value.size; // same as cardRect.size
+    return data == null || size == null ? null : (data, size);
+  }
+}
+
+class BrushPainter extends StatefulWidget {
+  const BrushPainter({super.key, required this.cardRadius, required this.drawingDataNotifier});
+  final Radius cardRadius;
+  final DrawingDataNotifier drawingDataNotifier;
+  @override
+  State<BrushPainter> createState() => _BrushPainterState();
+}
+
+class _BrushPainterState extends State<BrushPainter> {
+  double min = 2;
+  double max = 28;
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
   void dispose() {
-    _drawingController.dispose();
     super.dispose();
   }
 
   void changeColor(Color color) {
-    _drawingController.setPaintContent(SimpleLine());
+    widget.drawingDataNotifier.drawingController.setPaintContent(SimpleLine());
     setState(() {
-      _drawingController.drawConfig.value = _drawingController.drawConfig.value.copyWith(color: color);
+      widget.drawingDataNotifier.drawingController.drawConfig.value =
+          widget.drawingDataNotifier.drawingController.drawConfig.value.copyWith(color: color);
     });
-  }
-
-  Future<(Uint8List, Size)?> _getImageData(BuildContext context) async {
-    final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    Size? size = _drawingController.drawConfig.value.size; // same as cardRect.size
-    return data == null || size == null ? null : (data, size);
   }
 
   @override
@@ -64,9 +81,10 @@ class _BrushPainterState extends State<BrushPainter> {
       ),
       top: GlobalToolBar(
         onConfirmPressed: () async {
-          drawingData = _drawingController.getHistory.sublist(0, _drawingController.currentIndex);
+          widget.drawingDataNotifier.drawingData = widget.drawingDataNotifier.drawingController.getHistory
+              .sublist(0, widget.drawingDataNotifier.drawingController.currentIndex);
 
-          Navigator.pop(context, await _getImageData(context));
+          Navigator.pop(context);
         },
       ),
       center: ClipRRect(
@@ -75,7 +93,7 @@ class _BrushPainterState extends State<BrushPainter> {
           width: GlobalRect().cardRect.width,
           height: GlobalRect().cardRect.height,
           child: DrawingBoard(
-            controller: _drawingController,
+            controller: widget.drawingDataNotifier.drawingController,
             background: Container(
               width: GlobalRect().cardRect.width,
               height: GlobalRect().cardRect.height,
@@ -101,12 +119,13 @@ class _BrushPainterState extends State<BrushPainter> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    onPressed: () => _drawingController.undo(),
+                    onPressed: () => widget.drawingDataNotifier.drawingController.undo(),
                     icon: const Icon(DUIcons.undo),
                     color: Colors.white,
                   ),
                   IconButton(
-                    onPressed: () => _drawingController.setPaintContent(Eraser(color: Colors.white)),
+                    onPressed: () =>
+                        widget.drawingDataNotifier.drawingController.setPaintContent(Eraser(color: Colors.white)),
                     icon: const Icon(DUIcons.eraser),
                     color: Colors.white,
                   )
@@ -114,14 +133,14 @@ class _BrushPainterState extends State<BrushPainter> {
               ),
               ColorBar(
                 onColorChanged: changeColor,
-                value: _drawingController.getColor,
+                value: widget.drawingDataNotifier.drawingController.getColor,
               ),
             ],
           ),
         ),
       ),
       left: ExValueBuilder<DrawConfig>(
-        valueListenable: _drawingController.drawConfig,
+        valueListenable: widget.drawingDataNotifier.drawingController.drawConfig,
         shouldRebuild: (DrawConfig p, DrawConfig n) => p.strokeWidth != n.strokeWidth,
         builder: (_, DrawConfig dc, ___) {
           return VerticalSlider(
@@ -129,7 +148,7 @@ class _BrushPainterState extends State<BrushPainter> {
             max: max,
             value: dc.strokeWidth,
             thumbColor: accent,
-            onChanged: (double v) => _drawingController.setStyle(strokeWidth: v),
+            onChanged: (double v) => widget.drawingDataNotifier.drawingController.setStyle(strokeWidth: v),
           );
         },
       ),

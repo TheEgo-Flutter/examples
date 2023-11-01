@@ -34,11 +34,11 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
   double get statusBarHeight => MediaQuery.of(context).padding.top;
+  final DrawingDataNotifier drawingDataNotifier = DrawingDataNotifier([]);
   @override
   void initState() {
     super.initState();
     fontFamilies = widget.resources.fonts;
-    drawingData = [];
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -423,27 +423,32 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
         break;
       case DrawingType():
         if (mounted) {
-          (Uint8List?, Size?)? data = await showGeneralDialog(
+          setState(() {
+            layerManager.removeLayerByType(DrawingType());
+          });
+          await showGeneralDialog(
             context: context,
             barrierColor: Colors.transparent,
             pageBuilder: (context, animation, secondaryAnimation) {
               return BrushPainter(
+                drawingDataNotifier: drawingDataNotifier,
                 cardRadius: widget.cardRadius,
               );
             },
-          );
-
-          if ((data != null && data.$1 != null)) {
-            setState(() {
-              var layer = LayerItem(
+          ).whenComplete(() async {
+            (Uint8List?, Size?)? data = await drawingDataNotifier.getImageData(context);
+            if ((data != null && data.$1 != null)) {
+              LayerItem layer = LayerItem(
                 UniqueKey(),
                 type: DrawingType(),
-                object: data.$1!,
+                object: data.$1,
                 rect: GlobalRect().cardRect.zero,
               );
               layerManager.addLayer(layer);
-            });
-          }
+              setState(() {});
+            }
+          });
+
           break;
         }
       default:
