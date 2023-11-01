@@ -129,6 +129,10 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           resizeToAvoidBottomInset: false,
           backgroundColor: background,
           body: SafeArea(
+            top: true,
+            bottom: false,
+            left: false,
+            right: false,
             child: Center(
               child: LayoutBuilder(
                 builder: (context, constraints) {
