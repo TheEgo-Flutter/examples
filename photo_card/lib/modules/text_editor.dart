@@ -20,7 +20,7 @@ class TextEditor extends StatefulWidget {
 class _TextEditorState extends State<TextEditor> {
   ValueNotifier<String> textNotifier = ValueNotifier<String>("");
   double fontSize = 24.0;
-  Color currentColor = Colors.white;
+  Color currentColor = Colors.black;
   Color textBackgroundColor = Colors.transparent;
   TextAlign align = TextAlign.center;
 
