@@ -278,7 +278,7 @@ class _TextEditorState extends State<TextEditor> {
 
   int getFontIndex() {
     int index = fontFamilies.indexWhere((element) {
-      return widget.textEditorStyle!.style.fontFamily!.replaceAll(RegExp(r'_\w+'), '') == element;
+      return widget.textEditorStyle!.style.fontFamily!.toLowerCase().contains(element.toLowerCase());
     });
     if (index < 0) {
       index = 0;
