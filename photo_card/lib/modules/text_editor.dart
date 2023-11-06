@@ -4,7 +4,6 @@ import 'package:photo_card/ui/ui.dart';
 
 import '../utils/global.dart';
 import '../utils/global.rect.dart';
-import '../utils/util.dart';
 
 List<String> fontFamilies = [];
 
@@ -37,15 +36,8 @@ class _TextEditorState extends State<TextEditor> {
     if (renderBox == null) {
       return Rect.zero;
     }
-
-    InlineSpan? span = TextSpan(text: input.text, style: input.style);
-    Size size = textSize(span, context, maxWidth: GlobalRect().cardRect.width);
-
-    Rect rect = Offset((GlobalRect().cardRect.right - GlobalRect().cardRect.left) / 2 - (size.width + 30) / 2,
-            renderBox.localToGlobal(Offset.zero).dy - GlobalRect().cardRect.topLeft.dy) &
-        Size(size.width + 30, size.height + 30);
-
-    return rect;
+    // log('${renderBox.size}\n${renderBox.globalToLocal(Offset.zero)}\t${renderBox.localToGlobal(Offset.zero)}\n${renderBox.globalToLocal(GlobalRect().cardRect.topLeft)}\t${renderBox.localToGlobal(GlobalRect().cardRect.topLeft)}');
+    return renderBox.localToGlobal(Offset.zero) - GlobalRect().cardRect.topLeft & renderBox.size;
   }
 
   TextStyle get currentTextStyle => TextStyle(
