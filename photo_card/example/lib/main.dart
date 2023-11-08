@@ -4,7 +4,7 @@ import 'package:example/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_card/lib.dart';
-import 'package:photo_card/utils/diy_resources.dart';
+import 'package:photo_card/photo_card.edit.dart';
 
 void main() async {
   if (Platform.isIOS) {

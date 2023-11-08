@@ -1,7 +1,12 @@
-part of 'photo_card.dart';
+import 'package:du_icons/du_icons.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'photo_card.dart';
 
 class PhotoEditor extends StatefulWidget {
-  final FFMpegController? ffmpegController;
+  final CaptureController? captureController;
   final DiyResources resources;
   final double aspectRatio;
   final Widget completed;
@@ -13,7 +18,7 @@ class PhotoEditor extends StatefulWidget {
   const PhotoEditor({
     Key? key,
     required this.resources,
-    this.ffmpegController,
+    this.captureController,
     this.aspectRatio = 300 / 464,
     this.cardRadius = const Radius.circular(16),
     this.completed = const Text('저장'),
@@ -220,8 +225,8 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
   }
 
   Widget buildImageLayer(BuildContext context) {
-    return FFmpegWidget(
-      controller: widget.ffmpegController,
+    return CaptureWidget(
+      controller: widget.captureController,
       child: Container(
         key: GlobalRect().cardAreaKey,
         decoration: cardColor != null
