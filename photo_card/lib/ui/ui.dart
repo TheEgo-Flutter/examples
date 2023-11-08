@@ -1,5 +1,5 @@
 export 'child_layer_item.dart';
-export 'clipper/center_clipper.dart';
+export 'clipper/clipper.dart';
 export 'color_bar.dart';
 export 'delete_area.dart';
 export 'draggable_resizable.dart';
