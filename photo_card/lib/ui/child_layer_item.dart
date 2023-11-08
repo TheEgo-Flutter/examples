@@ -24,10 +24,14 @@ class ChildLayerItem extends StatelessWidget {
         case BackgroundType():
           switch (layerItem.type.background) {
             case Background.gallery:
-              return SizedBox(
-                height: targetSize.height,
-                width: targetSize.width,
-                child: layerItem.object,
+              return OverflowBox(
+                maxHeight: double.infinity,
+                maxWidth: double.infinity,
+                child: SizedBox(
+                  height: targetSize.height,
+                  width: targetSize.width,
+                  child: layerItem.object,
+                ),
               );
             case Background.image:
               return Image(
