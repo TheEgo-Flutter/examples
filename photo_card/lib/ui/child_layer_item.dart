@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_card/lib.dart';
 
-import '../modules/gif_view.dart';
-
 class ChildLayerItem extends StatelessWidget {
   final LayerItem layerItem;
   final Size? customSize;
@@ -55,23 +53,17 @@ class ChildLayerItem extends StatelessWidget {
             height: targetSize.height,
           );
         case StickerType():
-          if (layerItem.object is GifView) {
-            return (layerItem.object as GifView).copyWith(
-              image: layerItem.object.image,
-              controller: layerItem.object.controller,
-              width: targetSize.width,
-              height: targetSize.height,
-            );
-          } else if (layerItem.object is Image) {
-            return Image(
+          return OverflowBox(
+            maxHeight: double.infinity,
+            maxWidth: double.infinity,
+            child: Image(
               image: layerItem.object as ImageProvider,
               fit: BoxFit.fill,
               width: targetSize.width,
               height: targetSize.height,
-            );
-          } else {
-            return const SizedBox.shrink();
-          }
+            ),
+          );
+
         case TextType():
           return TextBox(
             isReadOnly: true,
