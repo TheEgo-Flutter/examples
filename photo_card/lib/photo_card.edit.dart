@@ -618,16 +618,11 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           Size size = GlobalRect().stickerSize;
           Offset offset = Offset(GlobalRect().cardRect.size.width / 2 - size.width / 2,
               GlobalRect().cardRect.size.height / 2 - size.height / 2);
-          GifController controller = GifController();
+
           LayerItem layer = LayerItem(
             UniqueKey(),
             type: StickerType(),
-            object: GifView(
-              controller: controller,
-              image: child,
-              width: size.width,
-              height: size.height,
-            ),
+            object: child,
             rect: (offset & size),
           );
           layerManager.addLayer(layer);
