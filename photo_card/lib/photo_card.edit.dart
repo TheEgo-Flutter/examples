@@ -255,7 +255,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
           });
           (TextBoxInput, Rect)? result = await showGeneralDialog(
               context: context,
-              barrierColor: Colors.transparent,
+              barrierColor: Colors.black.withOpacity(0.5),
               pageBuilder: (context, animation, secondaryAnimation) {
                 return TextEditor(
                   textEditorStyle: item.object as TextBoxInput,
@@ -410,7 +410,7 @@ class _PhotoEditorState extends State<PhotoEditor> with WidgetsBindingObserver, 
       case TextType():
         (TextBoxInput, Rect)? result = await showGeneralDialog(
           context: context,
-          barrierColor: Colors.transparent,
+          barrierColor: Colors.black.withOpacity(0.5),
           pageBuilder: (context, animation, secondaryAnimation) {
             return const TextEditor();
           },
