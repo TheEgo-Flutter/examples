@@ -57,14 +57,20 @@ class ChildLayerItem extends StatelessWidget {
             height: targetSize.height,
           );
         case StickerType():
-          return OverflowBox(
-            maxHeight: double.infinity,
-            maxWidth: double.infinity,
-            child: Image(
-              image: layerItem.object as ImageProvider,
-              fit: BoxFit.fill,
-              width: targetSize.width,
-              height: targetSize.height,
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: targetSize.height,
+              maxWidth: targetSize.width,
+            ),
+            child: OverflowBox(
+              maxHeight: double.infinity,
+              maxWidth: double.infinity,
+              child: Image(
+                image: layerItem.object as ImageProvider,
+                fit: BoxFit.fill,
+                width: targetSize.width,
+                height: targetSize.height,
+              ),
             ),
           );
 
